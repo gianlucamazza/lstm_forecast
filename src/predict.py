@@ -97,16 +97,16 @@ def main(_ticker: str, _start_date: str, _model_path: str, _look_back: int, _loo
 # Execute prediction
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--ticker', type=str, required=True, help='The stock ticker symbol')
-    parser.add_argument('--model_path', type=str, required=True, help='The path to the trained model')
     parser.add_argument('--config', type=str, required=True, help='Path to configuration JSON file')
     args = parser.parse_args()
 
     with open(args.config, 'r') as config_file:
         config = json.load(config_file)
 
+    ticker = config['ticker']
+    model_path = config['model_path']
     start_date = config['start_date']
     look_back = config['look_back']
     look_forward = config['look_forward']
 
-    main(args.ticker, start_date, args.model_path, look_back, look_forward)
+    main(ticker, start_date, model_path, look_back, look_forward)
