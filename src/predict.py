@@ -13,7 +13,7 @@ from model import PricePredictor
 from data_loader import preprocess_data
 
 # Configure logging
-logging.basicConfig(filename='predict.log', level=logging.INFO, format='%(asctime)s:%(levelname)s:%(message)s')
+logging.basicConfig(filename='../predict.log', level=logging.INFO, format='%(asctime)s:%(levelname)s:%(message)s')
 
 # Set device
 device: torch.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -69,22 +69,23 @@ def plot_predictions(_historical_data: np.ndarray, _predictions: np.ndarray, _fu
                      _data: pd.DataFrame) -> None:
     plt.figure(figsize=(14, 7))
     plt.plot(_data.index, _historical_data, label='Historical Data')
-    plt.plot(_data.index[60:60 + len(_predictions)], _predictions, label='Predictions', color='r')
 
     # Create future dates for future predictions
     future_dates = pd.date_range(_data.index[-1], periods=len(_future_predictions) + 1, freq='D')[1:]
-    plt.plot(future_dates, _future_predictions, label='Future Predictions', color='g')
+    plt.plot(future_dates, _future_predictions, label='Predicted Future Prices', linestyle='dashed')
 
     plt.xlabel('Date')
     plt.ylabel('Price')
     plt.legend()
-    plt.show()
+
+    # Save the plot
+    plt.savefig('prediction.png')
 
 
 # Main function for prediction
 def main(_ticker: str, _start_date: str, _model_path: str, _look_back: int, _look_forward: int) -> None:
     data = get_data(_ticker, start=_start_date, end=time.strftime('%Y-%m-%d'))
-    x, _, scaler = preprocess_data(data, look_back=_look_back, predict_days=_look_forward)
+    x, _, scaler = preprocess_data(data, look_back=_look_back, look_forward=_look_forward)
     model = load_model(_model_path)
     predictions, future_predictions = predict(model, x, scaler, _look_forward)
 
@@ -98,10 +99,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--ticker', type=str, required=True, help='The stock ticker symbol')
     parser.add_argument('--model_path', type=str, required=True, help='The path to the trained model')
+    parser.add_argument('--config', type=str, required=True, help='Path to configuration JSON file')
     args = parser.parse_args()
 
-    with open('config.json', 'r') as config_file:
+    with open(args.config, 'r') as config_file:
         config = json.load(config_file)
+
     start_date = config['start_date']
     look_back = config['look_back']
     look_forward = config['look_forward']

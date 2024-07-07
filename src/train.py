@@ -14,7 +14,9 @@ import json
 
 device: torch.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-def train_model(_model: nn.Module, _train_loader: DataLoader, _val_loader: DataLoader, num_epochs: int, learning_rate: float, model_path: str) -> None:
+
+def train_model(_model: nn.Module, _train_loader: DataLoader, _val_loader: DataLoader, num_epochs: int,
+                learning_rate: float, model_path: str) -> None:
     criterion = nn.MSELoss()
     optimizer = optim.Adam(_model.parameters(), lr=learning_rate)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.5)
@@ -74,14 +76,17 @@ def evaluate_model(_ticker: str, _model: nn.Module, _x: np.ndarray, _y: np.ndarr
         predictions_reshaped = np.zeros((_y.shape[0], 3))
         predictions_reshaped[:, 0] = predictions[:, 0]
         predictions = _scaler.inverse_transform(predictions_reshaped)[:, 0]
-        y_true = _scaler.inverse_transform(np.concatenate([_y.reshape(-1, 1), np.zeros((_y.shape[0], 2))], axis=1))[:, 0]
+        y_true = _scaler.inverse_transform(np.concatenate([_y.reshape(-1, 1), np.zeros((_y.shape[0], 2))], axis=1))[:,
+                 0]
 
     plt.figure(figsize=(14, 7))
-    plt.title(f'{_ticker} Stock Price Prediction')
-    plt.plot(y_true, label='True Prices')
-    plt.plot(predictions, label='Predicted Prices')
+    plt.title(f'{_ticker} - Model Evaluation')
+    plt.plot(y_true, label='True Price', color='blue')
+    plt.plot(predictions, label='Predicted Price', color='red')
+    plt.xlabel('Days')
+    plt.ylabel('Price')
     plt.legend()
-    plt.show()
+    plt.savefig('evaluation.png')
 
 
 if __name__ == "__main__":

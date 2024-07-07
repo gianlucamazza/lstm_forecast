@@ -2,8 +2,8 @@
 
 # Train the model
 echo "Training the model..."
-python train.py --config config.json
+python src/train.py --config "config.json"
 
 # Run prediction script
 echo "Running prediction..."
-python predict.py --ticker "BTC-USD" --model_path "model.pth"
+python src/predict.py --ticker "BTC-USD" --model_path "model.pth" --config config.json

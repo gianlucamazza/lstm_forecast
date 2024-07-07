@@ -1,8 +1,6 @@
 import torch
 import torch.nn as nn
 
-device: torch.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
 
 class PricePredictor(nn.Module):
     def __init__(self) -> None:
@@ -12,8 +10,8 @@ class PricePredictor(nn.Module):
         self.fc = nn.Linear(50, 1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        h_0 = torch.zeros(2, x.size(0), 50).to(device)
-        c_0 = torch.zeros(2, x.size(0), 50).to(device)
+        h_0 = torch.zeros(2, x.size(0), 50).to(x.device)
+        c_0 = torch.zeros(2, x.size(0), 50).to(x.device)
 
         out, _ = self.lstm(x, (h_0, c_0))
         out = self.dropout(out[:, -1, :])
