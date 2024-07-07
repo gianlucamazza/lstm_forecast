@@ -1,1 +1,8 @@
 model.pth
+
+# IDEs
+.idea/
+.vscode/
+
+# Compiled files
+__pycache__/
