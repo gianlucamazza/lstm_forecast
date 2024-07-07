@@ -33,7 +33,7 @@ def get_data(_ticker: str, start: str, end: str) -> pd.DataFrame:
 
 
 # Make predictions
-def predict(_model: nn.Module, _x: np.ndarray, _scaler: StandardScaler, future_days: int = 30) \
+def predict(_model: nn.Module, _x: np.ndarray, _scaler: StandardScaler, future_days: int) \
         -> tuple[np.ndarray, np.ndarray]:
     _model.eval()
     with torch.no_grad():
@@ -80,11 +80,11 @@ def plot_predictions(_historical_data: np.ndarray, _predictions: np.ndarray, _fu
 
 
 # Main function for prediction
-def main(_ticker: str, _start_date: str, _model_path: str) -> None:
+def main(_ticker: str, _start_date: str, _model_path: str, predict_days) -> None:
     data = get_data(_ticker, start=_start_date, end=time.strftime('%Y-%m-%d'))
-    x, _, scaler = preprocess_data(data)
+    x, _, scaler = preprocess_data(data, predict_days=predict_days, look_back=60)
     model = load_model(_model_path)
-    predictions, future_predictions = predict(model, x, scaler)
+    predictions, future_predictions = predict(model, x, scaler, future_days)
 
     plot_predictions(data['Close'].values, predictions, future_predictions, data)
 
@@ -96,5 +96,5 @@ if __name__ == "__main__":
     ticker = 'AAPL'
     start_date = '2020-01-01'
     model_path = 'model.pth'
-
-    main(ticker, start_date, model_path)
+    future_days = 30
+    main(ticker, start_date, model_path, future_days)

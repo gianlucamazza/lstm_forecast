@@ -14,8 +14,18 @@ def get_data(_ticker: str, start: str, end: str) -> pd.DataFrame:
     return historical_data
 
 
-def preprocess_data(historical_data: pd.DataFrame, look_back: int = 60) -> tuple[
-    np.ndarray, np.ndarray, StandardScaler]:
+def preprocess_data(historical_data: pd.DataFrame, look_back: int = 60, predict_days: int = 30) \
+        -> tuple[np.ndarray, np.ndarray, StandardScaler]:
+    """Preprocess the data for model training.
+
+    Args:
+        historical_data (pd.DataFrame): The historical stock data.
+        look_back (int): The number of past days to consider for each input sample.
+        predict_days (int): The number of future days to predict.
+
+    Returns:
+        tuple: Processed input features (X), target values (y), and the scaler used for normalization.
+    """
     historical_data['SMA_20'] = SMAIndicator(historical_data['Close'], window=20).sma_indicator()
     historical_data['RSI_14'] = RSIIndicator(historical_data['Close'], window=14).rsi()
 
@@ -27,9 +37,9 @@ def preprocess_data(historical_data: pd.DataFrame, look_back: int = 60) -> tuple
     _X = []
     _y = []
 
-    for i in range(look_back, len(scaled_data) - 30):
+    for i in range(look_back, len(scaled_data) - predict_days):
         _X.append(scaled_data[i - look_back:i])
-        _y.append(scaled_data[i + 30, 0])  # Predict the close price 30 days into the future
+        _y.append(scaled_data[i + predict_days, 0])
 
     _X = np.array(_X)
     _y = np.array(_y)
