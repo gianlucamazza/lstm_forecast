@@ -4,3 +4,24 @@
 2024-07-07 19:43:42,122:INFO:Predictions completed and plotted
 2024-07-07 19:49:46,271:INFO:Predictions completed and plotted
 2024-07-07 19:51:42,967:INFO:Predictions completed and plotted
+2024-07-07 20:35:27,926:ERROR:
+1 Failed download:
+2024-07-07 20:35:27,926:ERROR:['AAPL']: YFPricesMissingError('$%ticker%: possibly delisted; No price data found  (1d 2024-07-07 -> 2024-07-07)')
+2024-07-07 21:26:45,035:ERROR:
+1 Failed download:
+2024-07-07 21:26:45,058:ERROR:['AAPL']: YFPricesMissingError('$%ticker%: possibly delisted; No price data found  (1d 2024-07-07 -> 2024-07-07)')
+2024-07-07 21:27:30,725:ERROR:
+1 Failed download:
+2024-07-07 21:27:30,726:ERROR:['BTC-USD']: IndexError('index 0 is out of bounds for axis 0 with size 0')
+2024-07-07 21:27:45,981:ERROR:
+1 Failed download:
+2024-07-07 21:27:45,982:ERROR:['BTC-USD']: IndexError('index 0 is out of bounds for axis 0 with size 0')
+2024-07-07 21:31:33,048:ERROR:
+1 Failed download:
+2024-07-07 21:31:33,049:ERROR:['BTC-USD']: IndexError('index 0 is out of bounds for axis 0 with size 0')
+2024-07-07 21:32:56,433:ERROR:
+1 Failed download:
+2024-07-07 21:32:56,433:ERROR:['BTC-USD']: IndexError('index 0 is out of bounds for axis 0 with size 0')
+2024-07-07 22:12:13,766:ERROR:
+1 Failed download:
+2024-07-07 22:12:13,766:ERROR:['BTC-USD']: IndexError('index 0 is out of bounds for axis 0 with size 0')

@@ -1,3 +1,4 @@
+import argparse
 import yfinance as yf
 import pandas as pd
 import numpy as np
@@ -6,6 +7,7 @@ import logging
 import torch
 import torch.nn as nn
 import time
+import json
 from sklearn.preprocessing import StandardScaler
 from model import PricePredictor
 from data_loader import preprocess_data
@@ -80,11 +82,11 @@ def plot_predictions(_historical_data: np.ndarray, _predictions: np.ndarray, _fu
 
 
 # Main function for prediction
-def main(_ticker: str, _start_date: str, _model_path: str, predict_days) -> None:
+def main(_ticker: str, _start_date: str, _model_path: str, _look_back: int, _look_forward: int) -> None:
     data = get_data(_ticker, start=_start_date, end=time.strftime('%Y-%m-%d'))
-    x, _, scaler = preprocess_data(data, predict_days=predict_days, look_back=60)
+    x, _, scaler = preprocess_data(data, look_back=_look_back, predict_days=_look_forward)
     model = load_model(_model_path)
-    predictions, future_predictions = predict(model, x, scaler, future_days)
+    predictions, future_predictions = predict(model, x, scaler, _look_forward)
 
     plot_predictions(data['Close'].values, predictions, future_predictions, data)
 
@@ -93,8 +95,15 @@ def main(_ticker: str, _start_date: str, _model_path: str, predict_days) -> None
 
 # Execute prediction
 if __name__ == "__main__":
-    ticker = 'AAPL'
-    start_date = '2020-01-01'
-    model_path = 'model.pth'
-    future_days = 30
-    main(ticker, start_date, model_path, future_days)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--ticker', type=str, required=True, help='The stock ticker symbol')
+    parser.add_argument('--model_path', type=str, required=True, help='The path to the trained model')
+    args = parser.parse_args()
+
+    with open('config.json', 'r') as config_file:
+        config = json.load(config_file)
+    start_date = config['start_date']
+    look_back = config['look_back']
+    look_forward = config['look_forward']
+
+    main(args.ticker, start_date, args.model_path, look_back, look_forward)
