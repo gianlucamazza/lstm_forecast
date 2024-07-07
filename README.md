@@ -64,9 +64,13 @@ run.sh
 ### Structure
 
 `src/data_loader.py` handles data loading, preprocessing, and feature selection.
+
 `src/feature_engineering.py` calculates various technical indicators used as features for the model.
+
 `src/model.py` contains the definition of the LSTM model and the early stopping class.
+
 `src/train.py` script preprocesses the data, trains the model, and evaluates it.
+
 `src/predict.py` script preprocesses the data, loads the trained model, and generates predictions.
 
 ### Example BTC-USD (prediction.png)
