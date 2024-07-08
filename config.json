@@ -1,9 +1,9 @@
 {
     "ticker": "BTC-USD",
-    "start_date": "2017-01-01",
+    "start_date": "2012-01-01",
     "log_dir": "logs",
     "log_file": "application.log",
-    "look_back": 60,
+    "look_back": 90,
     "look_forward": 30,
     "epochs": 100,
     "batch_size": 64,
@@ -12,20 +12,23 @@
     "features": [
         "Close",
         "SMA",
-        "EMA",
         "MACD",
-        "MACD_Signal",
         "RSI",
         "Stochastic",
         "Bollinger_High",
-        "Bollinger_Low"
+        "Bollinger_Low",
+        "ATR",
+        "ADX",
+        "MFI"
     ],
     "indicator_windows": {
         "SMA": 20,
-        "EMA": 20,
         "RSI": 14,
         "Stochastic": 14,
-        "Bollinger": 20
+        "Bollinger": 20,
+        "ATR": 14,
+        "ADX": 14,
+        "MFI": 14
     },
     "target": "Close"
 }
