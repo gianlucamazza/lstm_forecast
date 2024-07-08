@@ -3,9 +3,9 @@ import torch.nn as nn
 
 
 class PricePredictor(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self, input_size: int) -> None:
         super(PricePredictor, self).__init__()
-        self.lstm = nn.LSTM(input_size=3, hidden_size=50, num_layers=2, batch_first=True, dropout=0.2)
+        self.lstm = nn.LSTM(input_size=input_size, hidden_size=50, num_layers=2, batch_first=True, dropout=0.2)
         self.dropout = nn.Dropout(0.2)
         self.fc = nn.Linear(50, 1)
 

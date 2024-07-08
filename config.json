@@ -6,5 +6,8 @@
     "epochs": 100,
     "batch_size": 64,
     "learning_rate": 0.001,
-    "model_path": "model.pth"
+    "model_path": "model.pth",
+    "features": ["Close", "SMA_20", "EMA_20", "MACD", "MACD_Signal",
+        "RSI_14", "Stochastic", "Bollinger_High", "Bollinger_Low"],
+    "target": "Close"
 }
