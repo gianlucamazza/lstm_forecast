@@ -75,8 +75,8 @@ def plot_predictions(_historical_data: np.ndarray, _predictions: np.ndarray, _fu
                      _data: pd.DataFrame) -> None:
     plt.figure(figsize=(14, 7))
 
-    # Keep 60 days of historical data for better visualization
-    plt.plot(_data.index[-60:], _historical_data[-60:], label='Historical Prices')
+    # Keep 120 days of historical data for better visualization
+    plt.plot(_data.index[-120:], _historical_data[-120:], label='Historical Prices')
 
     # Debug: print last date from historical data
     print('Last date from historical data:', _data.index[-1])
