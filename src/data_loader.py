@@ -6,18 +6,18 @@ from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 from feature_engineering import calculate_technical_indicators
-from typing import List
+from typing import List, Tuple, Dict
 
 
-def get_data(_ticker: str, start: str, end: str) -> pd.DataFrame:
+def get_data(_ticker: str, start: str, end: str, windows: Dict[str, int]) -> pd.DataFrame:
     historical_data = yf.download(_ticker, start=start, end=end)
-    historical_data = calculate_technical_indicators(historical_data)
+    historical_data = calculate_technical_indicators(historical_data, windows=windows)
     historical_data.to_csv(f'data/{_ticker}.csv')
     return historical_data
 
 
 def preprocess_data(historical_data: pd.DataFrame, target: str, look_back: int = 60,
-                    look_forward: int = 30, features: List[str] = None) -> tuple:
+                    look_forward: int = 30, features: List[str] = None) -> Tuple[np.ndarray, np.ndarray, StandardScaler, List[str]]:
     """Preprocess the data for model training.
 
     Args:
@@ -35,22 +35,11 @@ def preprocess_data(historical_data: pd.DataFrame, target: str, look_back: int =
             raise ValueError(f"Feature {feature} is not in the historical data.")
 
     historical_data = historical_data.dropna()
-
     _scaler = StandardScaler()
-    columns = [target]
-
-    if features is None:
-        features = historical_data.columns
-
-    for feature in features:
-        if feature != target:
-            columns.append(feature)
-
+    columns = [target] + [feature for feature in features if feature != target]
     scaled_data = _scaler.fit_transform(historical_data[columns])
 
-    _X = []
-    _y = []
-
+    _X, _y = [], []
     for i in range(look_back, len(scaled_data) - look_forward):
         _X.append(scaled_data[i - look_back:i])
         _y.append(scaled_data[i + look_forward, 0])

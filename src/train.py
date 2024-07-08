@@ -112,11 +112,13 @@ def evaluate_model(_ticker: str, _model: nn.Module, _x: np.ndarray, _y: np.ndarr
         y_true_reshaped = np.zeros((_y.shape[0], len(feature_indices)))
         y_true_reshaped[:, 0] = _y
         y_true = _scaler.inverse_transform(y_true_reshaped)[:, 0]
+    
+    aligned_dates = dates[-len(y_true):]
 
     plt.figure(figsize=(14, 7))
     plt.title(f'{_ticker} - Model Evaluation')
-    plt.plot(dates, y_true, label='True Price', color='blue')
-    plt.plot(dates, predictions, label='Predicted Price', color='red')
+    plt.plot(aligned_dates, y_true, label='True Price', color='blue')
+    plt.plot(aligned_dates, predictions, label='Predicted Price', color='red')
     plt.xlabel('Days')
     plt.ylabel('Price')
     plt.legend()
@@ -143,6 +145,7 @@ if __name__ == "__main__":
     model_path = config['model_path']
     features = config['features']
     target = config['target']
+    indicator_windows = config['indicator_windows']
 
     # Log parameters
     logger.info(f'Ticker: {ticker}')
@@ -156,10 +159,11 @@ if __name__ == "__main__":
     logger.info(f'Model Path: {model_path}')
     logger.info(f'Features: {features}')
     logger.info(f'Target: {target}')
+    logger.info(f'Windows: {indicator_windows}')
 
     # Get historical data
     logger.info(f'Getting historical data for {ticker} from {start_date} to {end_date}')
-    historical_data = get_data(ticker, start_date, end_date)
+    historical_data = get_data(ticker, start_date, end_date, indicator_windows)
     dates = historical_data.index
     
     # Preprocess data
@@ -187,4 +191,4 @@ if __name__ == "__main__":
 
     # Evaluate model
     logger.info('Evaluating model')
-    evaluate_model(ticker, model, X, y, scaler, selected_features)
+    evaluate_model(ticker, model, X, y, scaler, selected_features, dates)

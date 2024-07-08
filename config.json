@@ -11,14 +11,21 @@
     "model_path": "model.pth",
     "features": [
         "Close",
-        "SMA_20",
-        "EMA_20",
+        "SMA",
+        "EMA",
         "MACD",
         "MACD_Signal",
-        "RSI_14",
+        "RSI",
         "Stochastic",
         "Bollinger_High",
         "Bollinger_Low"
     ],
+    "indicator_windows": {
+        "SMA": 20,
+        "EMA": 20,
+        "RSI": 14,
+        "Stochastic": 14,
+        "Bollinger": 20
+    },
     "target": "Close"
 }

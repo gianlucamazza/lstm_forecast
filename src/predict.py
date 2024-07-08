@@ -8,8 +8,7 @@ import torch.nn as nn
 import time
 from sklearn.preprocessing import StandardScaler
 from model import PricePredictor
-from data_loader import preprocess_data
-from feature_engineering import calculate_technical_indicators
+from data_loader import preprocess_data, get_data
 from typing import List
 from utils import load_json
 from logger import setup_logger
@@ -23,7 +22,6 @@ device: torch.device = torch.device('cuda' if torch.cuda.is_available() else 'cp
 print(f'Using device: {device}')
 
 
-# Load the trained model
 def load_model(path: str, input_shape: int) -> nn.Module:
     """
     Load the trained model from a given path.
@@ -40,26 +38,6 @@ def load_model(path: str, input_shape: int) -> nn.Module:
     model.eval()
     return model
 
-
-# Get historical data
-def get_data(_ticker: str, start: str, end: str) -> pd.DataFrame:
-    """
-    Get historical data for a given ticker.
-
-    Args:
-        _ticker (str): The ticker symbol.
-        start (str): The start date.
-        end (str): The end date.
-
-    Returns:
-        pd.DataFrame: The historical data.
-    """
-    historical_data = yf.download(_ticker, start=start, end=end)
-    historical_data = calculate_technical_indicators(historical_data)
-    return historical_data
-
-
-# Make predictions
 def predict(_model: nn.Module, _x: np.ndarray, _scaler: StandardScaler, future_days: int, _features: List) \
         -> tuple[np.ndarray, np.ndarray]:
     """
@@ -105,7 +83,6 @@ def predict(_model: nn.Module, _x: np.ndarray, _scaler: StandardScaler, future_d
     return predictions, future_predictions
 
 
-# Plot predictions aggregated with historical data
 def plot_predictions(filename: str, _historical_data: np.ndarray, _predictions: np.ndarray, _future_predictions: np.ndarray,
                      _data: pd.DataFrame) -> None:
     """
@@ -138,9 +115,8 @@ def plot_predictions(filename: str, _historical_data: np.ndarray, _predictions: 
     plt.savefig(filename)
 
 
-# Main function for prediction
 def main(_ticker: str, _target: str, _start_date: str, _model_path: str,
-         _look_back: int, _look_forward: int, _features: List) -> None:
+         _look_back: int, _look_forward: int, _features: List, _indicator_windows: dict) -> None:
     """
     Main function for prediction.
 
@@ -156,7 +132,7 @@ def main(_ticker: str, _target: str, _start_date: str, _model_path: str,
     Returns:
         None
     """
-    data = get_data(_ticker, start=_start_date, end=time.strftime('%Y-%m-%d'))
+    data = get_data(_ticker, start=_start_date, end=time.strftime('%Y-%m-%d'), windows=_indicator_windows)
     x, _, scaler, selected_features = preprocess_data(data, _target, look_back=_look_back, look_forward=_look_forward, features=_features)
     model = load_model(_model_path, input_shape=len(selected_features))
     predictions, future_predictions = predict(model, x, scaler, _look_forward, selected_features)
@@ -168,7 +144,6 @@ def main(_ticker: str, _target: str, _start_date: str, _model_path: str,
     logging.info('Predictions completed and plotted')
 
 
-# Execute prediction
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str, required=True, help='Path to configuration JSON file')
@@ -184,5 +159,6 @@ if __name__ == "__main__":
     look_forward = config['look_forward']
     features = config['features']
     target = config['target']
+    indicator_windows = config['indicator_windows']
 
-    main(ticker, target, start_date, model_path, look_back, look_forward, features)
+    main(ticker, target, start_date, model_path, look_back, look_forward, features, indicator_windows)
