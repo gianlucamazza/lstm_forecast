@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import argparse
 import time
+import json
 from torch.utils.data import DataLoader
 from model import EarlyStopping, PricePredictor
 from sklearn.preprocessing import StandardScaler
@@ -174,6 +175,11 @@ if __name__ == "__main__":
 
     # Debug: print selected features
     logger.info(f'Selected features: {selected_features}')
+
+    # Saver selected features to JSON
+    selected_features_json = {'selected_features': selected_features}
+    with open('selected_features.json', 'w') as f:
+        json.dump(selected_features_json, f)
 
     # Split data
     logger.info('Splitting data')
