@@ -7,13 +7,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 import argparse
-import logging
 import time
 from data_loader import get_data, preprocess_data, split_data
 from utils import load_json
+from logger import setup_logger
+import pandas as pd
 
 device: torch.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+logger = setup_logger('train_logger')
 
 def train_model(_model: nn.Module, _train_loader: DataLoader, _val_loader: DataLoader, num_epochs: int,
                 _learning_rate: float, _model_path: str) -> None:
@@ -84,7 +86,7 @@ def train_model(_model: nn.Module, _train_loader: DataLoader, _val_loader: DataL
 
 
 def evaluate_model(_ticker: str, _model: nn.Module, _x: np.ndarray, _y: np.ndarray,
-                   _scaler: StandardScaler, feature_indices: list) -> None:
+                   _scaler: StandardScaler, feature_indices: list, dates: pd.DatetimeIndex) -> None:
     """
     Evaluate the model.
 
@@ -95,7 +97,8 @@ def evaluate_model(_ticker: str, _model: nn.Module, _x: np.ndarray, _y: np.ndarr
         _y (np.ndarray): The target data.
         _scaler (StandardScaler): The scaler used to scale the data.
         feature_indices (list): The indices of the selected features.
-        
+        dates (pd.DatetimeIndex): The dates corresponding to the input data.
+
     Returns:
         None
     """
@@ -112,8 +115,8 @@ def evaluate_model(_ticker: str, _model: nn.Module, _x: np.ndarray, _y: np.ndarr
 
     plt.figure(figsize=(14, 7))
     plt.title(f'{_ticker} - Model Evaluation')
-    plt.plot(y_true, label='True Price', color='blue')
-    plt.plot(predictions, label='Predicted Price', color='red')
+    plt.plot(dates, y_true, label='True Price', color='blue')
+    plt.plot(dates, predictions, label='Predicted Price', color='red')
     plt.xlabel('Days')
     plt.ylabel('Price')
     plt.legend()
@@ -141,51 +144,47 @@ if __name__ == "__main__":
     features = config['features']
     target = config['target']
 
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
-
     # Log parameters
-    logging.info(f'Ticker: {ticker}')
-    logging.info(f'Start Date: {start_date}')
-    logging.info(f'End Date: {end_date}')
-    logging.info(f'Look Back: {look_back}')
-    logging.info(f'Look Forward: {look_forward}')
-    logging.info(f'Epochs: {epochs}')
-    logging.info(f'Batch Size: {batch_size}')
-    logging.info(f'Learning Rate: {learning_rate}')
-    logging.info(f'Model Path: {model_path}')
-    logging.info(f'Features: {features}')
-    logging.info(f'Target: {target}')
+    logger.info(f'Ticker: {ticker}')
+    logger.info(f'Start Date: {start_date}')
+    logger.info(f'End Date: {end_date}')
+    logger.info(f'Look Back: {look_back}')
+    logger.info(f'Look Forward: {look_forward}')
+    logger.info(f'Epochs: {epochs}')
+    logger.info(f'Batch Size: {batch_size}')
+    logger.info(f'Learning Rate: {learning_rate}')
+    logger.info(f'Model Path: {model_path}')
+    logger.info(f'Features: {features}')
+    logger.info(f'Target: {target}')
 
     # Get historical data
-    logging.info(f'Getting historical data for {ticker} from {start_date} to {end_date}')
+    logger.info(f'Getting historical data for {ticker} from {start_date} to {end_date}')
     historical_data = get_data(ticker, start_date, end_date)
-
+    dates = historical_data.index
+    
     # Preprocess data
-    logging.info('Preprocessing data')
+    logger.info('Preprocessing data')
     X, y, scaler, selected_features = preprocess_data(historical_data, target, look_back=look_back,
                                                       look_forward=look_forward, features=features)
 
     # Debug: print selected features
-    logging.info(f'Selected features: {selected_features}')
+    logger.info(f'Selected features: {selected_features}')
 
     # Split data
-    logging.info('Splitting data')
+    logger.info('Splitting data')
     train_loader, val_loader = split_data(X, y, batch_size=batch_size)
 
-    input_size = len(selected_features)
-    logging.info(f'Input size: {input_size}')
-
     # Initialize model
-    logging.info('Initializing model')
+    logger.info('Initializing model')
     model = PricePredictor(
-        input_size=input_size
+        input_size=len(selected_features)
     ).to(device)
 
     # Train model
-    logging.info('Training model')
+    logger.info('Training model')
     train_model(model, train_loader, val_loader, num_epochs=epochs,
                 _learning_rate=learning_rate, _model_path=model_path)
 
     # Evaluate model
-    logging.info('Evaluating model')
+    logger.info('Evaluating model')
     evaluate_model(ticker, model, X, y, scaler, selected_features)

@@ -3,7 +3,6 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import logging
 import torch
 import torch.nn as nn
 import time
@@ -13,9 +12,11 @@ from data_loader import preprocess_data
 from feature_engineering import calculate_technical_indicators
 from typing import List
 from utils import load_json
+from logger import setup_logger
 
-# Configure logging
-logging.basicConfig(filename='../predict.log', level=logging.INFO, format='%(asctime)s:%(levelname)s:%(message)s')
+# Set up logger
+logging = setup_logger('predict_logger')
+
 
 # Set device
 device: torch.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -124,14 +125,9 @@ def plot_predictions(filename: str, _historical_data: np.ndarray, _predictions: 
 
     plt.plot(_data.index, _historical_data, label='Historical Prices')
 
-    # Debug: print last date from historical data
-    print('Last date from historical data:', _data.index[-1])
-
     # Create future dates for future predictions
     future_dates = pd.date_range(_data.index[-1], periods=len(_future_predictions) + 1, freq='D')[1:]
 
-    # Debug: print first date from future dates
-    print('First date from future dates:', future_dates[0])
     plt.plot(future_dates, _future_predictions, label='Predicted Future Prices', linestyle='dashed')
 
     plt.xlabel('Date')

@@ -1,5 +1,6 @@
 model.pth
 data/*.csv
+logs/*.log
 
 # IDEs
 .idea/
