@@ -89,7 +89,7 @@ def evaluate_model(_ticker: str, _model: nn.Module, _x: np.ndarray, _y: np.ndarr
     plt.xlabel('Days')
     plt.ylabel('Price')
     plt.legend()
-    plt.savefig('evaluation.png')
+    plt.savefig('png/evaluation.png')
     plt.show()
 
 

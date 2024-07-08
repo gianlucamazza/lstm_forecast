@@ -71,12 +71,11 @@ def predict(_model: nn.Module, _x: np.ndarray, _scaler: StandardScaler, future_d
 
 
 # Plot predictions aggregated with historical data
-def plot_predictions(_historical_data: np.ndarray, _predictions: np.ndarray, _future_predictions: np.ndarray,
+def plot_predictions(filename: str, _historical_data: np.ndarray, _predictions: np.ndarray, _future_predictions: np.ndarray,
                      _data: pd.DataFrame) -> None:
     plt.figure(figsize=(14, 7))
 
-    # Keep 120 days of historical data for better visualization
-    plt.plot(_data.index[-120:], _historical_data[-120:], label='Historical Prices')
+    plt.plot(_data.index, _historical_data, label='Historical Prices')
 
     # Debug: print last date from historical data
     print('Last date from historical data:', _data.index[-1])
@@ -93,7 +92,7 @@ def plot_predictions(_historical_data: np.ndarray, _predictions: np.ndarray, _fu
     plt.legend()
 
     # Save the plot
-    plt.savefig('prediction.png')
+    plt.savefig(filename)
 
 
 # Main function for prediction
@@ -104,7 +103,9 @@ def main(_ticker: str, _target: str, _start_date: str, _model_path: str,
     model = load_model(_model_path, input_shape=len(selected_features))
     predictions, future_predictions = predict(model, x, scaler, _look_forward, selected_features)
 
-    plot_predictions(data['Close'].values, predictions, future_predictions, data)
+    plot_predictions('png/90_days.png', data['Close'].values[-90:], predictions[-90:], future_predictions, data[-90:])
+    plot_predictions('png/365_days.png', data['Close'].values[-365:], predictions[-365:], future_predictions, data[-365:])
+    plot_predictions('png/full.png', data['Close'].values, predictions, future_predictions, data)
 
     logging.info('Predictions completed and plotted')
 

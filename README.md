@@ -75,11 +75,13 @@ run.sh
 
 ### Example BTC-USD (prediction.png)
 
-![BTC-USD](prediction.png)
+![BTC-USD 90 chart](png/90_days.png)
+![BTC-USD 365 chart](png/365_days.png)
+![BTC-USD full chart](png/full.png)
 
 ### Evaluation
 
-![Evaluation](evaluation.png)
+![Evaluation](png/evaluation.png)
 
 ## License
 
