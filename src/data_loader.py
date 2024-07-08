@@ -1,3 +1,4 @@
+import torch
 import yfinance as yf
 import pandas as pd
 import numpy as np
@@ -6,7 +7,6 @@ from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 from feature_engineering import calculate_technical_indicators
 from typing import List
-import torch
 
 
 def get_data(_ticker: str, start: str, end: str) -> pd.DataFrame:
@@ -62,6 +62,17 @@ def preprocess_data(historical_data: pd.DataFrame, target: str, look_back: int =
 
 
 def split_data(_x: np.ndarray, _y: np.ndarray, batch_size: int,test_size: float = 0.15) -> tuple[DataLoader, DataLoader]:
+    """Split the data into training and validation sets.
+
+    Args:
+        _x (np.ndarray): The input features.
+        _y (np.ndarray): The target values.
+        batch_size (int): The batch size for the data loaders.
+        test_size (float): The fraction of data to use for validation.
+
+    Returns:
+        tuple[DataLoader, DataLoader]: Training and validation data loaders.
+    """
     x_train, x_val, y_train, y_val = train_test_split(_x, _y, test_size=test_size, random_state=42)
     train_data = TensorDataset(torch.tensor(x_train, dtype=torch.float32), torch.tensor(y_train, dtype=torch.float32))
     val_data = TensorDataset(torch.tensor(x_val, dtype=torch.float32), torch.tensor(y_val, dtype=torch.float32))

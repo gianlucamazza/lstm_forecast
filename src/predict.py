@@ -24,6 +24,16 @@ print(f'Using device: {device}')
 
 # Load the trained model
 def load_model(path: str, input_shape: int) -> nn.Module:
+    """
+    Load the trained model from a given path.
+
+    Args:
+        path (str): The path to the trained model.
+        input_shape (int): The input shape of the model.
+
+    Returns:
+        nn.Module: The trained model.
+    """
     model = PricePredictor(input_shape).to(device)
     model.load_state_dict(torch.load(path))
     model.eval()
@@ -32,6 +42,17 @@ def load_model(path: str, input_shape: int) -> nn.Module:
 
 # Get historical data
 def get_data(_ticker: str, start: str, end: str) -> pd.DataFrame:
+    """
+    Get historical data for a given ticker.
+
+    Args:
+        _ticker (str): The ticker symbol.
+        start (str): The start date.
+        end (str): The end date.
+
+    Returns:
+        pd.DataFrame: The historical data.
+    """
     historical_data = yf.download(_ticker, start=start, end=end)
     historical_data = calculate_technical_indicators(historical_data)
     return historical_data
@@ -40,6 +61,19 @@ def get_data(_ticker: str, start: str, end: str) -> pd.DataFrame:
 # Make predictions
 def predict(_model: nn.Module, _x: np.ndarray, _scaler: StandardScaler, future_days: int, _features: List) \
         -> tuple[np.ndarray, np.ndarray]:
+    """
+    Make predictions using the trained model.
+
+    Args:
+        _model (nn.Module): The trained model.
+        _x (np.ndarray): The input data.
+        _scaler (StandardScaler): The scaler used to scale the data.
+        future_days (int): The number of days to forecast.
+        _features (List): The list of features.
+
+    Returns:
+        tuple[np.ndarray, np.ndarray]: The predictions and future predictions.
+    """
     _model.eval()
     with torch.no_grad():
         _X_tensor = torch.tensor(_x, dtype=torch.float32).to(device)
@@ -73,6 +107,19 @@ def predict(_model: nn.Module, _x: np.ndarray, _scaler: StandardScaler, future_d
 # Plot predictions aggregated with historical data
 def plot_predictions(filename: str, _historical_data: np.ndarray, _predictions: np.ndarray, _future_predictions: np.ndarray,
                      _data: pd.DataFrame) -> None:
+    """
+    Plot the historical data, predictions, and future predictions.
+
+    Args:
+        filename (str): The filename to save the plot.
+        _historical_data (np.ndarray): The historical data.
+        _predictions (np.ndarray): The predictions.
+        _future_predictions (np.ndarray): The future predictions.
+        _data (pd.DataFrame): The data.
+
+    Returns:
+        None
+    """
     plt.figure(figsize=(14, 7))
 
     plt.plot(_data.index, _historical_data, label='Historical Prices')
@@ -98,6 +145,21 @@ def plot_predictions(filename: str, _historical_data: np.ndarray, _predictions: 
 # Main function for prediction
 def main(_ticker: str, _target: str, _start_date: str, _model_path: str,
          _look_back: int, _look_forward: int, _features: List) -> None:
+    """
+    Main function for prediction.
+
+    Args:
+        _ticker (str): The ticker symbol.
+        _target (str): The target feature.
+        _start_date (str): The start date.
+        _model_path (str): The path to the trained model.
+        _look_back (int): The look back window.
+        _look_forward (int): The look forward window.
+        _features (List): The list of features.
+
+    Returns:
+        None
+    """
     data = get_data(_ticker, start=_start_date, end=time.strftime('%Y-%m-%d'))
     x, _, scaler, selected_features = preprocess_data(data, _target, look_back=_look_back, look_forward=_look_forward, features=_features)
     model = load_model(_model_path, input_shape=len(selected_features))

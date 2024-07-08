@@ -17,6 +17,20 @@ device: torch.device = torch.device('cuda' if torch.cuda.is_available() else 'cp
 
 def train_model(_model: nn.Module, _train_loader: DataLoader, _val_loader: DataLoader, num_epochs: int,
                 _learning_rate: float, _model_path: str) -> None:
+    """
+    Train the model.
+
+    Args:
+        _model (nn.Module): The model to train.
+        _train_loader (DataLoader): The training data loader.
+        _val_loader (DataLoader): The validation data loader.
+        num_epochs (int): The number of epochs to train the model for.
+        _learning_rate (float): The learning rate for the optimizer.
+        _model_path (str): The path to save the best model.
+
+    Returns:
+        None
+    """
     criterion = nn.MSELoss()
     optimizer = optim.Adam(_model.parameters(), lr=_learning_rate)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.5)
@@ -71,6 +85,20 @@ def train_model(_model: nn.Module, _train_loader: DataLoader, _val_loader: DataL
 
 def evaluate_model(_ticker: str, _model: nn.Module, _x: np.ndarray, _y: np.ndarray,
                    _scaler: StandardScaler, feature_indices: list) -> None:
+    """
+    Evaluate the model.
+
+    Args:
+        _ticker (str): The ticker symbol.
+        _model (nn.Module): The model to evaluate.
+        _x (np.ndarray): The input data.
+        _y (np.ndarray): The target data.
+        _scaler (StandardScaler): The scaler used to scale the data.
+        feature_indices (list): The indices of the selected features.
+        
+    Returns:
+        None
+    """
     _model.eval()
     with torch.no_grad():
         predictions = _model(torch.tensor(_x, dtype=torch.float32).to(device)).cpu().numpy()

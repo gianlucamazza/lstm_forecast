@@ -1,6 +1,6 @@
 pandas~=2.2.2
 ta~=0.11.0
-numpy~=1.23.5
+numpy~=1.26.4
 yfinance~=0.2.40
 matplotlib~=3.9.1
 torch~=2.2.2
