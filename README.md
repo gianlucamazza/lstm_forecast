@@ -24,14 +24,17 @@ Example config.json:
 
 ```json
 {
-  "ticker": "BTC-USD",
-  "start_date": "2017-01-01",
-  "look_back": 60,
-  "look_forward": 30,
-  "epochs": 100,
-  "batch_size": 64,
-  "learning_rate": 0.001,
-  "model_path": "model.pth"
+    "ticker": "BTC-USD",
+    "start_date": "2017-01-01",
+    "look_back": 60,
+    "look_forward": 30,
+    "epochs": 100,
+    "batch_size": 64,
+    "learning_rate": 0.001,
+    "model_path": "model.pth",
+    "features": ["Close", "SMA_20", "EMA_20", "MACD", "MACD_Signal",
+        "RSI_14", "Stochastic", "Bollinger_High", "Bollinger_Low"],
+    "target": "Close"
 }
 ```
 
