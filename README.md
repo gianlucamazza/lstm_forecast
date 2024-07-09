@@ -10,6 +10,13 @@ The pipeline includes data preprocessing, feature engineering, model training, a
 
 ![Prediction](static/S&P_500_365_days.png)
 
+## Evaluation
+
+The model is evaluated using the Mean Squared Error (MSE) and Mean Absolute Error (MAE) metrics.
+The evaluation results are displayed in the training logs and the evaluation plot.
+
+![Evaluation](static/S&P_500_evaluation.png)
+
 ## Setup
 
 ### Requirements

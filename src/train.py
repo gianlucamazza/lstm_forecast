@@ -134,7 +134,7 @@ def evaluate_model(symbol: str, _model: nn.Module, _x: np.ndarray, _y: np.ndarra
     plt.xlabel('Days')
     plt.ylabel('Price')
     plt.legend()
-    plt.savefig(f'plots/{symbol}_evaluation.png')
+    plt.savefig(f'png/{symbol}_evaluation.png')
     logger.info('Model evaluation completed and plot saved.')
 
 
