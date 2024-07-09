@@ -1,7 +1,9 @@
 pandas~=2.2.2
 ta~=0.11.0
+Boruta~=0.3
 numpy~=1.26.4
 yfinance~=0.2.40
 matplotlib~=3.9.1
 torch~=2.2.2
+jupyterlab~=4.3.1
 scikit-learn~=1.5.1

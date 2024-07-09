@@ -1,6 +1,6 @@
 {
-    "ticker": "AMZN",
-    "start_date": "2010-01-01",
+    "ticker": "BTC-USD",
+    "start_date": "2012-01-01",
     "log_dir": "logs",
     "log_file": "application.log",
     "look_back": 90,
