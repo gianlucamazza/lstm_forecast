@@ -1,9 +1,9 @@
 {
-    "ticker": "BTC-USD",
-    "start_date": "2017-01-01",
+    "ticker": "AMZN",
+    "start_date": "2010-01-01",
     "log_dir": "logs",
     "log_file": "application.log",
-    "look_back": 60,
+    "look_back": 90,
     "look_forward": 30,
     "epochs": 100,
     "batch_size": 64,
@@ -11,21 +11,26 @@
     "model_path": "model.pth",
     "features": [
         "Close",
-        "SMA",
+        "SMA_50",
+        "SMA_200",
         "EMA",
         "MACD",
         "MACD_Signal",
         "RSI",
-        "Stochastic",
         "Bollinger_High",
-        "Bollinger_Low"
+        "Bollinger_Low",
+        "ATR",
+        "OBV",
+        "VWAP"
     ],
     "indicator_windows": {
-        "SMA": 20,
+        "SMA_50": 50,
+        "SMA_200": 200,
         "EMA": 20,
+        "MACD": [12, 26, 9],
         "RSI": 14,
-        "Stochastic": 14,
-        "Bollinger": 20
+        "Bollinger": 20,
+        "ATR": 14
     },
     "target": "Close"
 }
