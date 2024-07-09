@@ -15,6 +15,17 @@ logger = setup_logger('data_loader_logger', 'logs/data_loader.log')
 
 
 def get_data(_ticker: str, start: str, end: str, windows: Dict[str, int]) -> pd.DataFrame:
+    """Download historical stock data from Yahoo Finance and calculate technical indicators.
+    
+    Args:
+        _ticker (str): The stock ticker.
+        start (str): The start date for the historical data.
+        end (str): The end date for the historical data.
+        windows (Dict[str, int]): The window sizes for the technical indicators.
+        
+    Returns:
+        pd.DataFrame: The historical stock data.
+    """
     logger.info(f"Downloading data for {_ticker} from {start} to {end}")
     historical_data = yf.download(_ticker, start=start, end=end)
     historical_data = calculate_technical_indicators(historical_data, windows=windows)
@@ -41,6 +52,10 @@ def preprocess_data(historical_data: pd.DataFrame, target: str, look_back: int =
         tuple: Processed input features (X), target values (y), and the scaler used for normalization.
     """
     logger.info("Starting preprocessing of data")
+    logger.info(f"Target feature: {target}")
+    logger.info(f"Look back: {look_back}, Look forward: {look_forward}")
+    logger.info(f"Selected features: {features}")
+    
     for feature in features:
         if feature not in historical_data.columns:
             logger.error(f"Feature {feature} is not in the historical data.")

@@ -90,7 +90,7 @@ def predict(_model: nn.Module, _x: np.ndarray, _scaler: StandardScaler, future_d
 
 
 def plot_predictions(filename: str, _historical_data: np.ndarray, _predictions: np.ndarray, _future_predictions: np.ndarray,
-                     _data: pd.DataFrame) -> None:
+                     _data: pd.DataFrame, _freq: str = 'B') -> None:
     """
     Plot the historical data, predictions, and future predictions.
 
@@ -109,7 +109,13 @@ def plot_predictions(filename: str, _historical_data: np.ndarray, _predictions: 
     plt.plot(_data.index, _historical_data, label='Historical Prices')
 
     # Create future dates for future predictions
-    future_dates = pd.date_range(_data.index[-1], periods=len(_future_predictions) + 1, freq='D')[1:]
+    aligned_predictions = np.zeros_like(_historical_data)
+    aligned_predictions[-len(_predictions):] = _predictions
+
+    plt.plot(_data.index, aligned_predictions, label='Predicted Prices', color='red')
+
+    # Create future dates for future predictions
+    future_dates = pd.date_range(_data.index[-1], periods=len(_future_predictions) + 1, freq=_freq)[1:]
 
     plt.plot(future_dates, _future_predictions, label='Predicted Future Prices', linestyle='dashed')
 
@@ -119,7 +125,8 @@ def plot_predictions(filename: str, _historical_data: np.ndarray, _predictions: 
 
     # Save the plot
     plt.savefig(filename)
-    logger.info(f"Plot saved as {filename}")
+    logger.info(f'Plot saved to {filename}')
+
 
 def main(_ticker: str, _target: str, _start_date: str, _model_path: str,
          _look_back: int, _look_forward: int, _features: List, _best_features: List, _indicator_windows: dict) -> None:
@@ -148,9 +155,9 @@ def main(_ticker: str, _target: str, _start_date: str, _model_path: str,
     logger.info(f"Making predictions")
     predictions, future_predictions = predict(model, x, scaler, _look_forward, selected_features)
 
-    plot_predictions('png/90_days.png', data['Close'].values[-90:], predictions[-90:], future_predictions, data[-90:])
-    plot_predictions('png/365_days.png', data['Close'].values[-365:], predictions[-365:], future_predictions, data[-365:])
-    plot_predictions('png/full.png', data['Close'].values, predictions, future_predictions, data)
+    plot_predictions(f'png/{_ticker}_90_days.png', data['Close'].values[-90:], predictions[-90:], future_predictions, data[-90:])
+    plot_predictions(f'png/{_ticker}_365_days.png', data['Close'].values[-365:], predictions[-365:], future_predictions, data[-365:])
+    plot_predictions(f'png/{_ticker}_full.png', data['Close'].values, predictions, future_predictions, data)
 
     logger.info('Predictions completed and plotted')
 

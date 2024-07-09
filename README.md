@@ -76,16 +76,6 @@ run.sh
 
 `src/predict.py` script preprocesses the data, loads the trained model, and generates predictions.
 
-### Example BTC-USD (prediction.png)
-
-![BTC-USD 90 chart](png/90_days.png)
-![BTC-USD 365 chart](png/365_days.png)
-![BTC-USD full chart](png/full.png)
-
-### Evaluation
-
-![Evaluation](png/evaluation.png)
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

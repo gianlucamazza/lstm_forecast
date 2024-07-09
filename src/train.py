@@ -18,7 +18,7 @@ device: torch.device = torch.device('cuda' if torch.cuda.is_available() else 'cp
 
 logger = setup_logger('train_logger', 'logs/train.log')
 
-def train_model(_model: nn.Module, _train_loader: DataLoader, _val_loader: DataLoader, num_epochs: int,
+def train_model(ticker: str, _model: nn.Module, _train_loader: DataLoader, _val_loader: DataLoader, num_epochs: int,
                 _learning_rate: float, _model_path: str) -> None:
     """
     Train the model.
@@ -129,12 +129,11 @@ def evaluate_model(_ticker: str, _model: nn.Module, _x: np.ndarray, _y: np.ndarr
     plt.figure(figsize=(14, 7))
     plt.title(f'{_ticker} - Model Evaluation')
     plt.plot(aligned_dates, y_true, label='True Price', color='blue')
-    plt.plot(aligned_dates, predictions, label='Predicted Price', color='red')
+    plt.plot(aligned_dates, predictions, label='Predicted Prices', color='red')
     plt.xlabel('Days')
     plt.ylabel('Price')
     plt.legend()
     plt.savefig('png/evaluation.png')
-    plt.show()
     logger.info('Model evaluation completed and plot saved.')
 
 
@@ -190,7 +189,7 @@ if __name__ == "__main__":
 
     # Train model
     logger.info('Training model')
-    train_model(model, train_loader, val_loader, num_epochs=epochs,
+    train_model(ticker, model, train_loader, val_loader, num_epochs=epochs,
                 _learning_rate=learning_rate, _model_path=model_path)
 
     # Evaluate model

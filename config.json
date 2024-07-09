@@ -1,10 +1,9 @@
 {
     "ticker": "BTC-USD",
-    "start_date": "2021-01-01",
+    "start_date": "2011-01-01",
     "log_dir": "logs",
-    "log_file": "application.log",
-    "look_back": 180,
-    "look_forward": 60,
+    "look_back": 90,
+    "look_forward": 30,
     "epochs": 100,
     "batch_size": 64,
     "learning_rate": 0.001,
@@ -50,6 +49,8 @@
     },
     "target": "Close",
     "best_features": [
-        "ADX"
+        "ADX",
+        "VWAP",
+        "Bollinger_Low"
     ]
 }
