@@ -76,6 +76,29 @@ run.sh
 
 `src/predict.py` script preprocesses the data, loads the trained model, and generates predictions.
 
+### Output
+
+#### Logs
+
+`logs/data_loader.log` contains the data loading and preprocessing logs.
+`logs/feature_engineering.log` contains the feature engineering logs.
+`logs/model.log` contains the model training logs.
+`logs/train.log` contains the training logs.
+`logs/predict.log` contains the prediction logs.
+`logs/main.log` contains the main logs.
+
+#### Models
+
+`models/{symbol}_model.pth` contains the trained model.
+
+#### Evaluation
+
+`png/{symbol}_evaluation.png` contains the training and validation loss.
+
+#### Predictions
+
+`png/{symbol}_prediction.png` contains the predicted stock prices.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

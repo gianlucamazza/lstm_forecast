@@ -21,7 +21,7 @@ logger = setup_logger('predict_logger', 'logs/predict.log')
 device: torch.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 logger.info(f"Device: {device}")
 
-def load_model(path: str, input_shape: int) -> nn.Module:
+def load_model(symbol: str, path: str, input_shape: int) -> nn.Module:
     """
     Load the trained model from a given path.
 
@@ -34,7 +34,7 @@ def load_model(path: str, input_shape: int) -> nn.Module:
     """
     logger.info(f"Loading model from {path} with input shape {input_shape}")
     model = PricePredictor(input_shape).to(device)
-    model.load_state_dict(torch.load(path))
+    model.load_state_dict(torch.load(path + f'/{symbol}_model.pth'))
     model.eval()
     logger.info("Model loaded and set to evaluation mode.")
     return model
@@ -89,12 +89,13 @@ def predict(_model: nn.Module, _x: np.ndarray, _scaler: StandardScaler, future_d
     return predictions, future_predictions
 
 
-def plot_predictions(filename: str, _historical_data: np.ndarray, _predictions: np.ndarray, _future_predictions: np.ndarray,
+def plot_predictions(symbol: str, filename: str, _historical_data: np.ndarray, _predictions: np.ndarray, _future_predictions: np.ndarray,
                      _data: pd.DataFrame, _freq: str) -> None:
     """
     Plot the historical data, predictions, and future predictions.
 
     Args:
+        symbol (str): The stock symbol.
         filename (str): The filename to save the plot.
         _historical_data (np.ndarray): The historical data.
         _predictions (np.ndarray): The predictions.
@@ -119,6 +120,7 @@ def plot_predictions(filename: str, _historical_data: np.ndarray, _predictions: 
 
     plt.plot(future_dates, _future_predictions, label='Predicted Future Prices', linestyle='dashed')
 
+    plt.title(f'{symbol} {_data.index[0].strftime("%Y-%m-%d")} to {_data.index[-1].strftime("%Y-%m-%d")}')
     plt.xlabel('Date')
     plt.ylabel('Price')
     plt.legend()
@@ -128,13 +130,13 @@ def plot_predictions(filename: str, _historical_data: np.ndarray, _predictions: 
     logger.info(f'Plot saved to {filename}')
 
 
-def main(_ticker: str, _target: str, _start_date: str, _model_path: str,
+def main(_ticker: str, _symbol: str, _target: str, _start_date: str, _model_path: str,
          _look_back: int, _look_forward: int, _features: List, _best_features: List, _indicator_windows: dict, freq: str) -> None:
     """
     Main function for prediction.
 
     Args:
-        _ticker (str): The ticker symbol.
+        _symbol (str): The stock symbol.
         _target (str): The target feature.
         _start_date (str): The start date.
         _model_path (str): The path to the trained model.
@@ -146,18 +148,18 @@ def main(_ticker: str, _target: str, _start_date: str, _model_path: str,
     Returns:
         None
     """
-    logger.info(f"Getting data for {_ticker} from {_start_date}")
+    logger.info(f"Getting data for {_symbol} from {_start_date}")
     data = get_data(_ticker, start=_start_date, end=time.strftime('%Y-%m-%d'), windows=_indicator_windows)
     logger.info(f"Preprocessing data")
     x, _, scaler, selected_features = preprocess_data(data, _target, look_back=_look_back, look_forward=_look_forward, features=_features, best_features=_best_features)
     logger.info(f"Loaded model from {_model_path}")
-    model = load_model(_model_path, input_shape=len(selected_features))
+    model = load_model(_symbol, _model_path, input_shape=len(selected_features))
     logger.info(f"Making predictions")
     predictions, future_predictions = predict(model, x, scaler, _look_forward, selected_features)
 
-    plot_predictions(f'png/{_ticker}_90_days.png', data['Close'].values[-90:], predictions[-90:], future_predictions, data[-90:], freq)
-    plot_predictions(f'png/{_ticker}_365_days.png', data['Close'].values[-365:], predictions[-365:], future_predictions, data[-365:], freq)
-    plot_predictions(f'png/{_ticker}_full.png', data['Close'].values, predictions, future_predictions, data, freq)
+    plot_predictions(_symbol, f'png/{_symbol}_90_days.png', data['Close'].values[-90:], predictions[-90:], future_predictions, data[-90:], freq)
+    plot_predictions(_symbol, f'png/{_symbol}_365_days.png', data['Close'].values[-365:], predictions[-365:], future_predictions, data[-365:], freq)
+    plot_predictions(_symbol, f'png/{_symbol}_full.png', data['Close'].values, predictions, future_predictions, data, freq)
 
     logger.info('Predictions completed and plotted')
 
@@ -171,6 +173,7 @@ if __name__ == "__main__":
     config = load_json(args.config)
 
     ticker = config['ticker']
+    symbol = config['symbol']
     model_path = config['model_path']
     start_date = config['start_date']
     look_back = config['look_back']
@@ -182,5 +185,5 @@ if __name__ == "__main__":
     indicator_windows = config['indicator_windows']
 
     logger.info(f"Starting prediction for {ticker}")
-    main(ticker, target, start_date, model_path, look_back, look_forward, features, best_features, indicator_windows, freq)
+    main(ticker, symbol, target, start_date, model_path, look_back, look_forward, features, best_features, indicator_windows, freq)
     logger.info(f"Prediction for {ticker} completed")

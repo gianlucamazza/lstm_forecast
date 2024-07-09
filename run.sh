@@ -12,13 +12,14 @@ rm -rf data/*.csv
 echo "Cleaning up the png directory..."
 rm -rf png/*.png
 
-# Clean up the model directory
-echo "Cleaning up the model..."
-rm -rf model.pth
-
 # Train the model
-echo "Training the model..."
-python src/train.py --config config.json
+# if skip_training is set to true in the config file, the training will be skipped
+if [ "$SKIP_TRAINING" = "true" ]; then
+    echo "Skipping training..."
+else
+    echo "Training the model..."
+    python src/train.py --config config.json
+fi
 
 # Run prediction script
 echo "Running prediction..."

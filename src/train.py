@@ -18,12 +18,13 @@ device: torch.device = torch.device('cuda' if torch.cuda.is_available() else 'cp
 
 logger = setup_logger('train_logger', 'logs/train.log')
 
-def train_model(ticker: str, _model: nn.Module, _train_loader: DataLoader, _val_loader: DataLoader, num_epochs: int,
+def train_model(symbol: str, _model: nn.Module, _train_loader: DataLoader, _val_loader: DataLoader, num_epochs: int,
                 _learning_rate: float, _model_path: str) -> None:
     """
     Train the model.
 
     Args:
+        symbol (str): The stock symbol.
         _model (nn.Module): The model to train.
         _train_loader (DataLoader): The training data loader.
         _val_loader (DataLoader): The validation data loader.
@@ -83,17 +84,17 @@ def train_model(ticker: str, _model: nn.Module, _train_loader: DataLoader, _val_
 
     # Save the best model
     if best_model is not None:
-        torch.save(best_model, _model_path)
-        logger.info(f'Best model saved to {_model_path}')
+        torch.save(best_model, f'{_model_path}/{symbol}_model.pth')
+        logger.info(f'Best model saved to {_model_path}/{symbol}_best_model.pth')
+        
 
-
-def evaluate_model(_ticker: str, _model: nn.Module, _x: np.ndarray, _y: np.ndarray,
+def evaluate_model(symbol: str, _model: nn.Module, _x: np.ndarray, _y: np.ndarray,
                    _scaler: StandardScaler, feature_names: list, dates: pd.DatetimeIndex) -> None:
     """
     Evaluate the model.
 
     Args:
-        _ticker (str): The ticker symbol.
+        symbol (str): The stock symbol.
         _model (nn.Module): The model to evaluate.
         _x (np.ndarray): The input data.
         _y (np.ndarray): The target data.
@@ -127,13 +128,13 @@ def evaluate_model(_ticker: str, _model: nn.Module, _x: np.ndarray, _y: np.ndarr
     aligned_dates = dates[-len(y_true):]
 
     plt.figure(figsize=(14, 7))
-    plt.title(f'{_ticker} - Model Evaluation')
+    plt.title(f'{symbol} - Model Evaluation')
     plt.plot(aligned_dates, y_true, label='True Price', color='blue')
     plt.plot(aligned_dates, predictions, label='Predicted Prices', color='red')
     plt.xlabel('Days')
     plt.ylabel('Price')
     plt.legend()
-    plt.savefig('png/evaluation.png')
+    plt.savefig(f'plots/{symbol}_evaluation.png')
     logger.info('Model evaluation completed and plot saved.')
 
 
@@ -146,6 +147,7 @@ if __name__ == "__main__":
     config = load_json(args.config)
 
     ticker = config['ticker']
+    symbol = config['symbol']
     start_date = config['start_date']
     end_date = time.strftime('%Y-%m-%d')
     look_back = config['look_back']
