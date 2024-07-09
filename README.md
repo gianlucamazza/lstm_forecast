@@ -125,6 +125,40 @@ To run the entire pipeline, run:
 run.sh
 ```
 
+#### Explained `run.sh`
+
+```bash
+    #!/bin/bash
+
+    # Clear logs
+    echo "Clearing logs..."
+    rm -rf logs/*.log
+
+    # Clean up the data directory
+    echo "Cleaning up the data directory..."
+    rm -rf data/*.csv
+
+    # Clean up the png directory
+    echo "Cleaning up the png directory..."
+    rm -rf png/*.png
+
+    # Train the model
+    # if skip_training is set to true in the config file, the training will be skipped
+    if [ "$SKIP_TRAINING" = "true" ]; then
+        echo "Skipping training..."
+    else
+        echo "Training the model..."
+        python src/train.py --config config.json
+    fi
+
+    # Run prediction script
+    echo "Running prediction..."
+    python src/predict.py --config config.json
+
+```
+
+the `run.sh` script is a bash script that automates the entire pipeline. It clears the logs, data, and png directories, trains the model, and generates predictions.
+
 ### Structure
 
 `src/data_loader.py` handles data loading, preprocessing, and feature selection.
