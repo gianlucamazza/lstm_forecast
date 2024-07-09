@@ -186,4 +186,4 @@ if __name__ == "__main__":
 
     logger.info(f"Starting prediction for {ticker}")
     main(ticker, symbol, target, start_date, model_path, look_back, look_forward, features, best_features, indicator_windows, freq)
-    logger.info(f"Prediction for {ticker} completed")
+    logger.info(f"Prediction for {symbol} completed")

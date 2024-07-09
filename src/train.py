@@ -192,9 +192,9 @@ if __name__ == "__main__":
 
     # Train model
     logger.info('Training model')
-    train_model(ticker, model, train_loader, val_loader, num_epochs=epochs,
+    train_model(symbol, model, train_loader, val_loader, num_epochs=epochs,
                 _learning_rate=learning_rate, _model_path=model_path)
 
     # Evaluate model
     logger.info('Evaluating model')
-    evaluate_model(ticker, model, X, y, scaler, selected_features, dates)
+    evaluate_model(symbol, model, X, y, scaler, selected_features, dates)

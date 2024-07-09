@@ -1,7 +1,7 @@
 {
     "ticker": "^GSPC",
-    "symbol": "S&P 500",
-    "start_date": "2011-01-01",
+    "symbol": "S&P_500",
+    "start_date": "2018-01-01",
     "log_dir": "logs",
     "look_back": 90,
     "look_forward": 30,
@@ -28,7 +28,10 @@
         "Aroon_Down",
         "Williams_R",
         "CMF",
-        "CCI"
+        "CCI",
+        "SMA_Agg",
+        "MACD_Agg",
+        "Bollinger_Bandwidth"
     ],
     "indicator_windows": {
         "SMA_50": 50,
@@ -50,5 +53,11 @@
     },
     "frequency": "B",
     "target": "Close",
-    "best_features": []
+    "best_features": [
+        "ADX",
+        "EMA",
+        "SMA_Agg",
+        "MACD_Agg",
+        "Bollinger_Bandwidth"
+    ]
 }

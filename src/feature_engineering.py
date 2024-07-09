@@ -8,6 +8,24 @@ from logger import setup_logger
 # Configura il logger
 logger = setup_logger('feature_engineering_logger', 'logs/feature_engineering.log')
 
+def aggregate_features(df):
+    """
+    Aggrega feature correlate per ridurre la dimensionalità e mantenere informazioni cruciali.
+
+    Args:
+        df (pd.DataFrame): Il DataFrame contenente i dati storici e gli indicatori calcolati.
+
+    Returns:
+        pd.DataFrame: Il DataFrame con feature aggregate.
+    """
+    logger.info("Starting aggregation of technical indicators")
+
+    df['SMA_Agg'] = df[['SMA_50', 'SMA_200']].mean(axis=1)
+    df['MACD_Agg'] = df[['MACD', 'MACD_Signal']].mean(axis=1)
+    df['Bollinger_Bandwidth'] = df['Bollinger_High'] - df['Bollinger_Low']
+
+    return df
+
 def calculate_technical_indicators(historical_data: pd.DataFrame, windows: dict) -> pd.DataFrame:
     """Calculate technical indicators with variable windows and add them to the historical data if specified in features.
 
@@ -95,6 +113,9 @@ def calculate_technical_indicators(historical_data: pd.DataFrame, windows: dict)
 
         historical_data = historical_data.dropna()
         logger.info("Dropped NA values from historical data")
+
+        # Aggregazione delle feature
+        historical_data = aggregate_features(historical_data)
 
     except Exception as e:
         logger.error(f"An error occurred while calculating technical indicators: {e}")
