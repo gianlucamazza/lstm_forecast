@@ -165,6 +165,11 @@ run.sh
 
 `png/{symbol}_prediction.png` contains the predicted stock prices.
 
+## Contributors
+
+- `Gianluca Mazza` - [LinkedIn](https://www.linkedin.com/in/gianlucamazza/)
+- `Matteo Garbelli` - [LinkedIn](https://www.linkedin.com/in/matteo-garbelli-1a0bb3b1/)
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
