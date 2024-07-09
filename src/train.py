@@ -10,7 +10,6 @@ import json
 from torch.utils.data import DataLoader
 from model import EarlyStopping, PricePredictor
 from sklearn.preprocessing import StandardScaler
-from boruta import BorutaPy
 from data_loader import get_data, preprocess_data, split_data
 from utils import load_json
 from logger import setup_logger
@@ -88,7 +87,7 @@ def train_model(_model: nn.Module, _train_loader: DataLoader, _val_loader: DataL
 
 
 def evaluate_model(_ticker: str, _model: nn.Module, _x: np.ndarray, _y: np.ndarray,
-                   _scaler: StandardScaler, feature_indices: list, dates: pd.DatetimeIndex) -> None:
+                   _scaler: StandardScaler, feature_names: list, dates: pd.DatetimeIndex) -> None:
     """
     Evaluate the model.
 
@@ -107,12 +106,21 @@ def evaluate_model(_ticker: str, _model: nn.Module, _x: np.ndarray, _y: np.ndarr
     _model.eval()
     with torch.no_grad():
         predictions = _model(torch.tensor(_x, dtype=torch.float32).to(device)).cpu().numpy()
-        predictions_reshaped = np.zeros((_y.shape[0], len(feature_indices)))
+        
+        predictions_reshaped = np.zeros((_y.shape[0], len(feature_names) + 1))
         predictions_reshaped[:, 0] = predictions[:, 0]
+
+        if len(predictions_reshaped[0]) < len(_scaler.scale_):
+            predictions_reshaped = np.pad(predictions_reshaped, ((0, 0), (0, len(_scaler.scale_) - len(predictions_reshaped[0]))), 'constant')
+
         predictions = _scaler.inverse_transform(predictions_reshaped)[:, 0]
 
-        y_true_reshaped = np.zeros((_y.shape[0], len(feature_indices)))
+        y_true_reshaped = np.zeros((_y.shape[0], len(feature_names) + 1))
         y_true_reshaped[:, 0] = _y
+
+        if len(y_true_reshaped[0]) < len(_scaler.scale_):
+            y_true_reshaped = np.pad(y_true_reshaped, ((0, 0), (0, len(_scaler.scale_) - len(y_true_reshaped[0]))), 'constant')
+
         y_true = _scaler.inverse_transform(y_true_reshaped)[:, 0]
     
     aligned_dates = dates[-len(y_true):]
@@ -148,20 +156,7 @@ if __name__ == "__main__":
     features = config['features']
     target = config['target']
     indicator_windows = config['indicator_windows']
-
-    # Log parameters
-    logger.info(f'Ticker: {ticker}')
-    logger.info(f'Start Date: {start_date}')
-    logger.info(f'End Date: {end_date}')
-    logger.info(f'Look Back: {look_back}')
-    logger.info(f'Look Forward: {look_forward}')
-    logger.info(f'Epochs: {epochs}')
-    logger.info(f'Batch Size: {batch_size}')
-    logger.info(f'Learning Rate: {learning_rate}')
-    logger.info(f'Model Path: {model_path}')
-    logger.info(f'Features: {features}')
-    logger.info(f'Target: {target}')
-    logger.info(f'Windows: {indicator_windows}')
+    best_features = config.get('best_features', None)
 
     # Get historical data
     logger.info(f'Getting historical data for {ticker} from {start_date} to {end_date}')
@@ -171,15 +166,15 @@ if __name__ == "__main__":
     # Preprocess data
     logger.info('Preprocessing data')
     X, y, scaler, selected_features = preprocess_data(historical_data, target, look_back=look_back,
-                                                      look_forward=look_forward, features=features)
+                                                      look_forward=look_forward, features=features, best_features=best_features,max_iter=100)
 
     # Debug: print selected features
     logger.info(f'Selected features: {selected_features}')
 
-    # Saver selected features to JSON
-    selected_features_json = {'selected_features': selected_features}
-    with open('selected_features.json', 'w') as f:
-        json.dump(selected_features_json, f)
+    # Update config.json with selected features
+    config['best_features'] = selected_features
+    with open(args.config, 'w') as f:
+        json.dump(config, f, indent=4)
 
     # Split data
     logger.info('Splitting data')

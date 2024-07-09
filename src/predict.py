@@ -59,10 +59,11 @@ def predict(_model: nn.Module, _x: np.ndarray, _scaler: StandardScaler, future_d
         predictions = _model(_X_tensor).cpu().numpy()
 
         # Prepare for inverse transformation
-        predictions_reshaped = np.zeros((_x.shape[0], len(_features)))
+        predictions_reshaped = np.zeros((_x.shape[0], len(_features) + 1))
         predictions_reshaped[:, 0] = predictions[:, 0]
+        predictions_reshaped = np.pad(predictions_reshaped, ((0, 0), (0, len(_scaler.scale_) - len(predictions_reshaped[0]))), 'constant')
         predictions = _scaler.inverse_transform(predictions_reshaped)[:, 0]
-
+        
         # Forecast future prices
         future_predictions = []
         for _ in range(future_days):
@@ -76,8 +77,9 @@ def predict(_model: nn.Module, _x: np.ndarray, _scaler: StandardScaler, future_d
 
             _x = np.append(_x, [np.append(_x[-1][1:], new_row, axis=0)], axis=0)
 
-        future_predictions_reshaped = np.zeros((future_days, len(_features)))
+        future_predictions_reshaped = np.zeros((future_days, len(_features) + 1))
         future_predictions_reshaped[:, 0] = future_predictions
+        future_predictions_reshaped = np.pad(future_predictions_reshaped, ((0, 0), (0, len(_scaler.scale_) - len(future_predictions_reshaped[0]))), 'constant')
         future_predictions = _scaler.inverse_transform(future_predictions_reshaped)[:, 0]
 
     return predictions, future_predictions
@@ -116,7 +118,7 @@ def plot_predictions(filename: str, _historical_data: np.ndarray, _predictions: 
 
 
 def main(_ticker: str, _target: str, _start_date: str, _model_path: str,
-         _look_back: int, _look_forward: int, _features: List, _indicator_windows: dict) -> None:
+         _look_back: int, _look_forward: int, _features: List, _best_features: List, _indicator_windows: dict) -> None:
     """
     Main function for prediction.
 
@@ -128,12 +130,13 @@ def main(_ticker: str, _target: str, _start_date: str, _model_path: str,
         _look_back (int): The look back window.
         _look_forward (int): The look forward window.
         _features (List): The list of features.
+        _best_features (List): The list of best features.
 
     Returns:
         None
     """
     data = get_data(_ticker, start=_start_date, end=time.strftime('%Y-%m-%d'), windows=_indicator_windows)
-    x, _, scaler, selected_features = preprocess_data(data, _target, look_back=_look_back, look_forward=_look_forward, features=_features)
+    x, _, scaler, selected_features = preprocess_data(data, _target, look_back=_look_back, look_forward=_look_forward, features=_features, best_features=_best_features)
     model = load_model(_model_path, input_shape=len(selected_features))
     predictions, future_predictions = predict(model, x, scaler, _look_forward, selected_features)
 
@@ -158,7 +161,8 @@ if __name__ == "__main__":
     look_back = config['look_back']
     look_forward = config['look_forward']
     features = config['features']
+    best_features = config.get('best_features', None)
     target = config['target']
     indicator_windows = config['indicator_windows']
 
-    main(ticker, target, start_date, model_path, look_back, look_forward, features, indicator_windows)
+    main(ticker, target, start_date, model_path, look_back, look_forward, features, best_features, indicator_windows)
