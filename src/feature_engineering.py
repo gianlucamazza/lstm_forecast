@@ -3,93 +3,102 @@ from ta.trend import SMAIndicator, EMAIndicator, MACD, ADXIndicator, AroonIndica
 from ta.momentum import RSIIndicator, StochasticOscillator, WilliamsRIndicator
 from ta.volatility import BollingerBands, AverageTrueRange
 from ta.volume import OnBalanceVolumeIndicator, ChaikinMoneyFlowIndicator
+from logger import setup_logger
 
+# Configura il logger
+logger = setup_logger('feature_engineering_logger', 'logs/feature_engineering.log')
 
-def calculate_technical_indicators(historical_data: pd.DataFrame, windows: dict, features: list) -> pd.DataFrame:
+def calculate_technical_indicators(historical_data: pd.DataFrame, windows: dict) -> pd.DataFrame:
     """Calculate technical indicators with variable windows and add them to the historical data if specified in features.
 
     Args:
         historical_data (pd.DataFrame): The historical stock data.
         windows (dict): A dictionary containing the window sizes for each indicator.
-        features (list): A list of features to be calculated and added.
 
     Returns:
         pd.DataFrame: The historical stock data with added technical indicators.
     """
-    if 'SMA_20' in features:
+    logger.info("Starting calculation of technical indicators")
+
+    try:
         historical_data['SMA_20'] = SMAIndicator(historical_data['Close'], window=20).sma_indicator()
+        logger.debug(f"SMA_20 values: {historical_data['SMA_20'].head()}")
 
-    if 'SMA_50' in features:
         historical_data['SMA_50'] = SMAIndicator(historical_data['Close'], window=50).sma_indicator()
+        logger.debug(f"SMA_50 values: {historical_data['SMA_50'].head()}")
 
-    if 'SMA_200' in features:
         historical_data['SMA_200'] = SMAIndicator(historical_data['Close'], window=200).sma_indicator()
+        logger.debug(f"SMA_200 values: {historical_data['SMA_200'].head()}")
 
-    if 'EMA' in features:
         historical_data['EMA'] = EMAIndicator(historical_data['Close'], window=windows.get('EMA', 20)).ema_indicator()
+        logger.debug(f"EMA values: {historical_data['EMA'].head()}")
 
-    if 'MACD' in features or 'MACD_Signal' in features:
         macd = MACD(historical_data['Close'])
-        if 'MACD' in features:
-            historical_data['MACD'] = macd.macd()
-        if 'MACD_Signal' in features:
-            historical_data['MACD_Signal'] = macd.macd_signal()
+        historical_data['MACD'] = macd.macd()
+        historical_data['MACD_Signal'] = macd.macd_signal()
+        logger.debug(f"MACD values: {historical_data['MACD'].head()}")
+        logger.debug(f"MACD_Signal values: {historical_data['MACD_Signal'].head()}")
 
-    if 'RSI' in features:
         historical_data['RSI'] = RSIIndicator(historical_data['Close'], window=windows.get('RSI', 14)).rsi()
+        logger.debug(f"RSI values: {historical_data['RSI'].head()}")
 
-    if 'Stochastic' in features:
         stochastic = StochasticOscillator(historical_data['High'], historical_data['Low'], historical_data['Close'],
                                           window=windows.get('Stochastic', 14))
         historical_data['Stochastic'] = stochastic.stoch()
+        logger.debug(f"Stochastic values: {historical_data['Stochastic'].head()}")
 
-    if 'Bollinger_High' in features or 'Bollinger_Low' in features:
         bollinger = BollingerBands(historical_data['Close'], window=windows.get('Bollinger', 20))
-        if 'Bollinger_High' in features:
-            historical_data['Bollinger_High'] = bollinger.bollinger_hband()
-        if 'Bollinger_Low' in features:
-            historical_data['Bollinger_Low'] = bollinger.bollinger_lband()
+        historical_data['Bollinger_High'] = bollinger.bollinger_hband()
+        historical_data['Bollinger_Low'] = bollinger.bollinger_lband()
+        logger.debug(f"Bollinger_High values: {historical_data['Bollinger_High'].head()}")
+        logger.debug(f"Bollinger_Low values: {historical_data['Bollinger_Low'].head()}")
 
-    if 'ADX' in features:
         historical_data['ADX'] = ADXIndicator(historical_data['High'], historical_data['Low'],
                                               historical_data['Close'], window=windows.get('ADX', 14)).adx()
+        logger.debug(f"ADX values: {historical_data['ADX'].head()}")
 
-    if 'OBV' in features:
         obv = OnBalanceVolumeIndicator(close=historical_data['Close'], volume=historical_data['Volume'])
         historical_data['OBV'] = obv.on_balance_volume()
+        logger.debug(f"OBV values: {historical_data['OBV'].head()}")
 
-    if 'VWAP' in features:
         typical_price = (historical_data['High'] + historical_data['Low'] + historical_data['Close']) / 3
         historical_data['VWAP'] = (typical_price * historical_data['Volume']).cumsum() / historical_data[
             'Volume'].cumsum()
+        logger.debug(f"VWAP values: {historical_data['VWAP'].head()}")
 
-    if 'Aroon_Up' in features or 'Aroon_Down' in features:
         aroon = AroonIndicator(high=historical_data['High'], low=historical_data['Low'],
                                window=windows.get('Aroon', 25))
-        if 'Aroon_Up' in features:
-            historical_data['Aroon_Up'] = aroon.aroon_up()
-        if 'Aroon_Down' in features:
-            historical_data['Aroon_Down'] = aroon.aroon_down()
+        historical_data['Aroon_Up'] = aroon.aroon_up()
+        historical_data['Aroon_Down'] = aroon.aroon_down()
+        logger.debug(f"Aroon_Up values: {historical_data['Aroon_Up'].head()}")
+        logger.debug(f"Aroon_Down values: {historical_data['Aroon_Down'].head()}")
 
-    if 'Williams_R' in features:
         historical_data['Williams_R'] = WilliamsRIndicator(historical_data['High'], historical_data['Low'],
                                                            historical_data['Close'],
                                                            lbp=windows.get('Williams_R', 14)).williams_r()
+        logger.debug(f"Williams_R values: {historical_data['Williams_R'].head()}")
 
-    if 'CMF' in features:
         historical_data['CMF'] = ChaikinMoneyFlowIndicator(historical_data['High'], historical_data['Low'],
                                                            historical_data['Close'], historical_data['Volume'],
                                                            window=windows.get('CMF', 20)).chaikin_money_flow()
+        logger.debug(f"CMF values: {historical_data['CMF'].head()}")
 
-    if 'ATR' in features:
         historical_data['ATR'] = AverageTrueRange(high=historical_data['High'], low=historical_data['Low'],
                                                   close=historical_data['Close'],
                                                   window=windows.get('ATR', 14)).average_true_range()
+        logger.debug(f"ATR values: {historical_data['ATR'].head()}")
 
-    if 'CCI' in features:
         historical_data['CCI'] = CCIIndicator(high=historical_data['High'], low=historical_data['Low'],
                                               close=historical_data['Close'],
                                               window=windows.get('CCI', 20)).cci()
+        logger.debug(f"CCI values: {historical_data['CCI'].head()}")
 
-    historical_data = historical_data.dropna()
+        historical_data = historical_data.dropna()
+        logger.info("Dropped NA values from historical data")
+
+    except Exception as e:
+        logger.error(f"An error occurred while calculating technical indicators: {e}")
+        raise
+
+    logger.info("Finished calculation of technical indicators")
     return historical_data

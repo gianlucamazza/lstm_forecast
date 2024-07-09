@@ -10,7 +10,7 @@ LOG_DIR = config.get("log_dir", "logs")
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
 
-LOG_FILE = os.path.join(LOG_DIR, config.get("log_file", "application.log"))
+LOG_FILE = os.path.join(LOG_DIR, 'main.log')
 
 def setup_logger(name, log_file=LOG_FILE, level=logging.INFO):
     """Function to setup a logger with the given name and log file."""

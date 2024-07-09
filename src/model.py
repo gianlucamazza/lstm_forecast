@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
+from logger import setup_logger
 
+logger = setup_logger('model_logger', 'logs/model.log')
 
 class PricePredictor(nn.Module):
     """
@@ -26,6 +28,7 @@ class PricePredictor(nn.Module):
             The number of expected features in the input sequence.
         """
         super(PricePredictor, self).__init__()
+        logger.info(f"Initializing PricePredictor with input size: {input_size}")
         self.lstm = nn.LSTM(input_size=input_size, hidden_size=50, num_layers=2, batch_first=True, dropout=0.2)
         self.dropout = nn.Dropout(0.2)
         self.fc = nn.Linear(50, 1)
@@ -50,7 +53,7 @@ class PricePredictor(nn.Module):
         out, _ = self.lstm(x, (h_0, c_0))
         out = self.dropout(out[:, -1, :])
         out = self.fc(out)
-
+        logger.debug("Forward pass completed.")
         return out
 
 
@@ -88,6 +91,7 @@ class EarlyStopping:
         self.counter = 0
         self.best_loss = None
         self.early_stop = False
+        logger.info(f"EarlyStopping initialized with patience={patience}, delta={delta}")
 
     def __call__(self, val_loss):
         """
@@ -104,10 +108,13 @@ class EarlyStopping:
         """
         if self.best_loss is None:
             self.best_loss = val_loss
+            logger.info(f"Initial validation loss set to {val_loss:.6f}")
         elif val_loss > self.best_loss - self.delta:
             self.counter += 1
+            logger.info(f"No improvement in validation loss. Counter: {self.counter}/{self.patience}")
             if self.counter >= self.patience:
                 self.early_stop = True
         else:
             self.best_loss = val_loss
             self.counter = 0
+            logger.info(f"Improvement in validation loss. Best loss updated to {val_loss:.6f}")

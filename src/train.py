@@ -16,7 +16,7 @@ from logger import setup_logger
 
 device: torch.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-logger = setup_logger('train_logger')
+logger = setup_logger('train_logger', 'logs/train.log')
 
 def train_model(_model: nn.Module, _train_loader: DataLoader, _val_loader: DataLoader, num_epochs: int,
                 _learning_rate: float, _model_path: str) -> None:
@@ -69,14 +69,14 @@ def train_model(_model: nn.Module, _train_loader: DataLoader, _val_loader: DataL
         scheduler.step(val_loss)
         early_stopping(val_loss)
 
-        print(f'Epoch {epoch + 1}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}')
+        logger.info(f'Epoch {epoch + 1}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}')
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             best_model = _model.state_dict()
 
         if early_stopping.early_stop:
-            print("Early stopping")
+            logger.info("Early stopping triggered.")
             break
 
         _model.train()
@@ -84,6 +84,7 @@ def train_model(_model: nn.Module, _train_loader: DataLoader, _val_loader: DataL
     # Save the best model
     if best_model is not None:
         torch.save(best_model, _model_path)
+        logger.info(f'Best model saved to {_model_path}')
 
 
 def evaluate_model(_ticker: str, _model: nn.Module, _x: np.ndarray, _y: np.ndarray,
@@ -134,6 +135,7 @@ def evaluate_model(_ticker: str, _model: nn.Module, _x: np.ndarray, _y: np.ndarr
     plt.legend()
     plt.savefig('png/evaluation.png')
     plt.show()
+    logger.info('Model evaluation completed and plot saved.')
 
 
 if __name__ == "__main__":

@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Clear logs
+echo "Clearing logs..."
+rm -rf logs/*.log
+
 # Train the model
 echo "Training the model..."
 python src/train.py --config config.json

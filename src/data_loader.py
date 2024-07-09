@@ -11,13 +11,15 @@ from feature_engineering import calculate_technical_indicators
 from typing import List, Tuple, Dict
 from logger import setup_logger
 
-logger = setup_logger('data_loader_logger')
+logger = setup_logger('data_loader_logger', 'logs/data_loader.log')
 
 
 def get_data(_ticker: str, start: str, end: str, windows: Dict[str, int]) -> pd.DataFrame:
+    logger.info(f"Downloading data for {_ticker} from {start} to {end}")
     historical_data = yf.download(_ticker, start=start, end=end)
     historical_data = calculate_technical_indicators(historical_data, windows=windows)
     historical_data.to_csv(f'data/{_ticker}.csv')
+    logger.info(f"Data for {_ticker} saved to data/{_ticker}.csv")
     return historical_data
 
 
@@ -41,12 +43,14 @@ def preprocess_data(historical_data: pd.DataFrame, target: str, look_back: int =
     logger.info("Starting preprocessing of data")
     for feature in features:
         if feature not in historical_data.columns:
+            logger.error(f"Feature {feature} is not in the historical data.")
             raise ValueError(f"Feature {feature} is not in the historical data.")
 
     historical_data = historical_data.dropna()
     _scaler = StandardScaler()
     columns = [target] + features
     scaled_data = _scaler.fit_transform(historical_data[columns])
+    logger.debug(f"Scaled data: {scaled_data[:5]}") 
     
     _X, _y = [], []
     for i in range(look_back, len(scaled_data) - look_forward):
@@ -60,8 +64,10 @@ def preprocess_data(historical_data: pd.DataFrame, target: str, look_back: int =
     logger.info(f"Shape of _y: {_y.shape}")
 
     if np.any(np.isnan(_X)) or np.any(np.isnan(_y)):
+        logger.error("NaN values found in input data.")
         raise ValueError("NaN values found in input data.")
     if np.any(np.isinf(_X)) or np.any(np.isinf(_y)):
+        logger.error("Infinite values found in input data.")
         raise ValueError("Infinite values found in input data.")
     
     if best_features:
@@ -111,7 +117,9 @@ def split_data(_x: np.ndarray, _y: np.ndarray, batch_size: int, test_size: float
     Returns:
         tuple[DataLoader, DataLoader]: Training and validation data loaders.
     """
+    logger.info("Splitting data into training and validation sets")
     x_train, x_val, y_train, y_val = train_test_split(_x, _y, test_size=test_size, random_state=42)
+    logger.info(f"Training data shape: {x_train.shape}, Validation data shape: {x_val.shape}")
     train_data = TensorDataset(torch.tensor(x_train, dtype=torch.float32), torch.tensor(y_train, dtype=torch.float32))
     val_data = TensorDataset(torch.tensor(x_val, dtype=torch.float32), torch.tensor(y_val, dtype=torch.float32))
 
