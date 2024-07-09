@@ -197,7 +197,11 @@ the `run.sh` script is a bash script that automates the entire pipeline. It clea
 
 #### Predictions
 
-`png/{symbol}_prediction.png` contains the predicted stock prices.
+`png/{symbol}_full.png` contains the prediction plot for the entire dataset.
+
+`png/{symbol}_365_days.png` contains the prediction plot zoomed in on the last 365 days.
+
+`png/{symbol}_90_days.png` contains the prediction plot zoomed in on the last 90 days.
 
 ## Contributors
 
