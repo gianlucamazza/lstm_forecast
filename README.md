@@ -24,17 +24,67 @@ Example config.json:
 
 ```json
 {
-    "ticker": "BTC-USD",
-    "start_date": "2017-01-01",
-    "look_back": 60,
+    "ticker": "^GSPC",
+    "symbol": "S&P_500",
+    "start_date": "2018-01-01",
+    "log_dir": "logs",
+    "look_back": 90,
     "look_forward": 30,
     "epochs": 100,
     "batch_size": 64,
     "learning_rate": 0.001,
-    "model_path": "model.pth",
-    "features": ["Close", "SMA_20", "EMA_20", "MACD", "MACD_Signal",
-        "RSI_14", "Stochastic", "Bollinger_High", "Bollinger_Low"],
-    "target": "Close"
+    "model_path": "models",
+    "features": [
+        "Close",
+        "SMA_50",
+        "SMA_200",
+        "EMA",
+        "MACD",
+        "MACD_Signal",
+        "RSI",
+        "Bollinger_High",
+        "Bollinger_Low",
+        "ATR",
+        "OBV",
+        "VWAP",
+        "ADX",
+        "Stochastic",
+        "Aroon_Up",
+        "Aroon_Down",
+        "Williams_R",
+        "CMF",
+        "CCI",
+        "SMA_Agg",
+        "MACD_Agg",
+        "Bollinger_Bandwidth"
+    ],
+    "indicator_windows": {
+        "SMA_50": 50,
+        "SMA_200": 200,
+        "EMA": 20,
+        "MACD": [
+            12,
+            26,
+            9
+        ],
+        "RSI": 14,
+        "Bollinger": 20,
+        "ATR": 14,
+        "Stochastic": 14,
+        "Aroon": 25,
+        "Williams_R": 14,
+        "CMF": 20,
+        "CCI": 20
+    },
+    "frequency": "B",
+    "target": "Close",
+    "best_features": [
+        "ADX",
+        "EMA",
+        "SMA_Agg",
+        "MACD_Agg",
+        "Bollinger_Bandwidth"
+    ]
 }
 ```
 
