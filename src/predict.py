@@ -90,7 +90,7 @@ def predict(_model: nn.Module, _x: np.ndarray, _scaler: StandardScaler, future_d
 
 
 def plot_predictions(filename: str, _historical_data: np.ndarray, _predictions: np.ndarray, _future_predictions: np.ndarray,
-                     _data: pd.DataFrame, _freq: str = 'B') -> None:
+                     _data: pd.DataFrame, _freq: str) -> None:
     """
     Plot the historical data, predictions, and future predictions.
 
@@ -129,7 +129,7 @@ def plot_predictions(filename: str, _historical_data: np.ndarray, _predictions: 
 
 
 def main(_ticker: str, _target: str, _start_date: str, _model_path: str,
-         _look_back: int, _look_forward: int, _features: List, _best_features: List, _indicator_windows: dict) -> None:
+         _look_back: int, _look_forward: int, _features: List, _best_features: List, _indicator_windows: dict, freq: str) -> None:
     """
     Main function for prediction.
 
@@ -155,9 +155,9 @@ def main(_ticker: str, _target: str, _start_date: str, _model_path: str,
     logger.info(f"Making predictions")
     predictions, future_predictions = predict(model, x, scaler, _look_forward, selected_features)
 
-    plot_predictions(f'png/{_ticker}_90_days.png', data['Close'].values[-90:], predictions[-90:], future_predictions, data[-90:])
-    plot_predictions(f'png/{_ticker}_365_days.png', data['Close'].values[-365:], predictions[-365:], future_predictions, data[-365:])
-    plot_predictions(f'png/{_ticker}_full.png', data['Close'].values, predictions, future_predictions, data)
+    plot_predictions(f'png/{_ticker}_90_days.png', data['Close'].values[-90:], predictions[-90:], future_predictions, data[-90:], freq)
+    plot_predictions(f'png/{_ticker}_365_days.png', data['Close'].values[-365:], predictions[-365:], future_predictions, data[-365:], freq)
+    plot_predictions(f'png/{_ticker}_full.png', data['Close'].values, predictions, future_predictions, data, freq)
 
     logger.info('Predictions completed and plotted')
 

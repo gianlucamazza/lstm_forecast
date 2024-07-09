@@ -156,6 +156,7 @@ if __name__ == "__main__":
     model_path = config['model_path']
     features = config['features']
     target = config['target']
+    frequency = config['frequency']
     indicator_windows = config['indicator_windows']
     best_features = config.get('best_features', None)
 

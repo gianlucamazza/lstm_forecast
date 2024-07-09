@@ -8,6 +8,10 @@ rm -rf logs/*.log
 echo "Cleaning up the data directory..."
 rm -rf data/*.csv
 
+# Clean up the png directory
+echo "Cleaning up the png directory..."
+rm -rf png/*.png
+
 # Clean up the model directory
 echo "Cleaning up the model..."
 rm -rf model.pth
