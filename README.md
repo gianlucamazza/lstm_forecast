@@ -6,6 +6,10 @@ This project aims to predict stock prices using Long Short-Term Memory (LSTM) ne
 The model is trained on historical stock data, which includes various technical indicators.
 The pipeline includes data preprocessing, feature engineering, model training, and prediction.
 
+## SP500 Prediction Example
+
+![Prediction](static/S&P_500_365_days.png)
+
 ## Setup
 
 ### Requirements
@@ -131,10 +135,15 @@ run.sh
 #### Logs
 
 `logs/data_loader.log` contains the data loading and preprocessing logs.
+
 `logs/feature_engineering.log` contains the feature engineering logs.
+
 `logs/model.log` contains the model training logs.
+
 `logs/train.log` contains the training logs.
+
 `logs/predict.log` contains the prediction logs.
+
 `logs/main.log` contains the main logs.
 
 #### Models
