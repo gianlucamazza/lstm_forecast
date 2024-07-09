@@ -1,7 +1,8 @@
 import pandas as pd
-from ta.trend import SMAIndicator, EMAIndicator, MACD
+from ta.trend import SMAIndicator, EMAIndicator, MACD, ADXIndicator
 from ta.momentum import RSIIndicator, StochasticOscillator
-from ta.volatility import BollingerBands
+from ta.volatility import BollingerBands, AverageTrueRange
+from ta.volume import OnBalanceVolumeIndicator, MFIIndicator
 
 
 def calculate_technical_indicators(historical_data: pd.DataFrame, windows: dict) -> pd.DataFrame:
@@ -26,6 +27,13 @@ def calculate_technical_indicators(historical_data: pd.DataFrame, windows: dict)
     bollinger = BollingerBands(historical_data['Close'], window=windows.get('Bollinger', 20))
     historical_data['Bollinger_High'] = bollinger.bollinger_hband()
     historical_data['Bollinger_Low'] = bollinger.bollinger_lband()
+    historical_data['ATR'] = AverageTrueRange(historical_data['High'], historical_data['Low'], historical_data['Close'], 
+                                              window=windows.get('ATR', 14)).average_true_range()
+    historical_data['ADX'] = ADXIndicator(historical_data['High'], historical_data['Low'], historical_data['Close'], 
+                                          window=windows.get('ADX', 14)).adx()
+    historical_data['OBV'] = OnBalanceVolumeIndicator(historical_data['Close'], historical_data['Volume']).on_balance_volume()
+    historical_data['MFI'] = MFIIndicator(historical_data['High'], historical_data['Low'], historical_data['Close'], 
+                                          historical_data['Volume'], window=windows.get('MFI', 14)).money_flow_index()
 
     historical_data = historical_data.dropna()
     return historical_data
