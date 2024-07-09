@@ -47,6 +47,11 @@
         "CMF": 20,
         "CCI": 20
     },
+    "frequency": "D",
     "target": "Close",
-    "frequency": "D"
+    "best_features": [
+        "ADX",
+        "VWAP",
+        "Bollinger_Low"
+    ]
 }

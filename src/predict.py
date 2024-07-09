@@ -178,8 +178,9 @@ if __name__ == "__main__":
     features = config['features']
     best_features = config.get('best_features', None)
     target = config['target']
+    freq = config['frequency']
     indicator_windows = config['indicator_windows']
 
     logger.info(f"Starting prediction for {ticker}")
-    main(ticker, target, start_date, model_path, look_back, look_forward, features, best_features, indicator_windows)
+    main(ticker, target, start_date, model_path, look_back, look_forward, features, best_features, indicator_windows, freq)
     logger.info(f"Prediction for {ticker} completed")
