@@ -37,6 +37,7 @@ Example config.json:
 {
     "ticker": "^GSPC",
     "symbol": "S&P_500",
+    "asset_type": "stocks",
     "start_date": "2018-01-01",
     "log_dir": "logs",
     "look_back": 90,
@@ -45,30 +46,6 @@ Example config.json:
     "batch_size": 64,
     "learning_rate": 0.001,
     "model_path": "models",
-    "features": [
-        "Close",
-        "SMA_50",
-        "SMA_200",
-        "EMA",
-        "MACD",
-        "MACD_Signal",
-        "RSI",
-        "Bollinger_High",
-        "Bollinger_Low",
-        "ATR",
-        "OBV",
-        "VWAP",
-        "ADX",
-        "Stochastic",
-        "Aroon_Up",
-        "Aroon_Down",
-        "Williams_R",
-        "CMF",
-        "CCI",
-        "SMA_Agg",
-        "MACD_Agg",
-        "Bollinger_Bandwidth"
-    ],
     "indicator_windows": {
         "SMA_50": 50,
         "SMA_200": 200,
@@ -85,16 +62,18 @@ Example config.json:
         "Aroon": 25,
         "Williams_R": 14,
         "CMF": 20,
-        "CCI": 20
+        "CCI": 20,
+        "Ichimoku": {
+            "window1": 9,
+            "window2": 26,
+            "window3": 52
+        }
     },
     "frequency": "B",
     "target": "Close",
     "best_features": [
-        "ADX",
-        "EMA",
-        "SMA_Agg",
-        "MACD_Agg",
-        "Bollinger_Bandwidth"
+        "Ichimoku_Tenkan",
+        "EMA"
     ]
 }
 ```
@@ -108,6 +87,7 @@ PARAMETER DESCRIPTION:
 
 - `ticker`: Stock ticker symbol.
 - `symbol`: Stock symbol.
+- `asset_type`: Type of asset, e.g., 'stocks', 'forex', 'commodity'.
 - `start_date`: Start date for the historical data.
 - `log_dir`: Directory to store the logs.
 - `look_back`: Number of days to look back for the LSTM model.
@@ -121,6 +101,25 @@ PARAMETER DESCRIPTION:
 - `frequency`: Frequency of the data, e.g., 'B' for business days or 'D' for daily.
 - `target`: Target variable for prediction.
 - `best_features`: List of best features selected for training from the feature selection process.
+
+### Features
+
+The model uses various technical indicators as features for training. The feature engineering script calculates these indicators from the historical stock data based on the asset type.
+
+The following technical indicators are used:
+
+- Simple Moving Average (SMA)
+- Exponential Moving Average (EMA)
+- Moving Average Convergence Divergence (MACD)
+- Relative Strength Index (RSI)
+- Bollinger Bands
+- Average True Range (ATR)
+- Stochastic Oscillator
+- Aroon Indicator
+- Chaikin Money Flow (CMF)
+- Commodity Channel Index (CCI)
+- Ichimoku Cloud
+
 
 ### Training
 
