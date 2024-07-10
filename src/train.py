@@ -19,7 +19,7 @@ device: torch.device = torch.device('cuda' if torch.cuda.is_available() else 'cp
 logger = setup_logger('train_logger', 'logs/train.log')
 
 def train_model(symbol: str, _model: nn.Module, _train_loader: DataLoader, _val_loader: DataLoader, num_epochs: int,
-                _learning_rate: float, _model_path: str) -> None:
+                _learning_rate: float, _model_dir: str) -> None:
     """
     Train the model.
 
@@ -30,7 +30,7 @@ def train_model(symbol: str, _model: nn.Module, _train_loader: DataLoader, _val_
         _val_loader (DataLoader): The validation data loader.
         num_epochs (int): The number of epochs to train the model for.
         _learning_rate (float): The learning rate for the optimizer.
-        _model_path (str): The path to save the best model.
+        _model_dir (str): The path to save the best model.
 
     Returns:
         None
@@ -84,8 +84,8 @@ def train_model(symbol: str, _model: nn.Module, _train_loader: DataLoader, _val_
 
     # Save the best model
     if best_model is not None:
-        torch.save(best_model, f'{_model_path}/{symbol}_model.pth')
-        logger.info(f'Best model saved to {_model_path}/{symbol}_best_model.pth')
+        torch.save(best_model, f'{_model_dir}/{symbol}_model.pth')
+        logger.info(f'Best model saved to {_model_dir}/{symbol}_best_model.pth')
         
 
 def evaluate_model(symbol: str, _model: nn.Module, _x: np.ndarray, _y: np.ndarray,
@@ -149,7 +149,7 @@ if __name__ == "__main__":
     ticker = config['ticker']
     symbol = config['symbol']
     asset_type = config['asset_type']
-    interval = config['interval']
+    data_sampling_interval = config['data_sampling_interval']
     start_date = config['start_date']
     end_date = time.strftime('%Y-%m-%d')
     look_back = config['look_back']
@@ -157,15 +157,15 @@ if __name__ == "__main__":
     epochs = config['epochs']
     batch_size = config['batch_size']
     learning_rate = config['learning_rate']
-    model_path = config['model_path']
+    model_dir = config['model_dir']
     target = config['target']
-    frequency = config['frequency']
+    data_resampling_frequency = config['data_resampling_frequency']
     indicator_windows = config['indicator_windows']
     best_features = config.get('best_features', None)
 
     # Get historical data
     logger.info(f'Getting historical data for {ticker} from {start_date} to {end_date}')
-    historical_data, features = get_data(ticker, symbol, asset_type, start_date, end_date, indicator_windows, interval, frequency)
+    historical_data, features = get_data(ticker, symbol, asset_type, start_date, end_date, indicator_windows, data_sampling_interval, data_resampling_frequency)
     dates = historical_data.index
     
     # Preprocess data
@@ -196,7 +196,7 @@ if __name__ == "__main__":
     # Train model
     logger.info('Training model')
     train_model(symbol, model, train_loader, val_loader, num_epochs=epochs,
-                _learning_rate=learning_rate, _model_path=model_path)
+                _learning_rate=learning_rate, _model_dir=model_dir)
 
     # Evaluate model
     logger.info('Evaluating model')

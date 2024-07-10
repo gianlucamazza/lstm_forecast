@@ -130,8 +130,8 @@ def plot_predictions(symbol: str, filename: str, _historical_data: np.ndarray, _
     logger.info(f'Plot saved to {filename}')
 
 
-def main(_ticker: str, _symbol: str, _asset_type: str, _interval: str, _target: str, _start_date: str, _model_path: str,
-         _look_back: int, _look_forward: int, _best_features: List, _indicator_windows: dict, frequency: str) -> None:
+def main(_ticker: str, _symbol: str, _asset_type: str, _data_sampling_interval: str, _target: str, _start_date: str, _model_dir: str,
+         _look_back: int, _look_forward: int, _best_features: List, _indicator_windows: dict, data_resampling_frequency: str) -> None:
     """
     Main function for prediction.
 
@@ -141,7 +141,7 @@ def main(_ticker: str, _symbol: str, _asset_type: str, _interval: str, _target: 
         _asset_type (str): The asset type.
         _target (str): The target feature.
         _start_date (str): The start date.
-        _model_path (str): The path to the trained model.
+        _model_dir (str): The path to the trained model.
         _look_back (int): The look back window.
         _look_forward (int): The look forward window.
         _features (List): The list of features.
@@ -151,11 +151,11 @@ def main(_ticker: str, _symbol: str, _asset_type: str, _interval: str, _target: 
         None
     """
     logger.info(f"Getting data for {_symbol} from {_start_date}")
-    historical_data, features = get_data(_ticker, _symbol, asset_type=_asset_type, start=_start_date, end=time.strftime('%Y-%m-%d'), windows=_indicator_windows, interval=_interval, frequency=frequency)
+    historical_data, features = get_data(_ticker, _symbol, asset_type=_asset_type, start=_start_date, end=time.strftime('%Y-%m-%d'), windows=_indicator_windows, data_sampling_interval=_data_sampling_interval, data_resampling_frequency=data_resampling_frequency)
     logger.info(f"Preprocessing data")
     x, _, scaler, selected_features = preprocess_data(historical_data, _target, look_back=_look_back, look_forward=_look_forward, features=features, best_features=_best_features)
-    logger.info(f"Loaded model from {_model_path}")
-    model = load_model(_symbol, _model_path, input_shape=len(selected_features))
+    logger.info(f"Loaded model from {_model_dir}")
+    model = load_model(_symbol, _model_dir, input_shape=len(selected_features))
     logger.info(f"Making predictions")
     predictions, future_predictions = predict(model, x, scaler, _look_forward, selected_features)
 
@@ -164,13 +164,13 @@ def main(_ticker: str, _symbol: str, _asset_type: str, _interval: str, _target: 
     plot_predictions(_symbol, f'png/{_symbol}_30_days.png', historical_data['Close'].values[-30:], predictions[-30:], future_predictions, historical_data[-30:], freq)
     plot_predictions(_symbol, f'png/{_symbol}_90_days.png', historical_data['Close'].values[-90:], predictions[-90:], future_predictions, historical_data[-90:], freq)
     plot_predictions(_symbol, f'png/{_symbol}_365_days.png', historical_data['Close'].values[-365:], predictions[-365:], future_predictions, historical_data[-365:], freq)
-    plot_predictions(_symbol, f'png/{_symbol}_full.png', historical_data['Close'].values, predictions, future_predictions, historical_data, frequency)
+    plot_predictions(_symbol, f'png/{_symbol}_full.png', historical_data['Close'].values, predictions, future_predictions, historical_data, data_resampling_frequency)
 
     logger.info('Predictions completed and plotted')
     
     # Create report
     report = pd.DataFrame({
-        'Date': pd.date_range(historical_data.index[-1], periods=_look_forward + 1, freq=frequency)[1:],
+        'Date': pd.date_range(historical_data.index[-1], periods=_look_forward + 1, freq=data_resampling_frequency)[1:],
         'Predicted Price': future_predictions
     })
     
@@ -189,16 +189,16 @@ if __name__ == "__main__":
     ticker = config['ticker']
     symbol = config['symbol']
     asset_type = config['asset_type']
-    interval = config['interval']
-    model_path = config['model_path']
+    data_sampling_interval = config['data_sampling_interval']
+    model_dir = config['model_dir']
     start_date = config['start_date']
     look_back = config['look_back']
     look_forward = config['look_forward']
     best_features = config.get('best_features', None)
     target = config['target']
-    frequency = config['frequency']
+    data_resampling_frequency = config['data_resampling_frequency']
     indicator_windows = config['indicator_windows']
 
     logger.info(f"Starting prediction for {ticker}")
-    main(ticker, symbol, asset_type, interval, target, start_date, model_path, look_back, look_forward, best_features, indicator_windows, frequency)
+    main(ticker, symbol, asset_type, data_sampling_interval, target, start_date, model_dir, look_back, look_forward, best_features, indicator_windows, data_resampling_frequency)
     logger.info(f"Prediction for {symbol} completed")

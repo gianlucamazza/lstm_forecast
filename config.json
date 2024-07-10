@@ -2,7 +2,7 @@
     "ticker": "BTC-USD",
     "symbol": "BTC",
     "asset_type": "etf",
-    "interval": "1d",
+    "data_sampling_interval": "1d",
     "start_date": "2015-01-01",
     "log_dir": "logs",
     "look_back": 90,
@@ -10,7 +10,7 @@
     "epochs": 100,
     "batch_size": 64,
     "learning_rate": 0.001,
-    "model_path": "models",
+    "model_dir": "models",
     "indicator_windows": {
         "SMA_50": 50,
         "SMA_200": 200,
@@ -34,6 +34,6 @@
             "window3": 52
         }
     },
-    "frequency": "D",
+    "data_resampling_frequency": "D",
     "target": "Close"
 }

@@ -38,7 +38,7 @@ Example config.json:
     "ticker": "^GSPC",
     "symbol": "S&P_500",
     "asset_type": "stocks",
-    "interval": "1h",
+    "data_sampling_interval": "1h",
     "start_date": "2018-01-01",
     "log_dir": "logs",
     "look_back": 90,
@@ -46,7 +46,7 @@ Example config.json:
     "epochs": 100,
     "batch_size": 64,
     "learning_rate": 0.001,
-    "model_path": "models",
+    "model_dir": "models",
     "indicator_windows": {
         "SMA_50": 50,
         "SMA_200": 200,
@@ -70,7 +70,7 @@ Example config.json:
             "window3": 52
         }
     },
-    "frequency": "B",
+    "data_resampling_frequency": "B",
     "target": "Close",
     "best_features": [
         "Ichimoku_Tenkan",
@@ -89,7 +89,7 @@ PARAMETER DESCRIPTION:
 - `ticker`: Stock ticker symbol.
 - `symbol`: Stock symbol.
 - `asset_type`: Type of asset, e.g., 'stocks', 'forex', 'commodity'.
-- `interval`: Interval for the historical data, e.g., '1d' for daily or '1h' for hourly. [1h has been limited to 1 year of data]
+- `data_sampling_interval`: Interval for the historical data, e.g., '1d' for daily or '1h' for hourly. [1h has been limited to 1 year of data]
 - `start_date`: Start date for the historical data.
 - `log_dir`: Directory to store the logs.
 - `look_back`: Number of days to look back for the LSTM model.
@@ -99,7 +99,7 @@ PARAMETER DESCRIPTION:
 - `learning_rate`: Learning rate for the optimizer.
 - `model_path`: Directory to store the trained model.
 - `indicator_windows`: Dictionary containing the window sizes for the technical indicators.
-- `frequency`: Frequency of the data, e.g., 'B' for business days or 'D' for daily.
+- `data_resampling_frequency`: Frequency of the data, e.g., 'B' for business days or 'D' for daily.
 - `target`: Target variable for prediction.
 - `best_features`: List of best features selected for training from the feature selection process. [Optional]
 
