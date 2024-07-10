@@ -153,15 +153,15 @@ def main(_ticker: str, _symbol: str, _asset_type: str,_target: str, _start_date:
     logger.info(f"Getting data for {_symbol} from {_start_date}")
     historical_data, features = get_data(_ticker, asset_type=_asset_type, start=_start_date, end=time.strftime('%Y-%m-%d'), windows=_indicator_windows)
     logger.info(f"Preprocessing data")
-    x, _, scaler, selected_features = preprocess_data(historical_data, _target, look_back=_look_back, look_forward=_look_forward, features=_features, best_features=_best_features)
+    x, _, scaler, selected_features = preprocess_data(historical_data, _target, look_back=_look_back, look_forward=_look_forward, features=features, best_features=_best_features)
     logger.info(f"Loaded model from {_model_path}")
     model = load_model(_symbol, _model_path, input_shape=len(selected_features))
     logger.info(f"Making predictions")
     predictions, future_predictions = predict(model, x, scaler, _look_forward, selected_features)
 
-    plot_predictions(_symbol, f'png/{_symbol}_90_days.png', historical_data['Close'].values[-90:], predictions[-90:], future_predictions, data[-90:], freq)
-    plot_predictions(_symbol, f'png/{_symbol}_365_days.png', historical_data['Close'].values[-365:], predictions[-365:], future_predictions, data[-365:], freq)
-    plot_predictions(_symbol, f'png/{_symbol}_full.png', historical_data['Close'].values, predictions, future_predictions, data, freq)
+    plot_predictions(_symbol, f'png/{_symbol}_90_days.png', historical_data['Close'].values[-90:], predictions[-90:], future_predictions, historical_data[-90:], freq)
+    plot_predictions(_symbol, f'png/{_symbol}_365_days.png', historical_data['Close'].values[-365:], predictions[-365:], future_predictions, historical_data[-365:], freq)
+    plot_predictions(_symbol, f'png/{_symbol}_full.png', historical_data['Close'].values, predictions, future_predictions, historical_data, freq)
 
     logger.info('Predictions completed and plotted')
 
