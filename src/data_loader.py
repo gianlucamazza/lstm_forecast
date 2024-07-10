@@ -14,7 +14,7 @@ from logger import setup_logger
 logger = setup_logger('data_loader_logger', 'logs/data_loader.log')
 
 
-def get_data(_ticker: str, symbol: str,asset_type: str, start: str, end: str, windows: Dict[str, int], interval: str, frequency: str) -> tuple[pd.DataFrame, List[str]]:
+def get_data(_ticker: str, symbol: str,asset_type: str, start: str, end: str, windows: Dict[str, int], data_sampling_interval: str, data_resampling_frequency: str) -> tuple[pd.DataFrame, List[str]]:
     """Download historical stock data from Yahoo Finance and calculate technical indicators.
     
     Args:
@@ -24,7 +24,8 @@ def get_data(_ticker: str, symbol: str,asset_type: str, start: str, end: str, wi
         start (str): The start date for the historical data.
         end (str): The end date for the historical data.
         windows (Dict[str, int]): The window sizes for the technical indicators.
-        interval (str): The interval for the historical data.
+        data_sampling_interval (str): The interval for the historical data.
+        data_resampling_frequency (str): The frequency for resampling the data.
         
     Returns:
         tuple[pd.DataFrame, List[str]]: The historical stock data and the list of calculated feature names.
@@ -33,7 +34,7 @@ def get_data(_ticker: str, symbol: str,asset_type: str, start: str, end: str, wi
     end_date = pd.to_datetime(end)
     
     # Adjust the start date if the interval is not daily and the date range is more than 2 years
-    if interval != '1d':
+    if data_sampling_interval != '1d':
         deltatime = pd.to_datetime(end) - pd.to_datetime(start)
         if deltatime.days > 365:
             logger.warning("Interval is not 1d and the time range is more than 1 years. Changing the start date to 1 year before the end date.")
@@ -43,8 +44,8 @@ def get_data(_ticker: str, symbol: str,asset_type: str, start: str, end: str, wi
             logger.info(f"New start date: {start}")
             
     logger.info(f"Downloading data for {_ticker} from {start} to {end}")
-    historical_data = yf.download(_ticker, start=start, end=end, interval=interval)
-    historical_data, features = calculate_technical_indicators(historical_data, windows=windows, asset_type=asset_type, frequency=frequency)
+    historical_data = yf.download(_ticker, start=start, end=end, interval=data_sampling_interval)
+    historical_data, features = calculate_technical_indicators(historical_data, windows=windows, asset_type=asset_type, frequency=data_resampling_frequency)
     historical_data.to_csv(f'data/{symbol}.csv')
     logger.info(f"Data for {_ticker} saved to data/{symbol}.csv")
     return historical_data, features

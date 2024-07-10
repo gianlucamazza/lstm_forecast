@@ -35,5 +35,11 @@
         }
     },
     "data_resampling_frequency": "D",
-    "target": "Close"
+    "target": "Close",
+    "best_features": [
+        "MACD_Agg",
+        "ADX",
+        "EMA",
+        "CMF"
+    ]
 }

@@ -16,7 +16,6 @@ from logger import setup_logger
 # Set up logger
 logger = setup_logger('predict_logger', 'logs/predict.log')
 
-
 # Set device
 device: torch.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 logger.info(f"Device: {device}")
@@ -88,7 +87,6 @@ def predict(_model: nn.Module, _x: np.ndarray, _scaler: StandardScaler, future_d
 
     return predictions, future_predictions
 
-
 def plot_predictions(symbol: str, filename: str, _historical_data: np.ndarray, _predictions: np.ndarray, _future_predictions: np.ndarray,
                      _data: pd.DataFrame, _freq: str) -> None:
     """
@@ -129,7 +127,6 @@ def plot_predictions(symbol: str, filename: str, _historical_data: np.ndarray, _
     plt.savefig(filename)
     logger.info(f'Plot saved to {filename}')
 
-
 def main(_ticker: str, _symbol: str, _asset_type: str, _data_sampling_interval: str, _target: str, _start_date: str, _model_dir: str,
          _look_back: int, _look_forward: int, _best_features: List, _indicator_windows: dict, data_resampling_frequency: str) -> None:
     """
@@ -146,6 +143,8 @@ def main(_ticker: str, _symbol: str, _asset_type: str, _data_sampling_interval: 
         _look_forward (int): The look forward window.
         _features (List): The list of features.
         _best_features (List): The list of best features.
+        _indicator_windows (dict): The indicator windows.
+        data_resampling_frequency (str): The data resampling frequency.
 
     Returns:
         None
@@ -159,11 +158,11 @@ def main(_ticker: str, _symbol: str, _asset_type: str, _data_sampling_interval: 
     logger.info(f"Making predictions")
     predictions, future_predictions = predict(model, x, scaler, _look_forward, selected_features)
 
-    # 7, 30, 90, 365 days
-    plot_predictions(_symbol, f'png/{_symbol}_7_days.png', historical_data['Close'].values[-7:], predictions[-7:], future_predictions, historical_data[-7:], freq)
-    plot_predictions(_symbol, f'png/{_symbol}_30_days.png', historical_data['Close'].values[-30:], predictions[-30:], future_predictions, historical_data[-30:], freq)
-    plot_predictions(_symbol, f'png/{_symbol}_90_days.png', historical_data['Close'].values[-90:], predictions[-90:], future_predictions, historical_data[-90:], freq)
-    plot_predictions(_symbol, f'png/{_symbol}_365_days.png', historical_data['Close'].values[-365:], predictions[-365:], future_predictions, historical_data[-365:], freq)
+    # Plot predictions
+    plot_predictions(_symbol, f'png/{_symbol}_7_days.png', historical_data['Close'].values[-7:], predictions[-7:], future_predictions, historical_data[-7:], data_resampling_frequency)
+    plot_predictions(_symbol, f'png/{_symbol}_30_days.png', historical_data['Close'].values[-30:], predictions[-30:], future_predictions, historical_data[-30:], data_resampling_frequency)
+    plot_predictions(_symbol, f'png/{_symbol}_90_days.png', historical_data['Close'].values[-90:], predictions[-90:], future_predictions, historical_data[-90:], data_resampling_frequency)
+    plot_predictions(_symbol, f'png/{_symbol}_365_days.png', historical_data['Close'].values[-365:], predictions[-365:], future_predictions, historical_data[-365:], data_resampling_frequency)
     plot_predictions(_symbol, f'png/{_symbol}_full.png', historical_data['Close'].values, predictions, future_predictions, historical_data, data_resampling_frequency)
 
     logger.info('Predictions completed and plotted')
