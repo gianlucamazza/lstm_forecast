@@ -2,8 +2,8 @@
     "ticker": "BTC-USD",
     "symbol": "BTCUSD",
     "asset_type": "forex",
-    "interval": "1h",
-    "start_date": "2022-01-01",
+    "interval": "1d",
+    "start_date": "2019-01-01",
     "log_dir": "logs",
     "look_back": 90,
     "look_forward": 30,
@@ -35,5 +35,12 @@
         }
     },
     "frequency": "D",
-    "target": "Close"
+    "target": "Close",
+    "best_features": [
+        "MACD_Agg",
+        "RSI",
+        "EMA",
+        "Aroon_Up",
+        "Bollinger_Low"
+    ]
 }
