@@ -22,9 +22,14 @@ def aggregate_features(df):
     
     df = df.copy()
     
-    df.loc[:, 'SMA_Agg'] = df[['SMA_50', 'SMA_200']].mean(axis=1)
-    df.loc[:, 'MACD_Agg'] = df[['MACD', 'MACD_Signal']].mean(axis=1)
-    df.loc[:, 'Bollinger_Bandwidth'] = df['Bollinger_High'] - df['Bollinger_Low']
+    if 'SMA_50' in df.columns and 'SMA_200' in df.columns:
+        df.loc[:, 'SMA_Agg'] = df[['SMA_50', 'SMA_200']].mean(axis=1)
+    
+    if 'MACD' in df.columns and 'MACD_Signal' in df.columns:
+        df.loc[:, 'MACD_Agg'] = df[['MACD', 'MACD_Signal']].mean(axis=1)
+    
+    if 'Bollinger_High' in df.columns and 'Bollinger_Low' in df.columns:
+        df.loc[:, 'Bollinger_Bandwidth'] = df['Bollinger_High'] - df['Bollinger_Low']
 
     return df
 
@@ -104,9 +109,10 @@ def calculate_forex_indicators(historical_data: pd.DataFrame, windows: dict) -> 
         'SMA_20', 'EMA', 'MACD', 'MACD_Signal', 'RSI', 'Stochastic', 
         'Bollinger_High', 'Bollinger_Low', 'ADX', 'Aroon_Up', 'Aroon_Down', 
         'Ichimoku_Tenkan', 'Ichimoku_Kijun', 'Ichimoku_Senkou_Span_A', 
-        'Ichimoku_Senkou_Span_B', 'SMA_Agg', 'MACD_Agg', 'Bollinger_Bandwidth'
+        'Ichimoku_Senkou_Span_B', 'MACD_Agg', 'Bollinger_Bandwidth'
     ]
-
+    
+    
 def calculate_commodity_indicators(historical_data: pd.DataFrame, windows: dict) -> tuple:
     logger.info("Calculating commodity indicators")
     
@@ -143,7 +149,7 @@ def calculate_commodity_indicators(historical_data: pd.DataFrame, windows: dict)
         'SMA_20', 'EMA', 'MACD', 'MACD_Signal', 'RSI', 'Stochastic', 
         'Bollinger_High', 'Bollinger_Low', 'ADX', 'CCI', 'CMF', 
         'Ichimoku_Tenkan', 'Ichimoku_Kijun', 'Ichimoku_Senkou_Span_A', 
-        'Ichimoku_Senkou_Span_B', 'SMA_Agg', 'MACD_Agg', 'Bollinger_Bandwidth'
+        'Ichimoku_Senkou_Span_B', 'MACD_Agg', 'Bollinger_Bandwidth'
     ]
 
 

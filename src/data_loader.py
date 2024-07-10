@@ -14,20 +14,35 @@ from logger import setup_logger
 logger = setup_logger('data_loader_logger', 'logs/data_loader.log')
 
 
-def get_data(_ticker: str, asset_type: str, start: str, end: str, windows: Dict[str, int]) -> tuple[pd.DataFrame, List[str]]:
+def get_data(_ticker: str, asset_type: str, start: str, end: str, windows: Dict[str, int], interval: str) -> tuple[pd.DataFrame, List[str]]:
     """Download historical stock data from Yahoo Finance and calculate technical indicators.
     
     Args:
         _ticker (str): The stock ticker.
+        asset_type (str): The type of asset.
         start (str): The start date for the historical data.
         end (str): The end date for the historical data.
         windows (Dict[str, int]): The window sizes for the technical indicators.
+        interval (str): The interval for the historical data.
         
     Returns:
-        pd.DataFrame: The historical stock data.
+        tuple[pd.DataFrame, List[str]]: The historical stock data and the list of calculated feature names.
     """
+    start_date = pd.to_datetime(start)
+    end_date = pd.to_datetime(end)
+    
+    # Adjust the start date if the interval is not daily and the date range is more than 2 years
+    if interval != '1d':
+        deltatime = pd.to_datetime(end) - pd.to_datetime(start)
+        if deltatime.days > 365:
+            logger.warning("Interval is not 1d and the time range is more than 1 years. Changing the start date to 1 year before the end date.")
+            # Set the start date to 1 year before the end date minus 1 day
+            start = end_date - pd.DateOffset(years=1)
+            start = start.strftime('%Y-%m-%d')
+            logger.info(f"New start date: {start}")
+            
     logger.info(f"Downloading data for {_ticker} from {start} to {end}")
-    historical_data = yf.download(_ticker, start=start, end=end)
+    historical_data = yf.download(_ticker, start=start, end=end, interval=interval)
     historical_data, features = calculate_technical_indicators(historical_data, windows=windows, asset_type=asset_type)
     historical_data.to_csv(f'data/{_ticker}.csv')
     logger.info(f"Data for {_ticker} saved to data/{_ticker}.csv")

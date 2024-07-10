@@ -149,6 +149,7 @@ if __name__ == "__main__":
     ticker = config['ticker']
     symbol = config['symbol']
     asset_type = config['asset_type']
+    interval = config['interval']
     start_date = config['start_date']
     end_date = time.strftime('%Y-%m-%d')
     look_back = config['look_back']
@@ -164,7 +165,7 @@ if __name__ == "__main__":
 
     # Get historical data
     logger.info(f'Getting historical data for {ticker} from {start_date} to {end_date}')
-    historical_data, features = get_data(ticker, asset_type, start_date, end_date, indicator_windows)
+    historical_data, features = get_data(ticker, asset_type, start_date, end_date, indicator_windows, interval)
     dates = historical_data.index
     
     # Preprocess data

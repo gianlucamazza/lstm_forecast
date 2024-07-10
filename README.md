@@ -38,6 +38,7 @@ Example config.json:
     "ticker": "^GSPC",
     "symbol": "S&P_500",
     "asset_type": "stocks",
+    "interval": "1h",
     "start_date": "2018-01-01",
     "log_dir": "logs",
     "look_back": 90,
@@ -88,6 +89,7 @@ PARAMETER DESCRIPTION:
 - `ticker`: Stock ticker symbol.
 - `symbol`: Stock symbol.
 - `asset_type`: Type of asset, e.g., 'stocks', 'forex', 'commodity'.
+- `interval`: Interval for the historical data, e.g., '1d' for daily or '1h' for hourly. [1h has been limited to 1 year of data]
 - `start_date`: Start date for the historical data.
 - `log_dir`: Directory to store the logs.
 - `look_back`: Number of days to look back for the LSTM model.
@@ -96,11 +98,10 @@ PARAMETER DESCRIPTION:
 - `batch_size`: Batch size for training.
 - `learning_rate`: Learning rate for the optimizer.
 - `model_path`: Directory to store the trained model.
-- `features`: List of features to use for training.
 - `indicator_windows`: Dictionary containing the window sizes for the technical indicators.
 - `frequency`: Frequency of the data, e.g., 'B' for business days or 'D' for daily.
 - `target`: Target variable for prediction.
-- `best_features`: List of best features selected for training from the feature selection process.
+- `best_features`: List of best features selected for training from the feature selection process. [Optional]
 
 ### Features
 
