@@ -1,6 +1,7 @@
 {
     "ticker": "^GSPC",
     "symbol": "S&P_500",
+    "asset_type": "stocks",
     "start_date": "2018-01-01",
     "log_dir": "logs",
     "look_back": 90,
@@ -9,30 +10,6 @@
     "batch_size": 64,
     "learning_rate": 0.001,
     "model_path": "models",
-    "features": [
-        "Close",
-        "SMA_50",
-        "SMA_200",
-        "EMA",
-        "MACD",
-        "MACD_Signal",
-        "RSI",
-        "Bollinger_High",
-        "Bollinger_Low",
-        "ATR",
-        "OBV",
-        "VWAP",
-        "ADX",
-        "Stochastic",
-        "Aroon_Up",
-        "Aroon_Down",
-        "Williams_R",
-        "CMF",
-        "CCI",
-        "SMA_Agg",
-        "MACD_Agg",
-        "Bollinger_Bandwidth"
-    ],
     "indicator_windows": {
         "SMA_50": 50,
         "SMA_200": 200,
@@ -49,15 +26,13 @@
         "Aroon": 25,
         "Williams_R": 14,
         "CMF": 20,
-        "CCI": 20
+        "CCI": 20,
+        "Ichimoku": {
+            "window1": 9,
+            "window2": 26,
+            "window3": 52
+        }
     },
     "frequency": "B",
-    "target": "Close",
-    "best_features": [
-        "ADX",
-        "EMA",
-        "SMA_Agg",
-        "MACD_Agg",
-        "Bollinger_Bandwidth"
-    ]
+    "target": "Close"
 }

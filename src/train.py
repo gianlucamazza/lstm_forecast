@@ -148,6 +148,7 @@ if __name__ == "__main__":
 
     ticker = config['ticker']
     symbol = config['symbol']
+    asset_type = config['asset_type']
     start_date = config['start_date']
     end_date = time.strftime('%Y-%m-%d')
     look_back = config['look_back']
@@ -156,7 +157,6 @@ if __name__ == "__main__":
     batch_size = config['batch_size']
     learning_rate = config['learning_rate']
     model_path = config['model_path']
-    features = config['features']
     target = config['target']
     frequency = config['frequency']
     indicator_windows = config['indicator_windows']
@@ -164,7 +164,7 @@ if __name__ == "__main__":
 
     # Get historical data
     logger.info(f'Getting historical data for {ticker} from {start_date} to {end_date}')
-    historical_data = get_data(ticker, start_date, end_date, indicator_windows)
+    historical_data, features = get_data(ticker, asset_type, start_date, end_date, indicator_windows)
     dates = historical_data.index
     
     # Preprocess data
