@@ -14,11 +14,12 @@ from logger import setup_logger
 logger = setup_logger('data_loader_logger', 'logs/data_loader.log')
 
 
-def get_data(_ticker: str, asset_type: str, start: str, end: str, windows: Dict[str, int], interval: str) -> tuple[pd.DataFrame, List[str]]:
+def get_data(_ticker: str, symbol: str,asset_type: str, start: str, end: str, windows: Dict[str, int], interval: str) -> tuple[pd.DataFrame, List[str]]:
     """Download historical stock data from Yahoo Finance and calculate technical indicators.
     
     Args:
         _ticker (str): The stock ticker.
+        symbol (str): The stock symbol.
         asset_type (str): The type of asset.
         start (str): The start date for the historical data.
         end (str): The end date for the historical data.
@@ -44,8 +45,8 @@ def get_data(_ticker: str, asset_type: str, start: str, end: str, windows: Dict[
     logger.info(f"Downloading data for {_ticker} from {start} to {end}")
     historical_data = yf.download(_ticker, start=start, end=end, interval=interval)
     historical_data, features = calculate_technical_indicators(historical_data, windows=windows, asset_type=asset_type)
-    historical_data.to_csv(f'data/{_ticker}.csv')
-    logger.info(f"Data for {_ticker} saved to data/{_ticker}.csv")
+    historical_data.to_csv(f'data/{symbol}.csv')
+    logger.info(f"Data for {_ticker} saved to data/{symbol}.csv")
     return historical_data, features
 
 

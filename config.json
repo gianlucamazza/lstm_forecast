@@ -1,7 +1,7 @@
 {
-    "ticker": "BTC-USD",
-    "symbol": "BTCUSD",
-    "asset_type": "forex",
+    "ticker": "CCUSAS.MI",
+    "symbol": "CCUSAS",
+    "asset_type": "etf",
     "interval": "1d",
     "start_date": "2019-01-01",
     "log_dir": "logs",
@@ -37,10 +37,6 @@
     "frequency": "D",
     "target": "Close",
     "best_features": [
-        "MACD_Agg",
-        "RSI",
-        "EMA",
-        "Aroon_Up",
-        "Bollinger_Low"
+        "CMF"
     ]
 }

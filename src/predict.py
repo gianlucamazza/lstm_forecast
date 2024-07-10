@@ -151,7 +151,7 @@ def main(_ticker: str, _symbol: str, _asset_type: str, _interval: str, _target: 
         None
     """
     logger.info(f"Getting data for {_symbol} from {_start_date}")
-    historical_data, features = get_data(_ticker, asset_type=_asset_type, start=_start_date, end=time.strftime('%Y-%m-%d'), windows=_indicator_windows, interval=_interval)
+    historical_data, features = get_data(_ticker, _symbol, asset_type=_asset_type, start=_start_date, end=time.strftime('%Y-%m-%d'), windows=_indicator_windows, interval=_interval)
     logger.info(f"Preprocessing data")
     x, _, scaler, selected_features = preprocess_data(historical_data, _target, look_back=_look_back, look_forward=_look_forward, features=features, best_features=_best_features)
     logger.info(f"Loaded model from {_model_path}")
@@ -167,6 +167,15 @@ def main(_ticker: str, _symbol: str, _asset_type: str, _interval: str, _target: 
     plot_predictions(_symbol, f'png/{_symbol}_full.png', historical_data['Close'].values, predictions, future_predictions, historical_data, freq)
 
     logger.info('Predictions completed and plotted')
+    
+    # Create report
+    report = pd.DataFrame({
+        'Date': pd.date_range(historical_data.index[-1], periods=_look_forward + 1, freq=freq)[1:],
+        'Predicted Price': future_predictions
+    })
+    
+    report.to_csv(f'reports/{_symbol}_predictions.csv', index=False)
+    logger.info(f'Report saved to reports/{_symbol}_predictions.csv')
 
 
 if __name__ == "__main__":

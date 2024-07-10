@@ -13,8 +13,8 @@ echo "Cleaning up the png directory..."
 rm -rf png/*.png
 
 # Train the model
-# if skip_training is set to true in the config file, the training will be skipped
-if [ "$SKIP_TRAINING" = "true" ]; then
+# if argument is --skip-training, then skip training
+if [ "$1" == "--skip-training" ]; then
     echo "Skipping training..."
 else
     echo "Training the model..."
