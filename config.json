@@ -1,9 +1,9 @@
 {
-    "ticker": "CCUSAS.MI",
-    "symbol": "CCUSAS",
+    "ticker": "BTC-USD",
+    "symbol": "BTC",
     "asset_type": "etf",
     "interval": "1d",
-    "start_date": "2019-01-01",
+    "start_date": "2015-01-01",
     "log_dir": "logs",
     "look_back": 90,
     "look_forward": 30,
@@ -35,8 +35,5 @@
         }
     },
     "frequency": "D",
-    "target": "Close",
-    "best_features": [
-        "CMF"
-    ]
+    "target": "Close"
 }

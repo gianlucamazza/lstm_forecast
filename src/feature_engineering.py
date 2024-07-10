@@ -191,7 +191,7 @@ def calculate_etf_indicators(historical_data: pd.DataFrame, windows: dict) -> tu
         'Ichimoku_Senkou_Span_B', 'SMA_Agg', 'MACD_Agg', 'Bollinger_Bandwidth'
     ]
 
-def calculate_technical_indicators(historical_data: pd.DataFrame, windows: dict, asset_type: str) -> tuple:
+def calculate_technical_indicators(historical_data: pd.DataFrame, windows: dict, asset_type: str, frequency: str) -> tuple:
     """
     Calculate technical indicators based on asset type and add them to the historical data.
 
@@ -205,6 +205,8 @@ def calculate_technical_indicators(historical_data: pd.DataFrame, windows: dict,
         list: The list of features used.
     """
     logger.info(f"Starting calculation of technical indicators for {asset_type}")
+    historical_data.index = pd.to_datetime(historical_data.index)
+    historical_data = historical_data.asfreq(frequency)
 
     if asset_type == 'stocks':
         return calculate_stock_indicators(historical_data, windows)

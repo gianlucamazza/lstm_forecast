@@ -131,7 +131,7 @@ def plot_predictions(symbol: str, filename: str, _historical_data: np.ndarray, _
 
 
 def main(_ticker: str, _symbol: str, _asset_type: str, _interval: str, _target: str, _start_date: str, _model_path: str,
-         _look_back: int, _look_forward: int, _best_features: List, _indicator_windows: dict, freq: str) -> None:
+         _look_back: int, _look_forward: int, _best_features: List, _indicator_windows: dict, frequency: str) -> None:
     """
     Main function for prediction.
 
@@ -151,7 +151,7 @@ def main(_ticker: str, _symbol: str, _asset_type: str, _interval: str, _target: 
         None
     """
     logger.info(f"Getting data for {_symbol} from {_start_date}")
-    historical_data, features = get_data(_ticker, _symbol, asset_type=_asset_type, start=_start_date, end=time.strftime('%Y-%m-%d'), windows=_indicator_windows, interval=_interval)
+    historical_data, features = get_data(_ticker, _symbol, asset_type=_asset_type, start=_start_date, end=time.strftime('%Y-%m-%d'), windows=_indicator_windows, interval=_interval, frequency=frequency)
     logger.info(f"Preprocessing data")
     x, _, scaler, selected_features = preprocess_data(historical_data, _target, look_back=_look_back, look_forward=_look_forward, features=features, best_features=_best_features)
     logger.info(f"Loaded model from {_model_path}")
@@ -164,13 +164,13 @@ def main(_ticker: str, _symbol: str, _asset_type: str, _interval: str, _target: 
     plot_predictions(_symbol, f'png/{_symbol}_30_days.png', historical_data['Close'].values[-30:], predictions[-30:], future_predictions, historical_data[-30:], freq)
     plot_predictions(_symbol, f'png/{_symbol}_90_days.png', historical_data['Close'].values[-90:], predictions[-90:], future_predictions, historical_data[-90:], freq)
     plot_predictions(_symbol, f'png/{_symbol}_365_days.png', historical_data['Close'].values[-365:], predictions[-365:], future_predictions, historical_data[-365:], freq)
-    plot_predictions(_symbol, f'png/{_symbol}_full.png', historical_data['Close'].values, predictions, future_predictions, historical_data, freq)
+    plot_predictions(_symbol, f'png/{_symbol}_full.png', historical_data['Close'].values, predictions, future_predictions, historical_data, frequency)
 
     logger.info('Predictions completed and plotted')
     
     # Create report
     report = pd.DataFrame({
-        'Date': pd.date_range(historical_data.index[-1], periods=_look_forward + 1, freq=freq)[1:],
+        'Date': pd.date_range(historical_data.index[-1], periods=_look_forward + 1, freq=frequency)[1:],
         'Predicted Price': future_predictions
     })
     
@@ -196,9 +196,9 @@ if __name__ == "__main__":
     look_forward = config['look_forward']
     best_features = config.get('best_features', None)
     target = config['target']
-    freq = config['frequency']
+    frequency = config['frequency']
     indicator_windows = config['indicator_windows']
 
     logger.info(f"Starting prediction for {ticker}")
-    main(ticker, symbol, asset_type, interval, target, start_date, model_path, look_back, look_forward, best_features, indicator_windows, freq)
+    main(ticker, symbol, asset_type, interval, target, start_date, model_path, look_back, look_forward, best_features, indicator_windows, frequency)
     logger.info(f"Prediction for {symbol} completed")

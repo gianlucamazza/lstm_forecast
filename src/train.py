@@ -165,13 +165,15 @@ if __name__ == "__main__":
 
     # Get historical data
     logger.info(f'Getting historical data for {ticker} from {start_date} to {end_date}')
-    historical_data, features = get_data(ticker, symbol, asset_type, start_date, end_date, indicator_windows, interval)
+    historical_data, features = get_data(ticker, symbol, asset_type, start_date, end_date, indicator_windows, interval, frequency)
     dates = historical_data.index
     
     # Preprocess data
     logger.info('Preprocessing data')
-    X, y, scaler, selected_features = preprocess_data(historical_data, target, look_back=look_back,
-                                                      look_forward=look_forward, features=features, best_features=best_features,max_iter=100)
+    X, y, scaler, selected_features = preprocess_data(historical_data=historical_data, target=target, 
+                                                      look_back=look_back, look_forward=look_forward, 
+                                                      features=features, best_features=best_features, 
+                                                      max_iter=100)
 
     # Debug: print selected features
     logger.info(f'Selected features: {selected_features}')

@@ -14,7 +14,7 @@ from logger import setup_logger
 logger = setup_logger('data_loader_logger', 'logs/data_loader.log')
 
 
-def get_data(_ticker: str, symbol: str,asset_type: str, start: str, end: str, windows: Dict[str, int], interval: str) -> tuple[pd.DataFrame, List[str]]:
+def get_data(_ticker: str, symbol: str,asset_type: str, start: str, end: str, windows: Dict[str, int], interval: str, frequency: str) -> tuple[pd.DataFrame, List[str]]:
     """Download historical stock data from Yahoo Finance and calculate technical indicators.
     
     Args:
@@ -44,7 +44,7 @@ def get_data(_ticker: str, symbol: str,asset_type: str, start: str, end: str, wi
             
     logger.info(f"Downloading data for {_ticker} from {start} to {end}")
     historical_data = yf.download(_ticker, start=start, end=end, interval=interval)
-    historical_data, features = calculate_technical_indicators(historical_data, windows=windows, asset_type=asset_type)
+    historical_data, features = calculate_technical_indicators(historical_data, windows=windows, asset_type=asset_type, frequency=frequency)
     historical_data.to_csv(f'data/{symbol}.csv')
     logger.info(f"Data for {_ticker} saved to data/{symbol}.csv")
     return historical_data, features
