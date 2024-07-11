@@ -1,9 +1,4 @@
-import os
-from flask import Flask, send_from_directory, render_template_string
 
-app = Flask(__name__, static_folder='../docs')
-
-INDEX_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -79,23 +74,9 @@ INDEX_TEMPLATE = """
             <input type="text" id="searchInput" onkeyup="searchGraphs()" placeholder="Search for graphs...">
         </div>
         <ul id="graphList">
-            {% for file in files %}
-            <li><a href="{{ file }}" target="_blank">{{ file }}</a></li>
-            {% endfor %}
+            <!-- The links to the graphs will be dynamically inserted here by the server -->
+            <li><a href="html/BTC_predictions.html" target="_blank">BTC_predictions.html</a></li>
         </ul>
     </main>
 </body>
 </html>
-"""
-
-@app.route('/')
-def index():
-    files = [f for f in os.listdir(app.static_folder) if f.endswith('_predictions.html')]
-    return render_template_string(INDEX_TEMPLATE, files=files)
-
-@app.route('/<path:filename>')
-def serve_file(filename):
-    return send_from_directory(app.static_folder, filename)
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
