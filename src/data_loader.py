@@ -2,13 +2,15 @@ import torch
 import yfinance as yf
 import pandas as pd
 import numpy as np
+
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
+
 from src.feature_engineering import calculate_technical_indicators
-from typing import List, Tuple, Dict
 from src.logger import setup_logger
+from typing import List, Tuple, Dict
 
 logger = setup_logger('data_loader_logger', 'logs/data_loader.log')
 
@@ -35,7 +37,8 @@ def get_data(_ticker: str, symbol: str,asset_type: str, start: str, end: str, wi
     if data_sampling_interval != '1d':
         deltatime = pd.to_datetime(end) - pd.to_datetime(start)
         if deltatime.days > 365:
-            logger.warning("Interval is not 1d and the time range is more than 1 years. Changing the start date to 1 year before the end date.")
+            logger.warning("Interval is not 1d and the time range is more than 1 years. Changing the start date to 1 "
+                           "year before the end date.")
             # Set the start date to 1 year before the end date minus 1 day
             start = end_date - pd.DateOffset(years=1)
             start = start.strftime('%Y-%m-%d')
@@ -43,34 +46,22 @@ def get_data(_ticker: str, symbol: str,asset_type: str, start: str, end: str, wi
             
     logger.info(f"Downloading data for {_ticker} from {start} to {end}")
     historical_data = yf.download(_ticker, start=start, end=end, interval=data_sampling_interval)
-    historical_data, features = calculate_technical_indicators(historical_data, windows=windows, asset_type=asset_type, frequency=data_resampling_frequency)
+    historical_data, features = calculate_technical_indicators(historical_data, windows=windows, asset_type=asset_type,
+                                                               frequency=data_resampling_frequency)
     historical_data.to_csv(f'data/{symbol}.csv')
     logger.info(f"Data for {_ticker} saved to data/{symbol}.csv")
     return historical_data, features
 
 
 def preprocess_data(historical_data: pd.DataFrame, targets: List[str], look_back: int = 60,
-                    look_forward: int = 30, features: List[str] = None, best_features: List[str] = None, max_iter: int = 100) -> Tuple[np.ndarray, np.ndarray, StandardScaler, List[str]]:
-    """
-    Preprocess the historical stock data for training the model.
-    
-    Args:
-        historical_data (pd.DataFrame): The historical stock data.
-        targets (List[str]): The target feature names.
-        look_back (int): The number of past days to consider for each input sample.
-        look_forward (int): The number of future days to predict.
-        features (List[str]): List of selected feature names.
-        best_features (List[str]): List of best feature names.
-        max_iter (int): The maximum number of iterations for feature selection.
-
-    Returns:
-        tuple: Processed input features (X), target values (y), and the scaler used for normalization.
-    """
+                    look_forward: int = 30, features: List[str] = None, best_features: List[str] = None,
+                    max_iter: int = 100) -> Tuple[np.ndarray, np.ndarray, StandardScaler, List[str]]:
+    """Preprocess the historical stock data for training the model."""
     logger.info("Starting preprocessing of data")
     logger.info(f"Targets: {targets}")
     logger.info(f"Look back: {look_back}, Look forward: {look_forward}")
     logger.info(f"Selected features: {features}")
-    
+
     for feature in features:
         if feature not in historical_data.columns:
             logger.error(f"Feature {feature} is not in the historical data.")
@@ -80,15 +71,17 @@ def preprocess_data(historical_data: pd.DataFrame, targets: List[str], look_back
     _scaler = StandardScaler()
     columns = targets + features
     scaled_data = _scaler.fit_transform(historical_data[columns])
-    logger.debug(f"Scaled data: {scaled_data[:5]}") 
-    
+    logger.debug(f"Scaled data: {scaled_data[:5]}")
+
     _X, _y = [], []
     for i in range(look_back, len(scaled_data) - look_forward):
         _X.append(scaled_data[i - look_back:i])
-        _y.append(scaled_data[i + look_forward - 1, 0])
+        _y.append(scaled_data[i + look_forward - 1, :len(targets)])
 
     _X = np.array(_X)
     _y = np.array(_y)
+
+    _y = _y.reshape(-1, len(targets))
 
     logger.info(f"Shape of _X: {_X.shape}")
     logger.info(f"Shape of _y: {_y.shape}")
@@ -99,10 +92,10 @@ def preprocess_data(historical_data: pd.DataFrame, targets: List[str], look_back
     if np.any(np.isinf(_X)) or np.any(np.isinf(_y)):
         logger.error("Infinite values found in input data.")
         raise ValueError("Infinite values found in input data.")
-    
+
     if best_features:
         logger.info(f"Using predefined best features: {best_features}")
-        feature_columns = columns[1:]
+        feature_columns = columns[len(targets):]
         feature_indices = [feature_columns.index(feature) for feature in best_features]
         _X_selected = _X[:, :, feature_indices]
         logger.info(f"Shape of _X_selected: {_X_selected.shape}")
@@ -114,7 +107,7 @@ def preprocess_data(historical_data: pd.DataFrame, targets: List[str], look_back
     forest = RandomForestRegressor(n_estimators=100, random_state=42, max_depth=10)
     logger.info("Starting feature selection using RandomForestRegressor")
     forest.fit(_X_reshaped, _y)
-    
+
     importances = forest.feature_importances_
     indices = np.argsort(importances)[::-1]
     selected_features_indices = indices[:min(len(indices), max_iter)]
@@ -125,9 +118,8 @@ def preprocess_data(historical_data: pd.DataFrame, targets: List[str], look_back
     logger.info(f"Validated selected feature indices: {selected_features_indices}")
 
     selected_features = [features[i] for i in selected_features_indices]
-    logger.info(f"Selected features: {selected_features}")
 
-    feature_columns = columns[1:]
+    feature_columns = columns[len(targets):]
     feature_indices = [feature_columns.index(feature) for feature in selected_features]
     _X_selected = _X[:, :, feature_indices]
     logger.info(f"Shape of _X_selected: {_X_selected.shape}")

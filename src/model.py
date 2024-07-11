@@ -2,8 +2,9 @@ import torch
 import torch.nn as nn
 import numpy as np
 from sklearn.preprocessing import StandardScaler
-from src.logger import setup_logger
 from typing import List, Tuple
+
+from src.logger import setup_logger
 
 logger = setup_logger('model_logger', 'logs/model.log')
 device: torch.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

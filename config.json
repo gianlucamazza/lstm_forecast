@@ -6,11 +6,11 @@
     "start_date": "2017-01-01",
     "log_dir": "logs",
     "model_params": {
-        "hidden_size": 64,
+        "hidden_size": 128,
         "num_layers": 2,
         "dropout": 0.3,
-        "fc_output_size": 1,
-        "learning_rate": 0.001
+        "learning_rate": 0.001,
+        "fc_output_size": 4
     },
     "look_back": 60,
     "look_forward": 30,
@@ -42,10 +42,10 @@
     },
     "data_resampling_frequency": "D",
     "targets": [
-        "Open",
         "Close",
+        "Open",
         "Low",
-        "Volume"
+        "High"
     ],
     "backtesting_params": {
         "initial_cash": 100000,
@@ -55,9 +55,5 @@
         "trade_allocation": 0.1,
         "max_open_trades": 5
     },
-    "best_features": [
-        "Bollinger_Low",
-        "Ichimoku_Tenkan",
-        "CMF"
-    ]
+    "best_features": []
 }
