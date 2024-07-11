@@ -27,6 +27,20 @@ INDEX_TEMPLATE = """
         main {{
             padding: 1em;
         }}
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1em;
+        }}
+        th, td {{
+            padding: 0.75em;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }}
+        th {{
+            background-color: #4CAF50;
+            color: white;
+        }}
         ul {{
             list-style-type: none;
             padding: 0;
@@ -79,6 +93,13 @@ INDEX_TEMPLATE = """
         <div class="search-bar">
             <input type="text" id="searchInput" onkeyup="searchGraphs()" placeholder="Search for graphs...">
         </div>
+        <table>
+            <tr>
+                <th>Graph</th>
+                <th>Features</th>
+            </tr>
+            {rows}
+        </table>
         <ul id="graphList">
             <!-- The links to the graphs will be dynamically inserted here by the server -->
             {links}
@@ -88,20 +109,43 @@ INDEX_TEMPLATE = """
 </html>
 """
 
+
+def extract_features_from_filename(filename):
+    """
+    Extract features from the filename.
+
+    Args:
+        filename (str): The filename.
+
+    Returns:
+        str: The extracted features.
+    """
+    parts = filename.split('_')
+    if len(parts) > 2:
+        return ', '.join(parts[1:-1])
+    return 'Unknown'
+
+
 def generate_index_html():
     # Get a list of all HTML files in the directory
     files = [f for f in os.listdir(html_directory) if f.endswith('_predictions.html')]
 
-    # Generate the list of links
-    links = '\n'.join([f'<li><a href="{file}" target="_blank">{file}</a></li>' for file in files])
-    
+    # Generate the list of links and rows
+    links = []
+    rows = []
+    for file in files:
+        features = extract_features_from_filename(file)
+        links.append(f'<li><a href="{file}" target="_blank">{file}</a></li>')
+        rows.append(f'<tr><td><a href="{file}" target="_blank">{file}</a></td><td>{features}</td></tr>')
+
     # Create the final HTML content
-    html_content = INDEX_TEMPLATE.format(links=links)
-    
+    html_content = INDEX_TEMPLATE.format(links='\n'.join(links), rows='\n'.join(rows))
+
     # Write the HTML content to index.html
     with open(os.path.join(html_directory, 'index.html'), 'w') as f:
         f.write(html_content)
     print(f'index.html generated with {len(files)} links.')
+
 
 if __name__ == '__main__':
     generate_index_html()

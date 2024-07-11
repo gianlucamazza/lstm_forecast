@@ -130,7 +130,7 @@ def main(_ticker: str, _symbol: str, _asset_type: str, _data_sampling_interval: 
     candles = historical_data[['Open', 'High', 'Low', 'Close']]
 
     # Plot predictions
-    plot_predictions(_symbol, f'docs/{_symbol}_predictions.html', candles, predictions, future_predictions, historical_data, _data_resampling_frequency, _data_sampling_interval)
+    plot_predictions(_symbol, f'docs/{_symbol}_{best_features}_predictions.html', candles, predictions, future_predictions, historical_data, _data_resampling_frequency, _data_sampling_interval)
 
     # Create report
     report = pd.DataFrame({

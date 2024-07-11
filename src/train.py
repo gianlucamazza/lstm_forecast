@@ -23,6 +23,7 @@ device: torch.device = torch.device('cuda' if torch.cuda.is_available() else 'cp
 
 logger = setup_logger('train_logger', 'logs/train.log')
 
+
 def train_model(symbol: str, _model: nn.Module, _train_loader: DataLoader, _val_loader: DataLoader, num_epochs: int,
                 _learning_rate: float, _model_dir: str) -> None:
     """
@@ -91,7 +92,7 @@ def train_model(symbol: str, _model: nn.Module, _train_loader: DataLoader, _val_
     if best_model is not None:
         torch.save(best_model, f'{_model_dir}/{symbol}_model.pth')
         logger.info(f'Best model saved to {_model_dir}/{symbol}_best_model.pth')
-        
+
 
 def evaluate_model(symbol: str, _model: nn.Module, _x: np.ndarray, _y: np.ndarray,
                    _scaler: StandardScaler, feature_names: list, dates: pd.DatetimeIndex) -> None:
@@ -110,36 +111,53 @@ def evaluate_model(symbol: str, _model: nn.Module, _x: np.ndarray, _y: np.ndarra
     Returns:
         None
     """
+
+    def inverse_transform(data: np.ndarray, scaler: StandardScaler, feature_names: list) -> np.ndarray:
+        """
+        Inverse transform the scaled data.
+
+        Args:
+            data (np.ndarray): The scaled data.
+            scaler (StandardScaler): The scaler used for scaling.
+            feature_names (list): The list of feature names.
+
+        Returns:
+            np.ndarray: The inverse transformed data.
+        """
+        if data.ndim == 1:
+            reshaped_data = np.zeros((data.shape[0], len(feature_names) + 1))
+            reshaped_data[:, 0] = data  # 1-dimensional data handling
+        else:
+            reshaped_data = np.zeros((data.shape[0], len(feature_names) + 1))
+            reshaped_data[:, 0] = data[:, 0]  # 2-dimensional data handling
+
+        if reshaped_data.shape[1] < len(scaler.scale_):
+            reshaped_data = np.pad(reshaped_data,
+                                   ((0, 0), (0, len(scaler.scale_) - reshaped_data.shape[1])), 'constant')
+
+        return scaler.inverse_transform(reshaped_data)[:, 0]
+
     _model.eval()
     with torch.no_grad():
         predictions = _model(torch.tensor(_x, dtype=torch.float32).to(device)).cpu().numpy()
-        
-        predictions_reshaped = np.zeros((_y.shape[0], len(feature_names) + 1))
-        predictions_reshaped[:, 0] = predictions[:, 0]
 
-        if len(predictions_reshaped[0]) < len(_scaler.scale_):
-            predictions_reshaped = np.pad(predictions_reshaped, ((0, 0), (0, len(_scaler.scale_) - len(predictions_reshaped[0]))), 'constant')
+        # Inverse transform predictions and true values
+        predictions = inverse_transform(predictions, _scaler, feature_names)
+        y_true = inverse_transform(_y, _scaler, feature_names)
 
-        predictions = _scaler.inverse_transform(predictions_reshaped)[:, 0]
-
-        y_true_reshaped = np.zeros((_y.shape[0], len(feature_names) + 1))
-        y_true_reshaped[:, 0] = _y
-
-        if len(y_true_reshaped[0]) < len(_scaler.scale_):
-            y_true_reshaped = np.pad(y_true_reshaped, ((0, 0), (0, len(_scaler.scale_) - len(y_true_reshaped[0]))), 'constant')
-
-        y_true = _scaler.inverse_transform(y_true_reshaped)[:, 0]
-    
     aligned_dates = dates[-len(y_true):]
 
     plt.figure(figsize=(14, 7))
     plt.title(f'{symbol} - Model Evaluation')
     plt.plot(aligned_dates, y_true, label='True Price', color='blue')
     plt.plot(aligned_dates, predictions, label='Predicted Prices', color='red')
-    plt.xlabel('Days')
+    plt.xlabel('Date')
     plt.ylabel('Price')
     plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
     plt.savefig(f'png/{symbol}_evaluation.png')
+    plt.close()
     logger.info('Model evaluation completed and plot saved.')
 
 
@@ -173,12 +191,12 @@ if __name__ == "__main__":
     historical_data, features = get_data(ticker, symbol, asset_type, start_date, end_date,
                                          indicator_windows, data_sampling_interval, data_resampling_frequency)
     dates = historical_data.index
-    
+
     # Preprocess data
     logger.info('Preprocessing data')
     X, y, scaler, selected_features = preprocess_data(historical_data=historical_data, targets=targets,
-                                                      look_back=look_back, look_forward=look_forward, 
-                                                      features=features, best_features=best_features, 
+                                                      look_back=look_back, look_forward=look_forward,
+                                                      features=features, best_features=best_features,
                                                       max_iter=100)
 
     # Debug: print selected features
