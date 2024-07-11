@@ -72,14 +72,17 @@ INDEX_TEMPLATE = """
     <script>
         function searchGraphs() {{
             let input = document.getElementById('searchInput').value.toLowerCase();
-            let ul = document.getElementById('graphList');
-            let li = ul.getElementsByTagName('li');
-            for (let i = 0; i < li.length; i++) {{
-                let a = li[i].getElementsByTagName('a')[0];
-                if (a.innerHTML.toLowerCase().indexOf(input) > -1) {{
-                    li[i].style.display = "";
-                }} else {{
-                    li[i].style.display = "none";
+            let table = document.getElementById('graphTable');
+            let tr = table.getElementsByTagName('tr');
+            for (let i = 1; i < tr.length; i++) {{
+                let td = tr[i].getElementsByTagName('td')[0];
+                if (td) {{
+                    let txtValue = td.textContent || td.innerText;
+                    if (txtValue.toLowerCase().indexOf(input) > -1) {{
+                        tr[i].style.display = "";
+                    }} else {{
+                        tr[i].style.display = "none";
+                    }}
                 }}
             }}
         }}
@@ -93,21 +96,18 @@ INDEX_TEMPLATE = """
         <div class="search-bar">
             <input type="text" id="searchInput" onkeyup="searchGraphs()" placeholder="Search for graphs...">
         </div>
-        <table>
+        <table id="graphTable">
             <tr>
                 <th>Graph</th>
                 <th>Features</th>
             </tr>
             {rows}
         </table>
-        <ul id="graphList">
-            <!-- The links to the graphs will be dynamically inserted here by the server -->
-            {links}
-        </ul>
     </main>
 </body>
 </html>
 """
+
 
 def extract_symbol_from_filename(filename):
     """
@@ -120,6 +120,7 @@ def extract_symbol_from_filename(filename):
         str: The extracted symbol.
     """
     return filename.split('_')[0]
+
 
 def extract_features_from_filename(filename):
     """
@@ -136,26 +137,26 @@ def extract_features_from_filename(filename):
         return ', '.join(parts[1:-1])
     return 'Unknown'
 
+
 def generate_index_html():
     # Get a list of all HTML files in the directory
     files = [f for f in os.listdir(html_directory) if f.endswith('_predictions.html')]
 
     # Generate the list of links and rows
-    links = []
     rows = []
     for file in files:
         symbol = extract_symbol_from_filename(file)
         features = extract_features_from_filename(file)
-        links.append(f'<li><a href="{file}" target="_blank">{symbol}</a></li>')
         rows.append(f'<tr><td><a href="{file}" target="_blank">{symbol}</a></td><td>{features}</td></tr>')
 
     # Create the final HTML content
-    html_content = INDEX_TEMPLATE.format(links='\n'.join(links), rows='\n'.join(rows))
+    html_content = INDEX_TEMPLATE.format(rows='\n'.join(rows))
 
     # Write the HTML content to index.html
     with open(os.path.join(html_directory, 'index.html'), 'w') as f:
         f.write(html_content)
     print(f'index.html generated with {len(files)} links.')
+
 
 if __name__ == '__main__':
     generate_index_html()

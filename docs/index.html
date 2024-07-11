@@ -66,14 +66,17 @@
     <script>
         function searchGraphs() {
             let input = document.getElementById('searchInput').value.toLowerCase();
-            let ul = document.getElementById('graphList');
-            let li = ul.getElementsByTagName('li');
-            for (let i = 0; i < li.length; i++) {
-                let a = li[i].getElementsByTagName('a')[0];
-                if (a.innerHTML.toLowerCase().indexOf(input) > -1) {
-                    li[i].style.display = "";
-                } else {
-                    li[i].style.display = "none";
+            let table = document.getElementById('graphTable');
+            let tr = table.getElementsByTagName('tr');
+            for (let i = 1; i < tr.length; i++) {
+                let td = tr[i].getElementsByTagName('td')[0];
+                if (td) {
+                    let txtValue = td.textContent || td.innerText;
+                    if (txtValue.toLowerCase().indexOf(input) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
                 }
             }
         }
@@ -87,19 +90,13 @@
         <div class="search-bar">
             <input type="text" id="searchInput" onkeyup="searchGraphs()" placeholder="Search for graphs...">
         </div>
-        <table>
+        <table id="graphTable">
             <tr>
                 <th>Graph</th>
                 <th>Features</th>
             </tr>
-            <tr><td><a href="BTC_['Bollinger_Low', 'Ichimoku_Tenkan', 'CMF']_predictions.html" target="_blank">BTC</a></td><td>['Bollinger, Low', 'Ichimoku, Tenkan', 'CMF']</td></tr>
-<tr><td><a href="BTCUSD_['Bollinger_Low', 'Ichimoku_Tenkan', 'CMF']_predictions.html" target="_blank">BTCUSD</a></td><td>['Bollinger, Low', 'Ichimoku, Tenkan', 'CMF']</td></tr>
+            <tr><td><a href="BTCUSD_['Bollinger_Low', 'Ichimoku_Tenkan', 'CMF']_predictions.html" target="_blank">BTCUSD</a></td><td>['Bollinger, Low', 'Ichimoku, Tenkan', 'CMF']</td></tr>
         </table>
-        <ul id="graphList">
-            <!-- The links to the graphs will be dynamically inserted here by the server -->
-            <li><a href="BTC_['Bollinger_Low', 'Ichimoku_Tenkan', 'CMF']_predictions.html" target="_blank">BTC</a></li>
-<li><a href="BTCUSD_['Bollinger_Low', 'Ichimoku_Tenkan', 'CMF']_predictions.html" target="_blank">BTCUSD</a></li>
-        </ul>
     </main>
 </body>
 </html>
