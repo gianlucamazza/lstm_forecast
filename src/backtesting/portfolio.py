@@ -6,7 +6,6 @@ from metrics import calculate_sharpe_ratio, calculate_sortino_ratio
 
 logger = setup_logger('portfolio_logger', 'logs/portfolio.log')
 
-
 class FakePortfolio:
     def __init__(self, initial_cash: float, trading_fee: float = 0.001, take_profit: float = None,
                  stop_loss: float = None, trade_allocation: float = 0.1, max_open_trades: int = 5):
@@ -60,17 +59,17 @@ class FakePortfolio:
             'type': type_,
             'symbol': symbol,
             'quantity': quantity,
-            'price': f"${price:,.2f}",
-            'cash_remaining': f"${self.cash:,.2f}",
+            'price': float(price),  # Store price as float
+            'cash_remaining': self.cash,
             'date': date,
             'status': status
         }
         if total_cost is not None:
-            transaction['total_cost'] = f"${total_cost:,.2f}"
+            transaction['total_cost'] = total_cost
         if total_revenue is not None:
-            transaction['total_revenue'] = f"${total_revenue:,.2f}"
+            transaction['total_revenue'] = total_revenue
         if fee is not None:
-            transaction['fee'] = f"${fee:,.2f}"
+            transaction['fee'] = fee
         if reason:
             transaction['reason'] = reason
         self.transaction_history.append(transaction)
@@ -89,11 +88,11 @@ class FakePortfolio:
         profit = total_value - self.initial_cash
         roi = (profit / self.initial_cash) * 100
         return pd.DataFrame([{
-            'initial_cash': f"${self.initial_cash:,.2f}",
-            'final_cash': f"${self.cash:,.2f}",
-            'total_value': f"${total_value:,.2f}",
-            'profit': f"${profit:,.2f}",
-            'ROI (%)': f"{roi:.2f}%"
+            'initial_cash': self.initial_cash,
+            'final_cash': self.cash,
+            'total_value': total_value,
+            'profit': profit,
+            'ROI (%)': roi
         }])
 
     def calculate_drawdown(self, historical_data: pd.DataFrame, symbol: str) -> float:
@@ -116,7 +115,7 @@ class FakePortfolio:
         return calmar_ratio
 
     def calculate_metrics(self, historical_data: pd.DataFrame, current_prices: Dict[str, float], symbol: str) -> Dict[str, float]:
-        total_trades = 0
+        total_trades = len(self.transaction_history) // 2  # Each buy and sell pair counts as one trade
         winning_trades = 0
         losing_trades = 0
 
@@ -124,10 +123,8 @@ class FakePortfolio:
             corresponding_buys = [t for t in self.transaction_history
                                   if t['type'] == 'buy' and t['symbol'] == sell['symbol'] and t['date'] <= sell['date']]
             if corresponding_buys:
-                total_trades += 1
-                total_cost = sum(
-                    float(buy['total_cost'].replace('$', '').replace(',', '')) for buy in corresponding_buys)
-                total_revenue = float(sell['total_revenue'].replace('$', '').replace(',', ''))
+                total_cost = sum(buy['total_cost'] for buy in corresponding_buys if 'total_cost' in buy)
+                total_revenue = sell['total_revenue'] if 'total_revenue' in sell else 0
 
                 if total_revenue > total_cost:
                     winning_trades += 1

@@ -94,7 +94,7 @@ def backtest(ticker: str, symbol: str, asset_type: str, data_sampling_interval: 
 
     portfolio_report_df = pd.DataFrame({
         'Date': historical_data.index,
-        'Portfolio Value': [f"${val:,.2f}" for val in portfolio_values],
+        'Portfolio Value': portfolio_values,
         'Daily Trades': daily_trades
     })
     portfolio_report_df.to_csv(f'reports/{symbol}_portfolio_value.csv', index=False)
@@ -104,15 +104,15 @@ def backtest(ticker: str, symbol: str, asset_type: str, data_sampling_interval: 
     performance_report_df.to_csv(f'reports/{symbol}_performance_report.csv', index=False)
     logger.info(f'Performance report saved to reports/{symbol}_performance_report.csv')
 
-    plot_predictions_with_orders(symbol, f'png/{symbol}_7_days.png', historical_data['Close'].values[-7:], predictions[-7:],
+    plot_predictions_with_orders(symbol, f'png/{symbol}_backtesting_7_days.png', historical_data['Close'].values[-7:], predictions[-7:],
                      future_predictions, historical_data[-7:], data_resampling_frequency, transaction_log_df)
-    plot_predictions_with_orders(symbol, f'png/{symbol}_30_days.png', historical_data['Close'].values[-30:], predictions[-30:],
+    plot_predictions_with_orders(symbol, f'png/{symbol}_backtesting_30_days.png', historical_data['Close'].values[-30:], predictions[-30:],
                      future_predictions, historical_data[-30:], data_resampling_frequency, transaction_log_df)
-    plot_predictions_with_orders(symbol, f'png/{symbol}_90_days.png', historical_data['Close'].values[-90:], predictions[-90:],
+    plot_predictions_with_orders(symbol, f'png/{symbol}_backtesting_90_days.png', historical_data['Close'].values[-90:], predictions[-90:],
                      future_predictions, historical_data[-90:], data_resampling_frequency, transaction_log_df)
-    plot_predictions_with_orders(symbol, f'png/{symbol}_365_days.png', historical_data['Close'].values[-365:], predictions[-365:],
+    plot_predictions_with_orders(symbol, f'png/{symbol}_backtesting_365_days.png', historical_data['Close'].values[-365:], predictions[-365:],
                      future_predictions, historical_data[-365:], data_resampling_frequency, transaction_log_df)
-    plot_predictions_with_orders(symbol, f'png/{symbol}_full.png', historical_data['Close'].values, predictions, future_predictions,
+    plot_predictions_with_orders(symbol, f'png/{symbol}_backtesting_full.png', historical_data['Close'].values, predictions, future_predictions,
                      historical_data, data_resampling_frequency, transaction_log_df)
 
     logger.info('Backtesting completed and plotted')
@@ -122,8 +122,8 @@ def backtest(ticker: str, symbol: str, asset_type: str, data_sampling_interval: 
         'Date': future_dates,
         'Predicted Price': future_predictions
     })
-    future_report_df.to_csv(f'reports/{symbol}_predictions.csv', index=False)
-    logger.info(f'Report saved to reports/{symbol}_predictions.csv')
+    future_report_df.to_csv(f'reports/{symbol}_backtesting_predictions.csv', index=False)
+    logger.info(f'Report saved to reports/{symbol}_backtesting_predictions.csv')
 
     metrics = portfolio.calculate_metrics(historical_data, current_prices, symbol)
     for key, value in metrics.items():

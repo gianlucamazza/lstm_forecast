@@ -6,7 +6,11 @@ rm -rf logs/*.log
 
 # Clean up the data directory
 echo "Cleaning up the data directory..."
-rm -rf data/*.csv
+if [ "$1" == "--skip-training" ]; then
+    echo "Skipping data cleanup..."
+else
+    rm -rf data/*.csv
+fi
 
 # Clean up the png directory
 echo "Cleaning up the png directory..."

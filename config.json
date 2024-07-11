@@ -54,5 +54,9 @@
         "stop_loss": 1.2,
         "trade_allocation": 0.1,
         "max_open_trades": 5
-    }
+    },
+    "best_features": [
+        "RSI",
+        "CMF"
+    ]
 }
