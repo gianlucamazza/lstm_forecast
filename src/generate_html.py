@@ -93,7 +93,7 @@ def generate_index_html():
     files = [f for f in os.listdir(html_directory) if f.endswith('_predictions.html')]
 
     # Generate the list of links
-    links = '\n'.join([f'<li><a href="{html_directory}/{file}" target="_blank">{file}</a></li>' for file in files])
+    links = '\n'.join([f'<li><a href="{file}" target="_blank">{file}</a></li>' for file in files])
     
     # Create the final HTML content
     html_content = INDEX_TEMPLATE.format(links=links)
