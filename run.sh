@@ -12,6 +12,10 @@ rm -rf data/*.csv
 echo "Cleaning up the png directory..."
 rm -rf png/*.png
 
+# Clean up the reports directory
+echo "Cleaning up the reports directory..."
+rm -rf reports/*.csv
+
 # Train the model
 # if argument is --skip-training, then skip training
 if [ "$1" == "--skip-training" ]; then

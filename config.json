@@ -1,12 +1,19 @@
 {
     "ticker": "BTC-USD",
     "symbol": "BTC",
-    "asset_type": "etf",
-    "data_sampling_interval": "1d",
-    "start_date": "2015-01-01",
+    "asset_type": "commodity",
+    "data_sampling_interval": "1h",
+    "start_date": "2019-01-01",
     "log_dir": "logs",
-    "look_back": 90,
-    "look_forward": 30,
+    "model_params": {
+        "input_size": 10,
+        "hidden_size": 100,
+        "num_layers": 2,
+        "dropout": 0.2,
+        "fc_output_size": 1
+    },
+    "look_back": 48,
+    "look_forward": 24,
     "epochs": 100,
     "batch_size": 64,
     "learning_rate": 0.001,
@@ -35,5 +42,16 @@
         }
     },
     "data_resampling_frequency": "D",
-    "target": "Close"
+    "targets": [
+        "Close",
+        "Volume"
+    ],
+    "best_features": [
+        "Ichimoku_Senkou_Span_B",
+        "Ichimoku_Senkou_Span_A",
+        "EMA",
+        "ADX",
+        "MACD",
+        "RSI"
+    ]
 }

@@ -4,6 +4,7 @@ from logger import setup_logger
 
 logger = setup_logger('model_logger', 'logs/model.log')
 
+
 class PricePredictor(nn.Module):
     """
     A PyTorch neural network module for predicting prices using an LSTM model.
@@ -18,7 +19,7 @@ class PricePredictor(nn.Module):
         Fully connected layer for the final output.
     """
 
-    def __init__(self, input_size: int) -> None:
+    def __init__(self, input_size: int, hidden_size: int, num_layers: int, dropout: float, fc_output_size: int) -> None:
         """
         Initializes the PricePredictor model.
 
@@ -26,12 +27,24 @@ class PricePredictor(nn.Module):
         ----------
         input_size : int
             The number of expected features in the input sequence.
+        hidden_size : int
+            The number of features in the hidden state h.
+        num_layers : int
+            Number of recurrent layers.
+        dropout : float
+            Dropout rate for regularization.
+        fc_output_size : int
+            The size of the output of the fully connected layer.
         """
         super(PricePredictor, self).__init__()
-        logger.info(f"Initializing PricePredictor with input size: {input_size}")
-        self.lstm = nn.LSTM(input_size=input_size, hidden_size=50, num_layers=2, batch_first=True, dropout=0.2)
-        self.dropout = nn.Dropout(0.2)
-        self.fc = nn.Linear(50, 1)
+        logger.info(
+            f"Initializing PricePredictor with input size: {input_size}, hidden size: {hidden_size}, num layers: {num_layers}, dropout: {dropout}")
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=True,
+                            dropout=dropout)
+        self.dropout = nn.Dropout(dropout)
+        self.fc = nn.Linear(hidden_size, fc_output_size)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -47,8 +60,8 @@ class PricePredictor(nn.Module):
         torch.Tensor
             Output tensor of shape (batch_size, 1), representing the predicted price.
         """
-        h_0 = torch.zeros(2, x.size(0), 50).to(x.device)
-        c_0 = torch.zeros(2, x.size(0), 50).to(x.device)
+        h_0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
+        c_0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
 
         out, _ = self.lstm(x, (h_0, c_0))
         out = self.dropout(out[:, -1, :])

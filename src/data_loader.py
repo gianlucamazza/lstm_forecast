@@ -14,7 +14,7 @@ from logger import setup_logger
 logger = setup_logger('data_loader_logger', 'logs/data_loader.log')
 
 
-def get_data(_ticker: str, symbol: str,asset_type: str, start: str, end: str, windows: Dict[str, int], interval: str, frequency: str) -> tuple[pd.DataFrame, List[str]]:
+def get_data(_ticker: str, symbol: str,asset_type: str, start: str, end: str, windows: Dict[str, int], data_sampling_interval: str, data_resampling_frequency: str) -> tuple[pd.DataFrame, List[str]]:
     """Download historical stock data from Yahoo Finance and calculate technical indicators.
     
     Args:
@@ -24,7 +24,8 @@ def get_data(_ticker: str, symbol: str,asset_type: str, start: str, end: str, wi
         start (str): The start date for the historical data.
         end (str): The end date for the historical data.
         windows (Dict[str, int]): The window sizes for the technical indicators.
-        interval (str): The interval for the historical data.
+        data_sampling_interval (str): The interval for the historical data.
+        data_resampling_frequency (str): The frequency for resampling the data.
         
     Returns:
         tuple[pd.DataFrame, List[str]]: The historical stock data and the list of calculated feature names.
@@ -33,7 +34,7 @@ def get_data(_ticker: str, symbol: str,asset_type: str, start: str, end: str, wi
     end_date = pd.to_datetime(end)
     
     # Adjust the start date if the interval is not daily and the date range is more than 2 years
-    if interval != '1d':
+    if data_sampling_interval != '1d':
         deltatime = pd.to_datetime(end) - pd.to_datetime(start)
         if deltatime.days > 365:
             logger.warning("Interval is not 1d and the time range is more than 1 years. Changing the start date to 1 year before the end date.")
@@ -43,21 +44,21 @@ def get_data(_ticker: str, symbol: str,asset_type: str, start: str, end: str, wi
             logger.info(f"New start date: {start}")
             
     logger.info(f"Downloading data for {_ticker} from {start} to {end}")
-    historical_data = yf.download(_ticker, start=start, end=end, interval=interval)
-    historical_data, features = calculate_technical_indicators(historical_data, windows=windows, asset_type=asset_type, frequency=frequency)
+    historical_data = yf.download(_ticker, start=start, end=end, interval=data_sampling_interval)
+    historical_data, features = calculate_technical_indicators(historical_data, windows=windows, asset_type=asset_type, frequency=data_resampling_frequency)
     historical_data.to_csv(f'data/{symbol}.csv')
     logger.info(f"Data for {_ticker} saved to data/{symbol}.csv")
     return historical_data, features
 
 
-def preprocess_data(historical_data: pd.DataFrame, target: str, look_back: int = 60,
+def preprocess_data(historical_data: pd.DataFrame, targets: List[str], look_back: int = 60,
                     look_forward: int = 30, features: List[str] = None, best_features: List[str] = None, max_iter: int = 100) -> Tuple[np.ndarray, np.ndarray, StandardScaler, List[str]]:
     """
     Preprocess the historical stock data for training the model.
     
     Args:
         historical_data (pd.DataFrame): The historical stock data.
-        target (str): The target feature to predict.
+        targets (List[str]): The target feature names.
         look_back (int): The number of past days to consider for each input sample.
         look_forward (int): The number of future days to predict.
         features (List[str]): List of selected feature names.
@@ -68,7 +69,7 @@ def preprocess_data(historical_data: pd.DataFrame, target: str, look_back: int =
         tuple: Processed input features (X), target values (y), and the scaler used for normalization.
     """
     logger.info("Starting preprocessing of data")
-    logger.info(f"Target feature: {target}")
+    logger.info(f"Targets: {targets}")
     logger.info(f"Look back: {look_back}, Look forward: {look_forward}")
     logger.info(f"Selected features: {features}")
     
@@ -79,7 +80,7 @@ def preprocess_data(historical_data: pd.DataFrame, target: str, look_back: int =
 
     historical_data = historical_data.dropna()
     _scaler = StandardScaler()
-    columns = [target] + features
+    columns = targets + features
     scaled_data = _scaler.fit_transform(historical_data[columns])
     logger.debug(f"Scaled data: {scaled_data[:5]}") 
     
