@@ -1,0 +1,105 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plotly Graphs</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 1em 0;
+            text-align: center;
+        }
+        main {
+            padding: 1em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1em;
+        }
+        th, td {
+            padding: 0.75em;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            background: white;
+            margin: 0.5em 0;
+            padding: 1em;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        li a {
+            text-decoration: none;
+            color: #333;
+        }
+        li a:hover {
+            color: #4CAF50;
+        }
+        .search-bar {
+            margin-bottom: 1em;
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 0.5em;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+    <script>
+        function searchGraphs() {
+            let input = document.getElementById('searchInput').value.toLowerCase();
+            let ul = document.getElementById('graphList');
+            let li = ul.getElementsByTagName('li');
+            for (let i = 0; i < li.length; i++) {
+                let a = li[i].getElementsByTagName('a')[0];
+                if (a.innerHTML.toLowerCase().indexOf(input) > -1) {
+                    li[i].style.display = "";
+                } else {
+                    li[i].style.display = "none";
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+    <header>
+        <h1>Available Plotly Graphs</h1>
+    </header>
+    <main>
+        <div class="search-bar">
+            <input type="text" id="searchInput" onkeyup="searchGraphs()" placeholder="Search for graphs...">
+        </div>
+        <table>
+            <tr>
+                <th>Graph</th>
+                <th>Features</th>
+            </tr>
+            <tr><td><a href="BTC_['Bollinger_Low', 'Ichimoku_Tenkan', 'CMF']_predictions.html" target="_blank">BTC_['Bollinger_Low', 'Ichimoku_Tenkan', 'CMF']_predictions.html</a></td><td>['Bollinger, Low', 'Ichimoku, Tenkan', 'CMF']</td></tr>
+<tr><td><a href="BTC_predictions.html" target="_blank">BTC_predictions.html</a></td><td>Unknown</td></tr>
+        </table>
+        <ul id="graphList">
+            <!-- The links to the graphs will be dynamically inserted here by the server -->
+            <li><a href="BTC_['Bollinger_Low', 'Ichimoku_Tenkan', 'CMF']_predictions.html" target="_blank">BTC_['Bollinger_Low', 'Ichimoku_Tenkan', 'CMF']_predictions.html</a></li>
+<li><a href="BTC_predictions.html" target="_blank">BTC_predictions.html</a></li>
+        </ul>
+    </main>
+</body>
+</html>
