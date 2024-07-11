@@ -4,6 +4,8 @@ png/*.png
 reports/*.csv
 models/*.pth
 
+docs/index.html
+
 # IDEs
 .idea/
 .vscode/
