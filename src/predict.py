@@ -6,12 +6,17 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import time
+import os
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from sklearn.preprocessing import StandardScaler
-from model import PricePredictor
-from data_loader import preprocess_data, get_data
+from src.model import load_model
+from src.data_loader import preprocess_data, get_data
+from src.utils import load_json
+from src.logger import setup_logger
 from typing import List
-from utils import load_json
-from logger import setup_logger
 
 # Set up logger
 logger = setup_logger('predict_logger', 'logs/predict.log')
@@ -19,34 +24,6 @@ logger = setup_logger('predict_logger', 'logs/predict.log')
 # Set device
 device: torch.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 logger.info(f"Device: {device}")
-
-
-def load_model(symbol: str, path: str, input_shape: int, model_params: dict) -> nn.Module:
-    """
-    Load the trained model from a given path.
-
-    Args:
-        symbol (str): The stock symbol.
-        path (str): The path to the trained model.
-        input_shape (int): The input shape of the model.
-        model_params (dict): The model parameters.
-
-    Returns:
-        nn.Module: The trained model.
-    """
-    model = PricePredictor(
-        input_size=input_shape,
-        hidden_size=model_params['hidden_size'],
-        num_layers=model_params['num_layers'],
-        dropout=model_params['dropout'],
-        fc_output_size=model_params['fc_output_size']
-    ).to(device)
-    logger.info(f"Model: {model}")
-    logger.info(f"Loading model from {path}/{symbol}_model.pth")
-    model.load_state_dict(torch.load(path + f'/{symbol}_model.pth'))
-    model.eval()
-    logger.info("Model loaded and set to evaluation mode.")
-    return model
 
 
 def predict(_model: nn.Module, _x: np.ndarray, _scaler: StandardScaler, future_days: int, _features: List) \

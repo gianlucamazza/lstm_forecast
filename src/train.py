@@ -7,8 +7,13 @@ import pandas as pd
 import argparse
 import time
 import json
+import os
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from torch.utils.data import DataLoader
-from model import EarlyStopping, PricePredictor
+from src.model import EarlyStopping, PricePredictor
 from sklearn.preprocessing import StandardScaler
 from data_loader import get_data, preprocess_data, split_data
 from utils import load_json
@@ -157,9 +162,8 @@ if __name__ == "__main__":
     look_forward = config['look_forward']
     epochs = config['epochs']
     batch_size = config['batch_size']
-    learning_rate = config['learning_rate']
     model_dir = config['model_dir']
-    targets = config.get('target', ['Close'])
+    targets = config.get('targets', ['Close'])
     data_resampling_frequency = config['data_resampling_frequency']
     indicator_windows = config['indicator_windows']
     best_features = config.get('best_features', None)
@@ -195,6 +199,7 @@ if __name__ == "__main__":
     num_layers = model_params.get('num_layers', 2)
     dropout = model_params.get('dropout', 0.2)
     fc_output_size = model_params.get('fc_output_size', 1)
+    learning_rate = model_params.get('learning_rate', 0.001)
 
     model = PricePredictor(
         input_size=len(selected_features),

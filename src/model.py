@@ -1,9 +1,13 @@
 import torch
 import torch.nn as nn
-from logger import setup_logger
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+from src.logger import setup_logger
+from typing import List, Tuple
+
 
 logger = setup_logger('model_logger', 'logs/model.log')
-
+device: torch.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class PricePredictor(nn.Module):
     """
@@ -69,6 +73,80 @@ class PricePredictor(nn.Module):
         logger.debug("Forward pass completed.")
         return out
 
+def load_model(symbol: str, path: str, input_shape: int, model_params: dict) -> nn.Module:
+    """
+    Load the trained model from a given path.
+
+    Args:
+        symbol (str): The stock symbol.
+        path (str): The path to the trained model.
+        input_shape (int): The input shape of the model.
+        model_params (dict): The model parameters.
+
+    Returns:
+        nn.Module: The trained model.
+    """
+    model = PricePredictor(
+        input_size=input_shape,
+        hidden_size=model_params['hidden_size'],
+        num_layers=model_params['num_layers'],
+        dropout=model_params['dropout'],
+        fc_output_size=model_params['fc_output_size']
+    ).to(device)
+    model.device = device
+    logger.info(f"Model: {model}")
+    logger.info(f"Loading model from {path}/{symbol}_model.pth")
+    model.load_state_dict(torch.load(path + f'/{symbol}_model.pth', map_location=device))
+    model.eval()
+    logger.info("Model loaded and set to evaluation mode.")
+    return model
+
+def predict(model: nn.Module, x_data: np.ndarray, scaler: StandardScaler, future_days: int, features: List) -> Tuple[
+    np.ndarray, np.ndarray]:
+    """
+    Make predictions using the trained model.
+
+    Args:
+        model (nn.Module): The trained model.
+        x_data (np.ndarray): The input data.
+        scaler (StandardScaler): The scaler used for normalization.
+        future_days (int): Number of days to predict into the future.
+        features (List): List of feature names.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: Predictions and future predictions.
+    """
+    model.eval()
+    with torch.no_grad():
+        x_tensor = torch.tensor(x_data, dtype=torch.float32).to(model.device)
+        predictions = model(x_tensor).cpu().numpy()
+
+        predictions_reshaped = np.zeros((x_data.shape[0], len(features) + 1))
+        predictions_reshaped[:, 0] = predictions[:, 0]
+        predictions_reshaped = np.pad(predictions_reshaped,
+                                      ((0, 0), (0, len(scaler.scale_) - len(predictions_reshaped[0]))), 'constant')
+        predictions = scaler.inverse_transform(predictions_reshaped)[:, 0]
+
+        future_predictions = []
+        for _ in range(future_days):
+            x_tensor = torch.tensor(x_data[-1:], dtype=torch.float32).to(model.device)
+            future_pred = model(x_tensor).cpu().numpy()[0][0]
+            future_predictions.append(future_pred)
+
+            new_row = np.zeros((1, x_data.shape[2]))
+            new_row[0, 0] = future_pred
+            new_row[0, 1:] = x_data[-1, -1, 1:]
+
+            x_data = np.append(x_data, [np.append(x_data[-1][1:], new_row, axis=0)], axis=0)
+
+        future_predictions_reshaped = np.zeros((future_days, len(features) + 1))
+        future_predictions_reshaped[:, 0] = future_predictions
+        future_predictions_reshaped = np.pad(future_predictions_reshaped,
+                                             ((0, 0), (0, len(scaler.scale_) - len(future_predictions_reshaped[0]))),
+                                             'constant')
+        future_predictions = scaler.inverse_transform(future_predictions_reshaped)[:, 0]
+
+    return predictions, future_predictions
 
 class EarlyStopping:
     """

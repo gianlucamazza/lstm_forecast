@@ -3,7 +3,7 @@ from ta.trend import SMAIndicator, EMAIndicator, MACD, ADXIndicator, AroonIndica
 from ta.momentum import RSIIndicator, StochasticOscillator
 from ta.volatility import BollingerBands
 from ta.volume import OnBalanceVolumeIndicator, ChaikinMoneyFlowIndicator
-from logger import setup_logger
+from src.logger import setup_logger
 
 # Configura il logger
 logger = setup_logger('feature_engineering_logger', 'logs/feature_engineering.log')
