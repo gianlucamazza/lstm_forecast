@@ -60,48 +60,61 @@ def predict(_model: nn.Module, _x: np.ndarray, _scaler: StandardScaler, future_d
 
     return predictions, future_predictions
 
-def plot_predictions(symbol: str, filename: str, candles: pd.DataFrame, _predictions: np.ndarray, _future_predictions: np.ndarray, _data: pd.DataFrame, _freq: str) -> None:
+def plot_predictions(symbol: str, filename: str, candles: pd.DataFrame, _predictions: np.ndarray, _future_predictions: np.ndarray, _data: pd.DataFrame, _freq: str, _interval: str) -> None:
     logger.info("Plotting predictions")
 
-    # Use only the necessary portion of the historical data for the given data_sampling_interval
-    interval_value = int(_freq[:-1]) if _freq[:-1].isdigit() else 1
-    interval_unit = _freq[-1]
-    interval = pd.Timedelta(f"{interval_value}{interval_unit}")
-    start_date = _data.index[-1] - (len(_predictions) * interval)
-    filtered_data = _data.loc[start_date:]
+    # Define the start and end date for the future predictions
+    start_date = candles.index[-1]
+    end_date = pd.to_datetime(candles.index[-1]) + pd.Timedelta(days=len(_future_predictions) * (1 if 'd' in _interval else 1/24))
+    date_range = pd.date_range(start=start_date, periods=len(_future_predictions), freq=_freq)
 
-    # Check for missing data
-    if filtered_data.isnull().values.any():
-        logger.warning("There are missing values in the historical data which may affect the accuracy of the plot.")
-        filtered_data = filtered_data.dropna()
+    # Create the candlestick chart
+    fig = go.Figure()
 
-    # Ensure there is enough data to plot
-    if len(filtered_data) < len(_predictions):
-        logger.error("Not enough historical data to plot the predictions.")
-        return
+    # Add candlestick data
+    fig.add_trace(go.Candlestick(
+        x=candles.index,
+        open=candles['Open'],
+        high=candles['High'],
+        low=candles['Low'],
+        close=candles['Close'],
+        name='Candlestick'
+    ))
 
-    # Create candlestick chart using historical data (Open, High, Low, Close)
-    fig = go.Figure(data=[go.Candlestick(x=filtered_data.index, open=filtered_data['Open'], high=filtered_data['High'], low=filtered_data['Low'], close=filtered_data['Close'], name='Market Data')])
+    # Add historical predictions
+    fig.add_trace(go.Scatter(
+        x=candles.index[-len(_predictions):],
+        y=_predictions,
+        mode='lines',
+        name='Predictions',
+        line=dict(color='blue')
+    ))
 
-    # Add predictions
-    prediction_dates = filtered_data.index[-len(_predictions):]
-    future_dates = pd.date_range(prediction_dates[-1], periods=len(_future_predictions) + 1, freq=_freq)[1:]
-
-    fig.add_trace(go.Scatter(x=prediction_dates, y=_predictions, mode='lines', name='Predictions', line=dict(color='blue')))
-    fig.add_trace(go.Scatter(x=future_dates, y=_future_predictions, mode='lines', name='Future Predictions', line=dict(color='orange', dash='dot')))
+    # Add future predictions
+    fig.add_trace(go.Scatter(
+        x=date_range,
+        y=_future_predictions,
+        mode='lines',
+        name='Future Predictions',
+        line=dict(color='red')
+    ))
 
     # Update layout for a professional appearance
     fig.update_layout(
-        title=f'{symbol} Predictions',
-        xaxis_title='Date' if 'd' in _freq else 'Date/Time',
+        title=f'{symbol} - Predictions',
+        xaxis_title='Date' if 'd' in _interval else 'Date/Time',
         yaxis_title='Price',
-        xaxis_rangeslider_visible=True,
-        template='plotly_white'
+        xaxis_rangeslider_visible=False,
+        template='plotly_white',
+        xaxis=dict(
+            tickformat='%Y-%m-%d %H:%M' if 'h' in _interval else '%Y-%m-%d'
+        )
     )
 
     # Save the plot as an HTML file for interactivity
     fig.write_html(filename)
-    logger.info(f"Interactive plot saved to {filename}")
+    logger.info(f"Predictions plot saved to {filename}")
+    
 
 def main(_ticker: str, _symbol: str, _asset_type: str, _data_sampling_interval: str, _targets: List[str], _start_date: str, _model_dir: str, _model_params: dict, _look_back: int, _look_forward: int, _best_features: List, _indicator_windows: dict, _data_resampling_frequency: str) -> None:
     logger.info(f"Getting data for {_symbol} from {_start_date}")
@@ -117,7 +130,7 @@ def main(_ticker: str, _symbol: str, _asset_type: str, _data_sampling_interval: 
     candles = historical_data[['Open', 'High', 'Low', 'Close']]
 
     # Plot predictions
-    plot_predictions(_symbol, f'html/{_symbol}_predictions.html', candles, predictions, future_predictions, historical_data, _data_resampling_frequency)
+    plot_predictions(_symbol, f'html/{_symbol}_predictions.html', candles, predictions, future_predictions, historical_data, _data_resampling_frequency, _data_sampling_interval)
 
     # Create report
     report = pd.DataFrame({

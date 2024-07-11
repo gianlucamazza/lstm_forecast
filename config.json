@@ -2,20 +2,20 @@
     "ticker": "BTC-USD",
     "symbol": "BTC",
     "asset_type": "commodity",
-    "data_sampling_interval": "1h",
-    "start_date": "2019-01-01",
+    "data_sampling_interval": "1d",
+    "start_date": "2017-01-01",
     "log_dir": "logs",
     "model_params": {
-        "hidden_size": 128,
-        "num_layers": 3,
+        "hidden_size": 64,
+        "num_layers": 2,
         "dropout": 0.3,
-        "fc_output_size": 1
+        "fc_output_size": 1,
+        "learning_rate": 0.001
     },
-    "look_back": 120,
-    "look_forward": 3,
-    "epochs": 150,
+    "look_back": 60,
+    "look_forward": 30,
+    "epochs": 100,
     "batch_size": 64,
-    "learning_rate": 0.001,
     "model_dir": "models",
     "indicator_windows": {
         "SMA_50": 50,
@@ -56,7 +56,8 @@
         "max_open_trades": 5
     },
     "best_features": [
-        "RSI",
+        "Bollinger_Low",
+        "Ichimoku_Tenkan",
         "CMF"
     ]
 }

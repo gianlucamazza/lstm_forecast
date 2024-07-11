@@ -29,7 +29,6 @@ def get_data(_ticker: str, symbol: str,asset_type: str, start: str, end: str, wi
     Returns:
         tuple[pd.DataFrame, List[str]]: The historical stock data and the list of calculated feature names.
     """
-    start_date = pd.to_datetime(start)
     end_date = pd.to_datetime(end)
     
     # Adjust the start date if the interval is not daily and the date range is more than 2 years

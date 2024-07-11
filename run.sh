@@ -5,16 +5,20 @@ echo "Clearing logs..."
 rm -rf logs/*.log
 
 # Clean up the data directory
-echo "Cleaning up the data directory..."
+echo "Cleaning up the data and reports directory..."
 if [ "$1" == "--skip-training" ]; then
     echo "Skipping data cleanup..."
 else
     rm -rf data/*.csv
+    rm -rf reports/*.csv
 fi
 
-# Clean up the png directory
+# Clean up the png and html directory
 echo "Cleaning up the png directory..."
 rm -rf png/*.png
+echo "Cleaning up the html directory..."
+rm -rf html/*.html
+
 
 # Clean up the reports directory
 echo "Cleaning up the reports directory..."
