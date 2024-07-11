@@ -28,7 +28,3 @@ fi
 # Run prediction script
 echo "Running prediction..."
 python src/predict.py --config config.json
-
-# Run backtesting script
-echo "Running backtesting..."
-python src/backtest.py --config config.json

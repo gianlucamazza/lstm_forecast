@@ -99,8 +99,8 @@ def evaluate_model(symbol: str, _model: nn.Module, _x: np.ndarray, _y: np.ndarra
         _x (np.ndarray): The input data.
         _y (np.ndarray): The target data.
         _scaler (StandardScaler): The scaler used to scale the data.
-        feature_indices (list): The indices of the selected features.
-        dates (pd.DatetimeIndex): The dates corresponding to the input data.
+        feature_names (List): The list of feature names.
+        dates (pd.DatetimeIndex): The dates corresponding to the data.
 
     Returns:
         None
@@ -152,25 +152,27 @@ if __name__ == "__main__":
     data_sampling_interval = config['data_sampling_interval']
     start_date = config['start_date']
     end_date = time.strftime('%Y-%m-%d')
+    model_params = config.get('model_params', {})
     look_back = config['look_back']
     look_forward = config['look_forward']
     epochs = config['epochs']
     batch_size = config['batch_size']
     learning_rate = config['learning_rate']
     model_dir = config['model_dir']
-    target = config['target']
+    targets = config.get('target', ['Close'])
     data_resampling_frequency = config['data_resampling_frequency']
     indicator_windows = config['indicator_windows']
     best_features = config.get('best_features', None)
 
     # Get historical data
     logger.info(f'Getting historical data for {ticker} from {start_date} to {end_date}')
-    historical_data, features = get_data(ticker, symbol, asset_type, start_date, end_date, indicator_windows, data_sampling_interval, data_resampling_frequency)
+    historical_data, features = get_data(ticker, symbol, asset_type, start_date, end_date,
+                                         indicator_windows, data_sampling_interval, data_resampling_frequency)
     dates = historical_data.index
     
     # Preprocess data
     logger.info('Preprocessing data')
-    X, y, scaler, selected_features = preprocess_data(historical_data=historical_data, target=target, 
+    X, y, scaler, selected_features = preprocess_data(historical_data=historical_data, targets=targets,
                                                       look_back=look_back, look_forward=look_forward, 
                                                       features=features, best_features=best_features, 
                                                       max_iter=100)
@@ -189,8 +191,17 @@ if __name__ == "__main__":
 
     # Initialize model
     logger.info('Initializing model')
+    hidden_size = model_params.get('hidden_size', 64)
+    num_layers = model_params.get('num_layers', 2)
+    dropout = model_params.get('dropout', 0.2)
+    fc_output_size = model_params.get('fc_output_size', 1)
+
     model = PricePredictor(
-        input_size=len(selected_features)
+        input_size=len(selected_features),
+        hidden_size=hidden_size,
+        num_layers=num_layers,
+        dropout=dropout,
+        fc_output_size=fc_output_size
     ).to(device)
 
     # Train model

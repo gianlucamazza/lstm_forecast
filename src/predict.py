@@ -20,23 +20,34 @@ logger = setup_logger('predict_logger', 'logs/predict.log')
 device: torch.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 logger.info(f"Device: {device}")
 
-def load_model(symbol: str, path: str, input_shape: int) -> nn.Module:
+
+def load_model(symbol: str, path: str, input_shape: int, model_params: dict) -> nn.Module:
     """
     Load the trained model from a given path.
 
     Args:
+        symbol (str): The stock symbol.
         path (str): The path to the trained model.
         input_shape (int): The input shape of the model.
+        model_params (dict): The model parameters.
 
     Returns:
         nn.Module: The trained model.
     """
-    logger.info(f"Loading model from {path} with input shape {input_shape}")
-    model = PricePredictor(input_shape).to(device)
+    model = PricePredictor(
+        input_size=input_shape,
+        hidden_size=model_params['hidden_size'],
+        num_layers=model_params['num_layers'],
+        dropout=model_params['dropout'],
+        fc_output_size=model_params['fc_output_size']
+    ).to(device)
+    logger.info(f"Model: {model}")
+    logger.info(f"Loading model from {path}/{symbol}_model.pth")
     model.load_state_dict(torch.load(path + f'/{symbol}_model.pth'))
     model.eval()
     logger.info("Model loaded and set to evaluation mode.")
     return model
+
 
 def predict(_model: nn.Module, _x: np.ndarray, _scaler: StandardScaler, future_days: int, _features: List) \
         -> tuple[np.ndarray, np.ndarray]:
@@ -62,10 +73,11 @@ def predict(_model: nn.Module, _x: np.ndarray, _scaler: StandardScaler, future_d
         # Prepare for inverse transformation
         predictions_reshaped = np.zeros((_x.shape[0], len(_features) + 1))
         predictions_reshaped[:, 0] = predictions[:, 0]
-        predictions_reshaped = np.pad(predictions_reshaped, ((0, 0), (0, len(_scaler.scale_) - len(predictions_reshaped[0]))), 'constant')
+        predictions_reshaped = np.pad(predictions_reshaped,
+                                      ((0, 0), (0, len(_scaler.scale_) - len(predictions_reshaped[0]))), 'constant')
         predictions = _scaler.inverse_transform(predictions_reshaped)[:, 0]
         logger.info(f"Predictions: {predictions}")
-        
+
         # Forecast future prices
         future_predictions = []
         for _ in range(future_days):
@@ -81,13 +93,17 @@ def predict(_model: nn.Module, _x: np.ndarray, _scaler: StandardScaler, future_d
 
         future_predictions_reshaped = np.zeros((future_days, len(_features) + 1))
         future_predictions_reshaped[:, 0] = future_predictions
-        future_predictions_reshaped = np.pad(future_predictions_reshaped, ((0, 0), (0, len(_scaler.scale_) - len(future_predictions_reshaped[0]))), 'constant')
+        future_predictions_reshaped = np.pad(future_predictions_reshaped,
+                                             ((0, 0), (0, len(_scaler.scale_) - len(future_predictions_reshaped[0]))),
+                                             'constant')
         future_predictions = _scaler.inverse_transform(future_predictions_reshaped)[:, 0]
         logger.info(f"Future predictions: {future_predictions}")
 
     return predictions, future_predictions
 
-def plot_predictions(symbol: str, filename: str, _historical_data: np.ndarray, _predictions: np.ndarray, _future_predictions: np.ndarray,
+
+def plot_predictions(symbol: str, filename: str, _historical_data: np.ndarray, _predictions: np.ndarray,
+                     _future_predictions: np.ndarray,
                      _data: pd.DataFrame, _freq: str) -> None:
     """
     Plot the historical data, predictions, and future predictions.
@@ -127,52 +143,66 @@ def plot_predictions(symbol: str, filename: str, _historical_data: np.ndarray, _
     plt.savefig(filename)
     logger.info(f'Plot saved to {filename}')
 
-def main(_ticker: str, _symbol: str, _asset_type: str, _data_sampling_interval: str, _target: str, _start_date: str, _model_dir: str,
-         _look_back: int, _look_forward: int, _best_features: List, _indicator_windows: dict, data_resampling_frequency: str) -> None:
+
+def main(_ticker: str, _symbol: str, _asset_type: str, _data_sampling_interval: str,
+         _targets: List[str], _start_date: str, _model_dir: str, _model_params: dict,
+         _look_back: int, _look_forward: int, _best_features: List, _indicator_windows: dict,
+         _data_resampling_frequency: str) -> None:
     """
     Main function for prediction.
-
+\
     Args:
         _ticker (str): The stock ticker.
         _symbol (str): The stock symbol.
         _asset_type (str): The asset type.
-        _target (str): The target feature.
+        _data_sampling_interval (str): The data sampling interval.
+        _targets (List): The list of target features.
         _start_date (str): The start date.
         _model_dir (str): The path to the trained model.
+        _model_params (dict): The model parameters.
         _look_back (int): The look back window.
         _look_forward (int): The look forward window.
-        _features (List): The list of features.
         _best_features (List): The list of best features.
         _indicator_windows (dict): The indicator windows.
-        data_resampling_frequency (str): The data resampling frequency.
+        _data_resampling_frequency (str): The data resampling frequency.
 
     Returns:
         None
     """
     logger.info(f"Getting data for {_symbol} from {_start_date}")
-    historical_data, features = get_data(_ticker, _symbol, asset_type=_asset_type, start=_start_date, end=time.strftime('%Y-%m-%d'), windows=_indicator_windows, data_sampling_interval=_data_sampling_interval, data_resampling_frequency=data_resampling_frequency)
+    historical_data, features = get_data(_ticker, _symbol, asset_type=_asset_type, start=_start_date,
+                                         end=time.strftime('%Y-%m-%d'), windows=_indicator_windows,
+                                         data_sampling_interval=_data_sampling_interval,
+                                         data_resampling_frequency=_data_resampling_frequency)
     logger.info(f"Preprocessing data")
-    x, _, scaler, selected_features = preprocess_data(historical_data, _target, look_back=_look_back, look_forward=_look_forward, features=features, best_features=_best_features)
+    x, _, scaler, selected_features = preprocess_data(historical_data, _targets, look_back=_look_back,
+                                                      look_forward=_look_forward, features=features,
+                                                      best_features=_best_features)
     logger.info(f"Loaded model from {_model_dir}")
-    model = load_model(_symbol, _model_dir, input_shape=len(selected_features))
+    model = load_model(_symbol, _model_dir, len(selected_features), _model_params)
     logger.info(f"Making predictions")
     predictions, future_predictions = predict(model, x, scaler, _look_forward, selected_features)
 
     # Plot predictions
-    plot_predictions(_symbol, f'png/{_symbol}_7_days.png', historical_data['Close'].values[-7:], predictions[-7:], future_predictions, historical_data[-7:], data_resampling_frequency)
-    plot_predictions(_symbol, f'png/{_symbol}_30_days.png', historical_data['Close'].values[-30:], predictions[-30:], future_predictions, historical_data[-30:], data_resampling_frequency)
-    plot_predictions(_symbol, f'png/{_symbol}_90_days.png', historical_data['Close'].values[-90:], predictions[-90:], future_predictions, historical_data[-90:], data_resampling_frequency)
-    plot_predictions(_symbol, f'png/{_symbol}_365_days.png', historical_data['Close'].values[-365:], predictions[-365:], future_predictions, historical_data[-365:], data_resampling_frequency)
-    plot_predictions(_symbol, f'png/{_symbol}_full.png', historical_data['Close'].values, predictions, future_predictions, historical_data, data_resampling_frequency)
+    plot_predictions(_symbol, f'png/{_symbol}_7_days.png', historical_data['Close'].values[-7:], predictions[-7:],
+                     future_predictions, historical_data[-7:], _data_resampling_frequency)
+    plot_predictions(_symbol, f'png/{_symbol}_30_days.png', historical_data['Close'].values[-30:], predictions[-30:],
+                     future_predictions, historical_data[-30:], _data_resampling_frequency)
+    plot_predictions(_symbol, f'png/{_symbol}_90_days.png', historical_data['Close'].values[-90:], predictions[-90:],
+                     future_predictions, historical_data[-90:], _data_resampling_frequency)
+    plot_predictions(_symbol, f'png/{_symbol}_365_days.png', historical_data['Close'].values[-365:], predictions[-365:],
+                     future_predictions, historical_data[-365:], _data_resampling_frequency)
+    plot_predictions(_symbol, f'png/{_symbol}_full.png', historical_data['Close'].values, predictions,
+                     future_predictions, historical_data, _data_resampling_frequency)
 
     logger.info('Predictions completed and plotted')
-    
+
     # Create report
     report = pd.DataFrame({
         'Date': pd.date_range(historical_data.index[-1], periods=_look_forward + 1, freq=data_resampling_frequency)[1:],
         'Predicted Price': future_predictions
     })
-    
+
     report.to_csv(f'reports/{_symbol}_predictions.csv', index=False)
     logger.info(f'Report saved to reports/{_symbol}_predictions.csv')
 
@@ -190,14 +220,18 @@ if __name__ == "__main__":
     asset_type = config['asset_type']
     data_sampling_interval = config['data_sampling_interval']
     model_dir = config['model_dir']
+    model_params = config.get('model_params', {})
     start_date = config['start_date']
     look_back = config['look_back']
     look_forward = config['look_forward']
-    best_features = config.get('best_features', None)
-    target = config['target']
+    best_features = config.get('best_features', [])
+    targets = config.get('targets', ['Close'])
     data_resampling_frequency = config['data_resampling_frequency']
     indicator_windows = config['indicator_windows']
 
     logger.info(f"Starting prediction for {ticker}")
-    main(ticker, symbol, asset_type, data_sampling_interval, target, start_date, model_dir, look_back, look_forward, best_features, indicator_windows, data_resampling_frequency)
+    main(_ticker=ticker, _symbol=symbol, _asset_type=asset_type, _data_sampling_interval=data_sampling_interval,
+         _targets=targets, _start_date=start_date, _model_dir=model_dir, _model_params=model_params,
+         _look_back=look_back, _look_forward=look_forward, _best_features=best_features,
+         _indicator_windows=indicator_windows, _data_resampling_frequency=data_resampling_frequency)
     logger.info(f"Prediction for {symbol} completed")
