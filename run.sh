@@ -36,3 +36,7 @@ fi
 # Run prediction script
 echo "Running prediction..."
 python src/predict.py --config config.json
+
+# Update HTML/docs for the prediction
+echo "Updating HTML..."
+python src/generate_html.py

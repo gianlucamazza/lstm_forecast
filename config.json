@@ -1,6 +1,6 @@
 {
     "ticker": "BTC-USD",
-    "symbol": "BTC",
+    "symbol": "BTCUSD",
     "asset_type": "commodity",
     "data_sampling_interval": "1d",
     "start_date": "2017-01-01",

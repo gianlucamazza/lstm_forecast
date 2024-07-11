@@ -109,6 +109,17 @@ INDEX_TEMPLATE = """
 </html>
 """
 
+def extract_symbol_from_filename(filename):
+    """
+    Extract the symbol from the filename.
+
+    Args:
+        filename (str): The filename.
+
+    Returns:
+        str: The extracted symbol.
+    """
+    return filename.split('_')[0]
 
 def extract_features_from_filename(filename):
     """
@@ -125,7 +136,6 @@ def extract_features_from_filename(filename):
         return ', '.join(parts[1:-1])
     return 'Unknown'
 
-
 def generate_index_html():
     # Get a list of all HTML files in the directory
     files = [f for f in os.listdir(html_directory) if f.endswith('_predictions.html')]
@@ -134,9 +144,10 @@ def generate_index_html():
     links = []
     rows = []
     for file in files:
+        symbol = extract_symbol_from_filename(file)
         features = extract_features_from_filename(file)
-        links.append(f'<li><a href="{file}" target="_blank">{file}</a></li>')
-        rows.append(f'<tr><td><a href="{file}" target="_blank">{file}</a></td><td>{features}</td></tr>')
+        links.append(f'<li><a href="{file}" target="_blank">{symbol}</a></li>')
+        rows.append(f'<tr><td><a href="{file}" target="_blank">{symbol}</a></td><td>{features}</td></tr>')
 
     # Create the final HTML content
     html_content = INDEX_TEMPLATE.format(links='\n'.join(links), rows='\n'.join(rows))
@@ -145,7 +156,6 @@ def generate_index_html():
     with open(os.path.join(html_directory, 'index.html'), 'w') as f:
         f.write(html_content)
     print(f'index.html generated with {len(files)} links.')
-
 
 if __name__ == '__main__':
     generate_index_html()
