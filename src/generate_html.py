@@ -1,7 +1,7 @@
 import os
 
 # Define the path to the directory containing the Plotly HTML files
-html_directory = 'html'
+html_directory = 'docs'
 
 # Define the template for the index.html file
 INDEX_TEMPLATE = """
