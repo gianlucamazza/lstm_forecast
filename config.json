@@ -6,7 +6,6 @@
     "start_date": "2019-01-01",
     "log_dir": "logs",
     "model_params": {
-        "input_size": 10,
         "hidden_size": 100,
         "num_layers": 2,
         "dropout": 0.2,
