@@ -4,4 +4,6 @@ numpy~=1.26.4
 yfinance~=0.2.40
 matplotlib~=3.9.1
 torch~=2.2.2
+plotly~=5.3.1
 scikit-learn~=1.5.1
+pre-commit

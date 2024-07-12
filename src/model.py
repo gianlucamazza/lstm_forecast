@@ -2,12 +2,13 @@ import torch
 import torch.nn as nn
 import numpy as np
 from sklearn.preprocessing import StandardScaler
-from src.logger import setup_logger
 from typing import List, Tuple
 
+from src.logger import setup_logger
 
 logger = setup_logger('model_logger', 'logs/model.log')
 device: torch.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 
 class PricePredictor(nn.Module):
     """
@@ -73,6 +74,7 @@ class PricePredictor(nn.Module):
         logger.debug("Forward pass completed.")
         return out
 
+
 def load_model(symbol: str, path: str, input_shape: int, model_params: dict) -> nn.Module:
     """
     Load the trained model from a given path.
@@ -101,8 +103,9 @@ def load_model(symbol: str, path: str, input_shape: int, model_params: dict) -> 
     logger.info("Model loaded and set to evaluation mode.")
     return model
 
-def predict(model: nn.Module, x_data: np.ndarray, scaler: StandardScaler, future_days: int, features: List) -> Tuple[
-    np.ndarray, np.ndarray]:
+
+def predict(model: nn.Module, x_data: np.ndarray, scaler: StandardScaler, future_days: int, features: List) -> \
+        Tuple[np.ndarray, np.ndarray]:
     """
     Make predictions using the trained model.
 
@@ -147,6 +150,7 @@ def predict(model: nn.Module, x_data: np.ndarray, scaler: StandardScaler, future
         future_predictions = scaler.inverse_transform(future_predictions_reshaped)[:, 0]
 
     return predictions, future_predictions
+
 
 class EarlyStopping:
     """
