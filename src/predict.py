@@ -221,7 +221,7 @@ def main(config_path: str) -> None:
                                               scaler_volume=scaler_volume, future_days=config.look_forward,
                                               _features=selected_features, _targets=config.targets)
     candles = historical_data[['Open', 'High', 'Low', 'Close']]
-    plot_predictions(config.symbol, f'docs/{config.symbol}_predictions.html', candles, predictions,
+    plot_predictions(config.symbol, f'docs/{config.symbol}_{selected_features}_predictions.html', candles, predictions,
                      future_predictions, config.data_resampling_frequency, config.data_sampling_interval)
 
     save_predictions_report(future_predictions, config.targets, candles.index[-1], config.data_resampling_frequency,
