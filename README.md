@@ -6,9 +6,9 @@ This project aims to predict stock prices using Long Short-Term Memory (LSTM) ne
 The model is trained on historical stock data, which includes various technical indicators.
 The pipeline includes data preprocessing, feature engineering, model training, and prediction.
 
-## SP500 Prediction Example
+## Published models/predictions
 
-![Prediction](static/S&P_500_365_days.png)
+[Live website]("https://gianlucamazza.github.io/pytorch-lstm-price_prediction/")
 
 ## Evaluation
 
@@ -35,24 +35,24 @@ Example config.json:
 
 ```json
 {
-    "ticker": "^GSPC",
-    "symbol": "S&P_500",
-    "asset_type": "stocks",
-    "data_sampling_interval": "1h",
-    "start_date": "2018-01-01",
+    "ticker": "BTC-USD",
+    "symbol": "BTCUSD",
+    "asset_type": "commodity",
+    "data_sampling_interval": "1d",
+    "start_date": "2013-01-01",
     "log_dir": "logs",
-    "look_back": 90,
+    "model_params": {
+        "hidden_size": 128,
+        "num_layers": 2,
+        "dropout": 0.2,
+        "learning_rate": 0.005,
+        "fc_output_size": 5
+    },
+    "look_back": 120,
     "look_forward": 30,
     "epochs": 100,
     "batch_size": 64,
-    "learning_rate": 0.001,
     "model_dir": "models",
-    "model_params": {
-        "hidden_size": 100,
-        "num_layers": 2,
-        "dropout": 0.2,
-        "fc_output_size": 1
-    },
     "indicator_windows": {
         "SMA_50": 50,
         "SMA_200": 200,
@@ -76,8 +76,27 @@ Example config.json:
             "window3": 52
         }
     },
-    "data_resampling_frequency": "B",
-    "target": "Close"
+    "data_resampling_frequency": "D",
+    "targets": [
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume"
+    ],
+    "backtesting_params": {
+        "initial_cash": 100000,
+        "trading_fee": 0.001,
+        "take_profit": 1.5,
+        "stop_loss": 1.2,
+        "trade_allocation": 0.1,
+        "max_open_trades": 5
+    },
+    "best_features": [
+        "MACD_Signal",
+        "ADX",
+        "Bollinger_Low"
+    ]
 }
 ```
 
@@ -196,57 +215,26 @@ python src/predict.py --config config.json
 
 To run the entire pipeline, run:
 
+Options:
+- `--config`: Path to the config file.
+- `--skip-training`: Skip the training step.
+- `--rebuild-features`: Rebuild the features.
+
 ```bash
-run.sh
+run.sh 
 ```
 
-#### Explained `run.sh`
+## Pipeline
 
-```bash
-    #!/bin/bash
+The pipeline consists of the following steps:
 
-    # Clear logs
-    echo "Clearing logs..."
-    rm -rf logs/*.log
-
-    # Clean up the data directory
-    echo "Cleaning up the data directory..."
-    rm -rf data/*.csv
-
-    # Clean up the png directory
-    echo "Cleaning up the png directory..."
-    rm -rf png/*.png
-
-    # Train the model
-    # if skip_training is set to true in the config file, the training will be skipped
-    if [ "$SKIP_TRAINING" = "true" ]; then
-        echo "Skipping training..."
-    else
-        echo "Training the model..."
-        python src/train.py --config config.json
-    fi
-
-    # Run prediction script
-    echo "Running prediction..."
-    python src/predict.py --config config.json
-
-```
-
-the `run.sh` script is a bash script that automates the entire pipeline. It clears the logs, data, and png directories, trains the model, and generates predictions.
-
-### Structure
-
-`src/data_loader.py` handles data loading, preprocessing, and feature selection.
-
-`src/feature_engineering.py` calculates various technical indicators used as features for the model.
-
-`src/model.py` contains the definition of the LSTM model and the early stopping class.
-
-`src/train.py` script preprocesses the data, trains the model, and evaluates it.
-
-`src/predict.py` script preprocesses the data, loads the trained model, and generates predictions.
-
-### Output
+1. **Data Loading**: Load historical stock data using the `yfinance` library.
+2. **Data Preprocessing**: Preprocess the data by filling missing values and resampling the data.
+3. **Feature Engineering**: Calculate technical indicators and add them to the dataset.
+4. **Feature Selection**: Select the best features using the `feature_engineering.py` script.
+5. **Model Training**: Train the LSTM model using the selected features.
+6. **Model Evaluation**: Evaluate the model using the Mean Squared Error (MSE) and Mean Absolute Error (MAE) metrics.
+7. **Prediction**: Generate predictions using the trained model.
 
 #### Logs
 
