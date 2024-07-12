@@ -3,7 +3,7 @@
     "symbol": "BTCUSD",
     "asset_type": "commodity",
     "data_sampling_interval": "1d",
-    "start_date": "2019-01-01",
+    "start_date": "2013-01-01",
     "log_dir": "logs",
     "model_params": {
         "hidden_size": 128,
@@ -42,10 +42,10 @@
     },
     "data_resampling_frequency": "D",
     "targets": [
-        "Close",
         "Open",
-        "Low",
         "High",
+        "Low",
+        "Close",
         "Volume"
     ],
     "backtesting_params": {
@@ -58,7 +58,7 @@
     },
     "best_features": [
         "MACD_Signal",
-        "Bollinger_High",
-        "ADX"
+        "ADX",
+        "Bollinger_Low"
     ]
 }

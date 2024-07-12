@@ -119,7 +119,7 @@ def inverse_transform_predictions(predictions, scaler_prices, scaler_volume, fea
 
 def forecast_future_prices(model: nn.Module, x: np.ndarray, future_days: int, num_targets: int) -> np.ndarray:
     future_predictions = []
-    for day in range(future_days):
+    for _ in range(future_days):
         future_pred = make_future_prediction(model, x)
         future_predictions.append(future_pred)
         x = update_input_data(x, future_pred, num_targets)
@@ -159,7 +159,6 @@ def plot_predictions(symbol: str, filename: str, candles: pd.DataFrame, predicti
     logger.info("Plotting predictions")
 
     start_date = candles.index[-1]
-    date_range = pd.date_range(start=start_date, periods=len(future_predictions), freq=freq)
 
     fig = go.Figure()
     add_candlestick_trace(fig, candles, 'Actual Candlestick')
@@ -168,7 +167,7 @@ def plot_predictions(symbol: str, filename: str, candles: pd.DataFrame, predicti
     add_candlestick_trace(fig, historical_candles, 'Predicted Candlestick')
 
     future_candles = create_candles(future_predictions, freq, start_date)
-    add_candlestick_trace(fig, future_candles, 'Future Predicted Candlestick')
+    add_candlestick_trace(fig, future_candles, 'Future Predicted Candlestick', increasing_color='blue', decreasing_color='orange')
 
     update_layout(fig, symbol, interval)
 
@@ -176,14 +175,17 @@ def plot_predictions(symbol: str, filename: str, candles: pd.DataFrame, predicti
     logger.info(f"Predictions plot saved to {filename}")
 
 
-def add_candlestick_trace(fig: go.Figure, candles: pd.DataFrame, name: str) -> None:
+def add_candlestick_trace(fig: go.Figure, candles: pd.DataFrame, name: str, increasing_color='green', decreasing_color='red') -> None:
+    logger.debug(f"Adding candlestick trace for {name}")
     fig.add_trace(go.Candlestick(
         x=candles.index,
         open=candles['Open'],
         high=candles['High'],
         low=candles['Low'],
         close=candles['Close'],
-        name=name
+        name=name,
+        increasing_line_color=increasing_color,
+        decreasing_line_color=decreasing_color
     ))
 
 
