@@ -10,6 +10,20 @@ logger = setup_logger('model_logger', 'logs/model.log')
 device: torch.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
+def init_weights(m):
+    if isinstance(m, nn.Linear):
+        torch.nn.init.xavier_uniform_(m.weight)
+        m.bias.data.fill_(0.01)
+    elif isinstance(m, nn.LSTM):
+        for name, param in m.named_parameters():
+            if 'weight_ih' in name:
+                nn.init.xavier_uniform_(param.data)
+            elif 'weight_hh' in name:
+                nn.init.xavier_uniform_(param.data)
+            elif 'bias' in name:
+                param.data.fill_(0)
+
+
 class PricePredictor(nn.Module):
     """
     A PyTorch neural network module for predicting prices using an LSTM model.
@@ -50,6 +64,9 @@ class PricePredictor(nn.Module):
                             dropout=dropout)
         self.dropout = nn.Dropout(dropout)
         self.fc = nn.Linear(hidden_size, fc_output_size)
+
+        # Apply weight initialization
+        self.apply(init_weights)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """

@@ -26,6 +26,7 @@ class Config:
         self.targets = self.config.get('targets', [])
         self.backtesting_params = self.config.get('backtesting_params', {})
         self.best_features = self.config.get('best_features', [])
+        self.feature_selection_algo = self.config.get('feature_selection_algo', 'random_forest')
         self.model_params['fc_output_size'] = len(self.targets)
 
     def save(self):

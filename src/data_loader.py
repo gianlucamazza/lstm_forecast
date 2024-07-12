@@ -8,12 +8,23 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LassoCV, MultiTaskLassoCV
+from sklearn.feature_selection import RFE
+from xgboost import XGBRegressor
 
 from src.feature_engineering import calculate_technical_indicators
 from src.logger import setup_logger
 from typing import List, Tuple, Dict, Any
 
 logger = setup_logger('data_loader_logger', 'logs/data_loader.log')
+
+FEATURE_SELECTION_ALGOS = {
+    "random_forest": RandomForestRegressor(n_estimators=100, random_state=42, max_depth=10),
+    "lasso": LassoCV(cv=5, random_state=42),
+    "xgboost": XGBRegressor(n_estimators=100, random_state=42),
+    "rfe": RFE(estimator=RandomForestRegressor(n_estimators=100, random_state=42, max_depth=10),
+               n_features_to_select=10)
+}
 
 
 def get_data(_ticker: str, symbol: str, asset_type: str, start: str, end: str, windows: Dict[str, int],
@@ -52,8 +63,9 @@ def save_historical_data(symbol: str, historical_data: pd.DataFrame) -> None:
 
 def preprocess_data(symbol: str, historical_data: pd.DataFrame, targets: List[str], look_back: int = 60,
                     look_forward: int = 30, features: List[str] = None, best_features: List[str] = None,
-                    max_iter: int = 100) -> Tuple[ndarray[Any, dtype[Any]], ndarray[Any, dtype[Any]],
-StandardScaler, StandardScaler, MinMaxScaler, list[str]]:
+                    max_iter: int = 100, feature_selection_algo: str = "random_forest") -> Tuple[
+    ndarray[Any, dtype[Any]], ndarray[Any, dtype[Any]],
+    StandardScaler, StandardScaler, MinMaxScaler, list[str]]:
     """Preprocess the historical stock data for training the model."""
     logger.info("Starting preprocessing of data")
     log_preprocessing_params(targets, look_back, look_forward, features)
@@ -72,7 +84,7 @@ StandardScaler, StandardScaler, MinMaxScaler, list[str]]:
         return select_best_features(_X, _y, best_features, features, scaled_features, scaler_features, scaler_prices,
                                     scaler_volume)
 
-    selected_features = perform_feature_selection(_X, _y, features, max_iter)
+    selected_features = perform_feature_selection(_X, _y, features, max_iter, feature_selection_algo)
     _X_selected = _X[:, :, selected_features]
 
     return _X_selected, _y, scaler_features, scaler_prices, scaler_volume, [features[i] for i in selected_features]
@@ -167,16 +179,31 @@ def validate_feature_indices(feature_indices: List[int], max_index: int) -> None
         raise ValueError("One or more feature indices are out of bounds.")
 
 
-def perform_feature_selection(_X: np.ndarray, _y: np.ndarray, features: List[str], max_iter: int) -> List[int]:
-    """Perform feature selection using RandomForestRegressor."""
+def perform_feature_selection(_X: np.ndarray, _y: np.ndarray, features: List[str], max_iter: int, algo: str) -> List[int]:
+    """Perform feature selection using the selected algorithm."""
     _X_reshaped = _X.reshape(_X.shape[0], -1)
     logger.info(f"Shape of _X_reshaped: {_X_reshaped.shape}")
 
-    forest = RandomForestRegressor(n_estimators=100, random_state=42, max_depth=10)
-    logger.info("Starting feature selection using RandomForestRegressor")
-    forest.fit(_X_reshaped, _y)
+    if algo not in FEATURE_SELECTION_ALGOS:
+        logger.error(f"Feature selection algorithm {algo} is not recognized.")
+        raise ValueError(f"Feature selection algorithm {algo} is not recognized.")
 
-    importances = forest.feature_importances_
+    logger.info(f"Starting feature selection using {algo}")
+    model = FEATURE_SELECTION_ALGOS[algo]
+
+    if algo == "lasso" and _y.ndim > 1 and _y.shape[1] > 1:
+        logger.info("Using MultiTaskLassoCV for multi-task output.")
+        model = MultiTaskLassoCV(cv=5, random_state=42)
+
+    model.fit(_X_reshaped, _y)
+
+    if hasattr(model, 'coef_'):  # For Lasso and MultiTaskLasso
+        importances = np.abs(model.coef_).sum(axis=0)
+    elif hasattr(model, 'feature_importances_'):  # For RandomForest and XGBoost
+        importances = model.feature_importances_
+    else:
+        raise ValueError("Model does not have feature importances or coefficients.")
+
     indices = np.argsort(importances)[::-1]
     selected_features_indices = indices[:min(len(indices), max_iter)]
     logger.info(f"Selected feature indices: {selected_features_indices}")
@@ -188,8 +215,8 @@ def perform_feature_selection(_X: np.ndarray, _y: np.ndarray, features: List[str
     return selected_features_indices
 
 
-def split_data(_x: np.ndarray, _y: np.ndarray, batch_size: int, test_size: float = 0.15) -> Tuple[
-    DataLoader, DataLoader]:
+def split_data(_x: np.ndarray, _y: np.ndarray, batch_size: int, test_size: float = 0.15) \
+        -> Tuple[DataLoader, DataLoader]:
     """Split data into training and validation sets."""
     logger.info("Splitting data into training and validation sets")
     x_train, x_val, y_train, y_val = train_test_split(_x, _y, test_size=test_size, random_state=42)

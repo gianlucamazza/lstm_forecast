@@ -9,7 +9,7 @@ import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.model import EarlyStopping, PricePredictor
+from src.model import EarlyStopping, PricePredictor, init_weights
 from src.data_loader import get_data, preprocess_data, split_data
 from src.logger import setup_logger
 from src.config import load_config, update_config
@@ -34,14 +34,16 @@ def initialize_model(config):
         fc_output_size=fc_output_size
     ).to(device)
 
+    model.apply(init_weights)
+
     return model
 
 
-def train_model(symbol, model, train_loader, val_loader, num_epochs, learning_rate, model_dir):
+def train_model(symbol, model, train_loader, val_loader, num_epochs, learning_rate, model_dir, weight_decay):
     """ Train the model using the given data loaders. """
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.5)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
     early_stopping = EarlyStopping(patience=10, delta=0)
 
     best_model = None
@@ -78,6 +80,7 @@ def run_training_epoch(model, data_loader, criterion, optimizer):
         outputs = model(X_batch)
         loss = criterion(outputs, y_batch)
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         optimizer.step()
         total_loss += loss.item()
     return total_loss / len(data_loader)
@@ -142,7 +145,7 @@ def main():
     args = parse_arguments()
     config = load_config(args.config)
     logger.info(f'Loaded configuration from {args.config}')
-
+    logger.info(f'Configuration: {config}')
     if args.rebuild_features:
         rebuild_features(config)
 
@@ -155,7 +158,8 @@ def main():
         look_forward=config.look_forward,
         features=features,
         best_features=config.best_features,
-        max_iter=100
+        max_iter=100,
+        feature_selection_algo=config.feature_selection_algo
     )
 
     update_config_with_best_features(config, selected_features)
@@ -164,7 +168,8 @@ def main():
     model = initialize_model(config)
 
     train_model(config.symbol, model, train_loader, val_loader, num_epochs=config.epochs,
-                learning_rate=config.model_params.get('learning_rate', 0.001), model_dir=config.model_dir)
+                learning_rate=config.model_params.get('learning_rate', 0.001), model_dir=config.model_dir,
+                weight_decay=config.model_params.get('weight_decay', 0.0))
 
     evaluate_model(config.symbol, model, x, y, scaler_prices, scaler_volume, historical_data.index)
 
