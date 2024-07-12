@@ -10,7 +10,7 @@ INDEX_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plotly Graphs</title>
+    <title>LSTM Price Prediction</title>
     <style>
         body {{
             font-family: Arial, sans-serif;
