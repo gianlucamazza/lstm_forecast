@@ -52,14 +52,14 @@ FEATURE_SELECTION_ALGOS = {
 
 
 def get_data(
-    _ticker: str,
-    symbol: str,
-    asset_type: str,
-    start: str,
-    end: str,
-    windows: Dict[str, int],
-    data_sampling_interval: str,
-    data_resampling_frequency: str,
+        _ticker: str,
+        symbol: str,
+        asset_type: str,
+        start: str,
+        end: str,
+        windows: Dict[str, int],
+        data_sampling_interval: str,
+        data_resampling_frequency: str,
 ) -> Tuple[pd.DataFrame, List[str]]:
     """Download and preprocess historical data."""
     end_date = pd.to_datetime(end)
@@ -101,15 +101,15 @@ def save_historical_data(symbol: str, historical_data: pd.DataFrame) -> None:
 
 
 def preprocess_data(
-    symbol: str,
-    historical_data: pd.DataFrame,
-    targets: List[str],
-    look_back: int = 60,
-    look_forward: int = 30,
-    features: List[str] = None,
-    best_features: List[str] = None,
-    max_iter: int = 100,
-    feature_selection_algo: str = "random_forest",
+        symbol: str,
+        historical_data: pd.DataFrame,
+        targets: List[str],
+        look_back: int = 60,
+        look_forward: int = 30,
+        features: List[str] = None,
+        best_features: List[str] = None,
+        max_iter: int = 100,
+        feature_selection_algo: str = "random_forest",
 ) -> Tuple[
     ndarray[Any, dtype[Any]],
     ndarray[Any, dtype[Any]],
@@ -121,6 +121,9 @@ def preprocess_data(
     """Preprocess the historical stock data for training the model."""
     logger.info("Starting preprocessing of data")
     log_preprocessing_params(targets, look_back, look_forward, features)
+
+    features = [f for f in features if f not in targets]  # Remove targets from features
+    logger.info(f"Features after removing targets: {features}")
 
     target_data, feature_data = split_data_into_targets_and_features(
         historical_data, targets, features
@@ -164,7 +167,7 @@ def preprocess_data(
 
 
 def select_features(
-    _x: np.ndarray, _y: np.ndarray, features: List[str], max_iter: int, algo: str
+        _x: np.ndarray, _y: np.ndarray, features: List[str], max_iter: int, algo: str
 ) -> List[int]:
     """Perform feature selection using the selected algorithm."""
     _X_reshaped = _x.reshape(_x.shape[0], -1)
@@ -183,7 +186,6 @@ def select_features(
 
     selected_features_indices = []
 
-    # Gestione separata delle colonne di target per modelli che non supportano output multivariato
     if algo in [
         "gradient_boosting",
         "random_forest",
@@ -195,7 +197,7 @@ def select_features(
         "rfe",
     ]:
         for i in range(_y.shape[1]):
-            logger.info(f"Feature selection for target column {i+1}/{_y.shape[1]}")
+            logger.info(f"Feature selection for target column {i + 1}/{_y.shape[1]}")
             model.fit(_X_reshaped, _y[:, i])
             if hasattr(model, "feature_importances_"):
                 importances = model.feature_importances_
@@ -209,7 +211,6 @@ def select_features(
             indices = np.argsort(importances)[::-1]
             selected_features_indices.extend(indices[: min(len(indices), max_iter)])
 
-        # Rimuovi duplicati e ordina
         selected_features_indices = list(set(selected_features_indices))
         selected_features_indices.sort()
 
@@ -246,7 +247,7 @@ def select_features(
 
 
 def log_preprocessing_params(
-    targets: List[str], look_back: int, look_forward: int, features: List[str]
+        targets: List[str], look_back: int, look_forward: int, features: List[str]
 ) -> None:
     """Log preprocessing parameters."""
     logger.info(f"Targets: {targets}")
@@ -255,7 +256,7 @@ def log_preprocessing_params(
 
 
 def split_data_into_targets_and_features(
-    historical_data: pd.DataFrame, targets: List[str], features: List[str]
+        historical_data: pd.DataFrame, targets: List[str], features: List[str]
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Split historical data into targets and features."""
     target_data = historical_data[targets]
@@ -264,7 +265,7 @@ def split_data_into_targets_and_features(
 
 
 def scale_targets(
-    target_data: pd.DataFrame,
+        target_data: pd.DataFrame,
 ) -> Tuple[np.ndarray, StandardScaler, MinMaxScaler]:
     """Scale target data."""
     scaler_prices = StandardScaler()
@@ -285,11 +286,11 @@ def scale_features(feature_data: pd.DataFrame) -> Tuple[np.ndarray, StandardScal
 
 
 def save_scaled_data(
-    symbol: str,
-    scaled_features: np.ndarray,
-    scaled_targets: np.ndarray,
-    features: List[str],
-    targets: List[str],
+        symbol: str,
+        scaled_features: np.ndarray,
+        scaled_targets: np.ndarray,
+        features: List[str],
+        targets: List[str],
 ) -> None:
     """Save scaled data to CSV."""
     scaled_data = np.concatenate((scaled_features, scaled_targets), axis=1)
@@ -299,16 +300,16 @@ def save_scaled_data(
 
 
 def create_dataset(
-    scaled_features: np.ndarray,
-    scaled_targets: np.ndarray,
-    look_back: int,
-    look_forward: int,
-    targets: List[str],
+        scaled_features: np.ndarray,
+        scaled_targets: np.ndarray,
+        look_back: int,
+        look_forward: int,
+        targets: List[str],
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Create dataset from scaled features and targets."""
     _X, _y = [], []
     for i in range(look_back, len(scaled_features) - look_forward):
-        _X.append(scaled_features[i - look_back : i])
+        _X.append(scaled_features[i - look_back: i])
         _y.append(scaled_targets[i + look_forward - 1, : len(targets)])
 
     _X = np.array(_X)
@@ -330,14 +331,14 @@ def validate_data(_x: np.ndarray, _y: np.ndarray) -> None:
 
 
 def select_best_features(
-    _x: np.ndarray,
-    _y: np.ndarray,
-    best_features: List[str],
-    features: List[str],
-    scaled_features: np.ndarray,
-    scaler_features: StandardScaler,
-    scaler_prices: StandardScaler,
-    scaler_volume: MinMaxScaler,
+        _x: np.ndarray,
+        _y: np.ndarray,
+        best_features: List[str],
+        features: List[str],
+        scaled_features: np.ndarray,
+        scaler_features: StandardScaler,
+        scaler_prices: StandardScaler,
+        scaler_volume: MinMaxScaler,
 ) -> Tuple[
     np.ndarray, np.ndarray, StandardScaler, StandardScaler, MinMaxScaler, List[str]
 ]:
@@ -358,7 +359,7 @@ def validate_feature_indices(feature_indices: List[int], max_index: int) -> None
 
 
 def split_data(
-    _x: np.ndarray, _y: np.ndarray, batch_size: int, test_size: float = 0.15
+        _x: np.ndarray, _y: np.ndarray, batch_size: int, test_size: float = 0.15
 ) -> Tuple[DataLoader, DataLoader]:
     """Split data into training and validation sets."""
     logger.info("Splitting data into training and validation sets")
