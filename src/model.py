@@ -1,13 +1,14 @@
+from typing import List, Tuple
+
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
 from sklearn.preprocessing import StandardScaler
-from typing import List, Tuple
 
 from src.logger import setup_logger
 
-logger = setup_logger('model_logger', 'logs/model.log')
-device: torch.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+logger = setup_logger("model_logger", "logs/model.log")
+device: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def init_weights(m):
@@ -16,11 +17,11 @@ def init_weights(m):
         m.bias.data.fill_(0.01)
     elif isinstance(m, nn.LSTM):
         for name, param in m.named_parameters():
-            if 'weight_ih' in name:
+            if "weight_ih" in name:
                 nn.init.xavier_uniform_(param.data)
-            elif 'weight_hh' in name:
+            elif "weight_hh" in name:
                 nn.init.xavier_uniform_(param.data)
-            elif 'bias' in name:
+            elif "bias" in name:
                 param.data.fill_(0)
 
 
@@ -38,7 +39,14 @@ class PricePredictor(nn.Module):
         Fully connected layer for the final output.
     """
 
-    def __init__(self, input_size: int, hidden_size: int, num_layers: int, dropout: float, fc_output_size: int) -> None:
+    def __init__(
+        self,
+        input_size: int,
+        hidden_size: int,
+        num_layers: int,
+        dropout: float,
+        fc_output_size: int,
+    ) -> None:
         """
         Initializes the PricePredictor model.
 
@@ -57,11 +65,17 @@ class PricePredictor(nn.Module):
         """
         super(PricePredictor, self).__init__()
         logger.info(
-            f"Initializing PricePredictor with input size: {input_size}, hidden size: {hidden_size}, num layers: {num_layers}, dropout: {dropout}")
+            f"Initializing PricePredictor with input size: {input_size}, hidden size: {hidden_size}, num layers: {num_layers}, dropout: {dropout}"
+        )
         self.hidden_size = hidden_size
         self.num_layers = num_layers
-        self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=True,
-                            dropout=dropout)
+        self.lstm = nn.LSTM(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            batch_first=True,
+            dropout=dropout,
+        )
         self.dropout = nn.Dropout(dropout)
         self.fc = nn.Linear(hidden_size, fc_output_size)
 
@@ -92,7 +106,9 @@ class PricePredictor(nn.Module):
         return out
 
 
-def load_model(symbol: str, path: str, input_shape: int, model_params: dict) -> nn.Module:
+def load_model(
+    symbol: str, path: str, input_shape: int, model_params: dict
+) -> nn.Module:
     """
     Load the trained model from a given path.
 
@@ -107,22 +123,29 @@ def load_model(symbol: str, path: str, input_shape: int, model_params: dict) -> 
     """
     model = PricePredictor(
         input_size=input_shape,
-        hidden_size=model_params['hidden_size'],
-        num_layers=model_params['num_layers'],
-        dropout=model_params['dropout'],
-        fc_output_size=model_params['fc_output_size']
+        hidden_size=model_params["hidden_size"],
+        num_layers=model_params["num_layers"],
+        dropout=model_params["dropout"],
+        fc_output_size=model_params["fc_output_size"],
     ).to(device)
     model.device = device
     logger.info(f"Model: {model}")
     logger.info(f"Loading model from {path}/{symbol}_model.pth")
-    model.load_state_dict(torch.load(path + f'/{symbol}_model.pth', map_location=device))
+    model.load_state_dict(
+        torch.load(path + f"/{symbol}_model.pth", map_location=device)
+    )
     model.eval()
     logger.info("Model loaded and set to evaluation mode.")
     return model
 
 
-def predict(model: nn.Module, x_data: np.ndarray, scaler: StandardScaler, future_days: int, features: List) -> \
-        Tuple[np.ndarray, np.ndarray]:
+def predict(
+    model: nn.Module,
+    x_data: np.ndarray,
+    scaler: StandardScaler,
+    future_days: int,
+    features: List,
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Make predictions using the trained model.
 
@@ -143,8 +166,11 @@ def predict(model: nn.Module, x_data: np.ndarray, scaler: StandardScaler, future
 
         predictions_reshaped = np.zeros((x_data.shape[0], len(features) + 1))
         predictions_reshaped[:, 0] = predictions[:, 0]
-        predictions_reshaped = np.pad(predictions_reshaped,
-                                      ((0, 0), (0, len(scaler.scale_) - len(predictions_reshaped[0]))), 'constant')
+        predictions_reshaped = np.pad(
+            predictions_reshaped,
+            ((0, 0), (0, len(scaler.scale_) - len(predictions_reshaped[0]))),
+            "constant",
+        )
         predictions = scaler.inverse_transform(predictions_reshaped)[:, 0]
 
         future_predictions = []
@@ -157,13 +183,17 @@ def predict(model: nn.Module, x_data: np.ndarray, scaler: StandardScaler, future
             new_row[0, 0] = future_pred
             new_row[0, 1:] = x_data[-1, -1, 1:]
 
-            x_data = np.append(x_data, [np.append(x_data[-1][1:], new_row, axis=0)], axis=0)
+            x_data = np.append(
+                x_data, [np.append(x_data[-1][1:], new_row, axis=0)], axis=0
+            )
 
         future_predictions_reshaped = np.zeros((future_days, len(features) + 1))
         future_predictions_reshaped[:, 0] = future_predictions
-        future_predictions_reshaped = np.pad(future_predictions_reshaped,
-                                             ((0, 0), (0, len(scaler.scale_) - len(future_predictions_reshaped[0]))),
-                                             'constant')
+        future_predictions_reshaped = np.pad(
+            future_predictions_reshaped,
+            ((0, 0), (0, len(scaler.scale_) - len(future_predictions_reshaped[0]))),
+            "constant",
+        )
         future_predictions = scaler.inverse_transform(future_predictions_reshaped)[:, 0]
 
     return predictions, future_predictions
@@ -203,7 +233,9 @@ class EarlyStopping:
         self.counter = 0
         self.best_loss = None
         self.early_stop = False
-        logger.info(f"EarlyStopping initialized with patience={patience}, delta={delta}")
+        logger.info(
+            f"EarlyStopping initialized with patience={patience}, delta={delta}"
+        )
 
     def __call__(self, val_loss):
         """
@@ -223,10 +255,14 @@ class EarlyStopping:
             logger.info(f"Initial validation loss set to {val_loss:.6f}")
         elif val_loss > self.best_loss - self.delta:
             self.counter += 1
-            logger.info(f"No improvement in validation loss. Counter: {self.counter}/{self.patience}")
+            logger.info(
+                f"No improvement in validation loss. Counter: {self.counter}/{self.patience}"
+            )
             if self.counter >= self.patience:
                 self.early_stop = True
         else:
             self.best_loss = val_loss
             self.counter = 0
-            logger.info(f"Improvement in validation loss. Best loss updated to {val_loss:.6f}")
+            logger.info(
+                f"Improvement in validation loss. Best loss updated to {val_loss:.6f}"
+            )

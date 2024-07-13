@@ -45,18 +45,43 @@ rm -rf reports/*.csv
 # Train the model
 if [ "$SKIP_TRAINING" = true ]; then
   echo "Skipping training..."
+  TRAIN_SUCCESS=true
 elif [ "$REBUILD_FEATURES" = true ]; then
   echo "Rebuilding features..."
   python src/train.py --config config.json --rebuild-features
+  if [ $? -eq 0 ]; then
+    TRAIN_SUCCESS=true
+  else
+    TRAIN_SUCCESS=false
+  fi
 else
   echo "Training the model..."
   python src/train.py --config config.json
+  if [ $? -eq 0 ]; then
+    TRAIN_SUCCESS=true
+  else
+    TRAIN_SUCCESS=false
+  fi
 fi
 
-# Run prediction script
-echo "Running prediction..."
-python src/predict.py --config config.json
+# Run prediction script only if training was successful
+if [ "$TRAIN_SUCCESS" = true ]; then
+  echo "Running prediction..."
+  python src/predict.py --config config.json
+  if [ $? -eq 0 ]; then
+    PREDICT_SUCCESS=true
+  else
+    PREDICT_SUCCESS=false
+  fi
+else
+  echo "Training failed, skipping prediction and HTML update."
+  PREDICT_SUCCESS=false
+fi
 
-# Update HTML/docs for the prediction
-echo "Updating HTML..."
-python src/generate_html.py
+# Update HTML/docs for the prediction only if prediction was successful
+if [ "$PREDICT_SUCCESS" = true ]; then
+  echo "Updating HTML..."
+  python src/generate_html.py
+else
+  echo "Prediction failed, skipping HTML update."
+fi
