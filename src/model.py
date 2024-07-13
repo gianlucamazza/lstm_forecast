@@ -65,7 +65,8 @@ class PricePredictor(nn.Module):
         """
         super(PricePredictor, self).__init__()
         logger.info(
-            f"Initializing PricePredictor with input size: {input_size}, hidden size: {hidden_size}, num layers: {num_layers}, dropout: {dropout}"
+            f"Initializing PricePredictor with input size: {input_size}, hidden size: {hidden_size}, "
+            f"num layers: {num_layers}, dropout: {dropout}"
         )
         self.hidden_size = hidden_size
         self.num_layers = num_layers

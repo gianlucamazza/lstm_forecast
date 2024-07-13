@@ -1,4 +1,7 @@
+from typing import List, Tuple
+
 import pandas as pd
+from ta.momentum import RSIIndicator, StochasticOscillator
 from ta.trend import (
     SMAIndicator,
     EMAIndicator,
@@ -8,13 +11,11 @@ from ta.trend import (
     CCIIndicator,
     IchimokuIndicator,
 )
-from ta.momentum import RSIIndicator, StochasticOscillator
 from ta.volatility import BollingerBands
 from ta.volume import OnBalanceVolumeIndicator, ChaikinMoneyFlowIndicator
-from src.logger import setup_logger
-from typing import List, Tuple
 
-# Configura il logger
+from src.logger import setup_logger
+
 logger = setup_logger("feature_engineering_logger", "logs/feature_engineering.log")
 
 
@@ -23,6 +24,18 @@ def calculate_common_indicators(
 ) -> pd.DataFrame:
     """
     Calculate common technical indicators for all asset types.
+
+    Parameters
+    ----------
+    historical_data : pd.DataFrame
+        Historical data containing OHLCV values.
+    windows : dict
+        Dictionary containing window sizes for technical indicators.
+
+    Returns
+    -------
+    pd.DataFrame
+        Historical data with calculated technical indicators.
     """
     logger.info("Calculating common indicators")
 
@@ -68,6 +81,25 @@ def calculate_specific_indicators(
 ) -> pd.DataFrame:
     """
     Calculate specific technical indicators based on the asset type.
+
+    Parameters
+    ----------
+    historical_data : pd.DataFrame
+        Historical data containing OHLCV values.
+    windows : dict
+        Dictionary containing window sizes for technical indicators.
+    asset_type : str
+        Type of asset for which the indicators need to be calculated.
+
+    Returns
+    -------
+    pd.DataFrame
+        Historical data with calculated technical indicators.
+
+    Raises
+    ------
+    ValueError
+        If the asset type is not supported.
     """
     logger.info(f"Calculating specific indicators for {asset_type}")
 
@@ -127,6 +159,16 @@ def calculate_specific_indicators(
 def calculate_ichimoku(historical_data: pd.DataFrame) -> pd.DataFrame:
     """
     Calculate Ichimoku indicators for all asset types.
+
+    Parameters
+    ----------
+    historical_data : pd.DataFrame
+        Historical data containing OHLCV values.
+
+    Returns
+    -------
+    pd.DataFrame
+        Historical data with calculated Ichimoku indicators.
     """
     logger.info("Calculating Ichimoku indicators")
 
@@ -150,6 +192,22 @@ def calculate_technical_indicators(
 ) -> Tuple[pd.DataFrame, List[str]]:
     """
     Calculate technical indicators based on asset type and add them to the historical data.
+
+    Parameters
+    ----------
+    historical_data : pd.DataFrame
+        Historical data containing OHLCV values.
+    windows : dict
+        Dictionary containing window sizes for technical indicators.
+    asset_type : str
+        Type of asset for which the indicators need to be calculated.
+    frequency : str
+        Frequency of the data.
+
+    Returns
+    -------
+    pd.DataFrame
+        Historical data with calculated technical indicators.
     """
     logger.info(f"Starting calculation of technical indicators for {asset_type}")
     historical_data.index = pd.to_datetime(historical_data.index)

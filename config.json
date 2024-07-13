@@ -1,83 +1,61 @@
 {
-  "ticker": "BTC-USD",
-  "symbol": "BTCUSD",
-  "asset_type": "commodity",
-  "data_sampling_interval": "1d",
-  "start_date": "2013-01-01",
-  "log_dir": "logs",
-  "model_params": {
-    "hidden_size": 128,
-    "num_layers": 2,
-    "dropout": 0.2,
-    "learning_rate": 0.001,
-    "fc_output_size": 5
-  },
-  "feature_selection_algo": "lasso",
-  "look_back": 120,
-  "look_forward": 30,
-  "epochs": 150,
-  "batch_size": 32,
-  "model_dir": "models",
-  "indicator_windows": {
-    "SMA_50": 50,
-    "SMA_200": 200,
-    "EMA": 20,
-    "MACD": [
-      12,
-      26,
-      9
+    "ticker": "BTC-USD",
+    "symbol": "BTCUSD",
+    "asset_type": "commodity",
+    "data_sampling_interval": "1d",
+    "start_date": "2013-01-01",
+    "log_dir": "logs",
+    "model_params": {
+        "hidden_size": 128,
+        "num_layers": 2,
+        "dropout": 0.2,
+        "learning_rate": 0.001,
+        "fc_output_size": 5
+    },
+    "feature_selection_algo": "random_forest",
+    "look_back": 120,
+    "look_forward": 30,
+    "epochs": 150,
+    "batch_size": 32,
+    "model_dir": "models",
+    "indicator_windows": {
+        "SMA_50": 50,
+        "SMA_200": 200,
+        "EMA": 20,
+        "MACD": [
+            12,
+            26,
+            9
+        ],
+        "RSI": 14,
+        "Bollinger": 20,
+        "ATR": 14,
+        "Stochastic": 14,
+        "Aroon": 25,
+        "Williams_R": 14,
+        "CMF": 20,
+        "CCI": 20,
+        "Ichimoku": {
+            "window1": 9,
+            "window2": 26,
+            "window3": 52
+        }
+    },
+    "data_resampling_frequency": "D",
+    "targets": [
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume"
     ],
-    "RSI": 14,
-    "Bollinger": 20,
-    "ATR": 14,
-    "Stochastic": 14,
-    "Aroon": 25,
-    "Williams_R": 14,
-    "CMF": 20,
-    "CCI": 20,
-    "Ichimoku": {
-      "window1": 9,
-      "window2": 26,
-      "window3": 52
-    }
-  },
-  "data_resampling_frequency": "D",
-  "targets": [
-    "Open",
-    "High",
-    "Low",
-    "Close",
-    "Volume"
-  ],
-  "backtesting_params": {
-    "initial_cash": 100000,
-    "trading_fee": 0.001,
-    "take_profit": 1.5,
-    "stop_loss": 1.2,
-    "trade_allocation": 0.1,
-    "max_open_trades": 5
-  },
-  "best_features": [
-    "Open",
-    "High",
-    "Low",
-    "Close",
-    "Adj Close",
-    "Volume",
-    "SMA_50",
-    "SMA_200",
-    "EMA",
-    "MACD",
-    "MACD_Signal",
-    "RSI",
-    "Bollinger_High",
-    "Bollinger_Low",
-    "ADX",
-    "CCI",
-    "CMF",
-    "Ichimoku_Tenkan",
-    "Ichimoku_Kijun",
-    "Ichimoku_Senkou_Span_A",
-    "Ichimoku_Senkou_Span_B"
-  ]
+    "backtesting_params": {
+        "initial_cash": 100000,
+        "trading_fee": 0.001,
+        "take_profit": 1.5,
+        "stop_loss": 1.2,
+        "trade_allocation": 0.1,
+        "max_open_trades": 5
+    },
+    "best_features": []
 }

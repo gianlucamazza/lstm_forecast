@@ -32,9 +32,9 @@ FEATURE_SELECTION_ALGOS = {
     ),
     "gradient_boosting": GradientBoostingRegressor(n_estimators=100, random_state=42),
     "extra_trees": ExtraTreesRegressor(n_estimators=100, random_state=42, max_depth=10),
-    "lasso": LassoCV(cv=5, random_state=42, max_iter=10000, tol=1e-5),
+    "lasso": LassoCV(cv=5, random_state=42, max_iter=10000, tol=1e-6),
     "multi_task_lasso": MultiTaskLassoCV(
-        cv=5, random_state=42, max_iter=10000, tol=1e-5
+        cv=5, random_state=42, max_iter=20000, tol=1e-6
     ),
     "xgboost": XGBRegressor(n_estimators=100, random_state=42),
     "lightgbm": LGBMRegressor(n_estimators=100, random_state=42),
@@ -65,7 +65,7 @@ def get_data(
     end_date = pd.to_datetime(end)
 
     if data_sampling_interval != "1d":
-        adjust_start_date_if_needed(start, end, end_date)
+        start = adjust_start_date_if_needed(start, end, end_date)
 
     logger.info(f"Downloading data for {_ticker} from {start} to {end}")
     historical_data = yf.download(
@@ -89,8 +89,7 @@ def adjust_start_date_if_needed(start: str, end: str, end_date: pd.Timestamp) ->
             "Interval is not 1d and the time range is more than 1 year. Changing the start date to 1 "
             "year before the end date."
         )
-        start = end_date - pd.DateOffset(years=1)
-        start = start.strftime("%Y-%m-%d")
+        start = (end_date - pd.DateOffset(years=1)).strftime("%Y-%m-%d")
         logger.info(f"New start date: {start}")
     return start
 
@@ -117,7 +116,7 @@ def preprocess_data(
     StandardScaler,
     StandardScaler,
     MinMaxScaler,
-    list[str],
+    List[str],
 ]:
     """Preprocess the historical stock data for training the model."""
     logger.info("Starting preprocessing of data")
@@ -182,27 +181,61 @@ def select_features(
     logger.info(f"Starting feature selection using {algo}")
     model = FEATURE_SELECTION_ALGOS[algo]
 
-    if algo == "lasso" and _y.ndim > 1 and _y.shape[1] > 1:
-        logger.info("Using MultiTaskLassoCV for multi-task output.")
-        model = MultiTaskLassoCV(cv=5, random_state=42)
+    selected_features_indices = []
 
-    if algo == "rfe":
-        model = RFE(estimator=model, n_features_to_select=max_iter)
+    # Gestione separata delle colonne di target per modelli che non supportano output multivariato
+    if algo in [
+        "gradient_boosting",
+        "random_forest",
+        "extra_trees",
+        "xgboost",
+        "lightgbm",
+        "catboost",
+        "svr",
+        "rfe",
+    ]:
+        for i in range(_y.shape[1]):
+            logger.info(f"Feature selection for target column {i+1}/{_y.shape[1]}")
+            model.fit(_X_reshaped, _y[:, i])
+            if hasattr(model, "feature_importances_"):
+                importances = model.feature_importances_
+            elif hasattr(model, "ranking_"):  # For RFE
+                importances = -model.ranking_
+            else:
+                raise ValueError(
+                    "Model does not have feature importances or coefficients."
+                )
 
-    model.verbose = 1
-    model.fit(_X_reshaped, _y)
+            indices = np.argsort(importances)[::-1]
+            selected_features_indices.extend(indices[: min(len(indices), max_iter)])
 
-    if hasattr(model, "coef_"):  # For Lasso and MultiTaskLasso
-        importances = np.abs(model.coef_).sum(axis=0)
-    elif hasattr(model, "feature_importances_"):  # For RandomForest and XGBoost
-        importances = model.feature_importances_
-    elif hasattr(model, "ranking_"):  # For RFE
-        importances = -model.ranking_
+        # Rimuovi duplicati e ordina
+        selected_features_indices = list(set(selected_features_indices))
+        selected_features_indices.sort()
+
     else:
-        raise ValueError("Model does not have feature importances or coefficients.")
+        if algo == "lasso" and _y.ndim > 1 and _y.shape[1] > 1:
+            logger.info("Using MultiTaskLassoCV for multi-task output.")
+            model = MultiTaskLassoCV(cv=5, random_state=42, max_iter=20000, tol=1e-6)
 
-    indices = np.argsort(importances)[::-1]
-    selected_features_indices = indices[: min(len(indices), max_iter)]
+        if algo == "rfe":
+            model = RFE(estimator=model, n_features_to_select=max_iter)
+
+        model.verbose = 1
+        model.fit(_X_reshaped, _y)
+
+        if hasattr(model, "coef_"):  # For Lasso and MultiTaskLasso
+            importances = np.abs(model.coef_).sum(axis=0)
+        elif hasattr(model, "feature_importances_"):  # For RandomForest and XGBoost
+            importances = model.feature_importances_
+        elif hasattr(model, "ranking_"):  # For RFE
+            importances = -model.ranking_
+        else:
+            raise ValueError("Model does not have feature importances or coefficients.")
+
+        indices = np.argsort(importances)[::-1]
+        selected_features_indices = indices[: min(len(indices), max_iter)].tolist()
+
     logger.info(f"Selected feature indices: {selected_features_indices}")
 
     max_index = len(features) - 1
@@ -306,7 +339,7 @@ def select_best_features(
     scaler_prices: StandardScaler,
     scaler_volume: MinMaxScaler,
 ) -> Tuple[
-    np.ndarray, np.ndarray, StandardScaler, StandardScaler, MinMaxScaler, list[str]
+    np.ndarray, np.ndarray, StandardScaler, StandardScaler, MinMaxScaler, List[str]
 ]:
     """Select predefined best features."""
     logger.info(f"Using predefined best features: {best_features}")

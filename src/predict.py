@@ -80,7 +80,8 @@ def predict(
 
             if _x[-1][1:].shape[1] != new_row.shape[1]:
                 logger.debug(
-                    f"Adjusting shapes for concatenation. _x[-1][1:].shape: {_x[-1][1:].shape}, new_row.shape: {new_row.shape}"
+                    f"Adjusting shapes for concatenation. _x[-1][1:].shape: {_x[-1][1:].shape}, "
+                    f"new_row.shape: {new_row.shape}"
                 )
                 if _x[-1][1:].shape[1] < new_row.shape[1]:
                     new_row = new_row[:, : _x[-1][1:].shape[1]]

@@ -1,25 +1,39 @@
-import torch
-import torch.optim as optim
-import torch.nn as nn
-import matplotlib.pyplot as plt
-import numpy as np
+
 import argparse
 import os
 import sys
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.model import EarlyStopping, PricePredictor, init_weights
-from src.data_loader import get_data, preprocess_data, split_data
 from src.logger import setup_logger
+from src.data_loader import get_data, preprocess_data, split_data
 from src.config import load_config, update_config
+
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 logger = setup_logger("train_logger", "logs/train.log")
 
 
 def initialize_model(config):
-    """Initialize the model with the given configuration."""
+    """
+    Initialize the model with the given configuration.
+
+    Parameters
+    ----------
+    config : Config
+        The configuration object.
+
+    Returns
+    -------
+    PricePredictor
+        The initialized model.
+    """
     hidden_size = config.model_params.get("hidden_size", 64)
     num_layers = config.model_params.get("num_layers", 2)
     dropout = config.model_params.get("dropout", 0.2)
@@ -64,7 +78,8 @@ def train_model(
 
     model.train()
     for epoch in range(num_epochs):
-        train_loss = run_training_epoch(model, train_loader, criterion, optimizer)
+        train_loss = run_training_epoch(
+            model, train_loader, criterion, optimizer)
         val_loss = run_validation_epoch(model, val_loader, criterion)
 
         scheduler.step(val_loss)
@@ -89,10 +104,10 @@ def run_training_epoch(model, data_loader, criterion, optimizer):
     """Run a single training epoch using the given data loader."""
     model.train()
     total_loss = 0.0
-    for X_batch, y_batch in data_loader:
-        X_batch, y_batch = X_batch.to(device), y_batch.to(device)
+    for x_batch, y_batch in data_loader:
+        x_batch, y_batch = x_batch.to(device), y_batch.to(device)
         optimizer.zero_grad()
-        outputs = model(X_batch)
+        outputs = model(x_batch)
         loss = criterion(outputs, y_batch)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
@@ -107,7 +122,8 @@ def run_validation_epoch(model, data_loader, criterion):
     total_loss = 0.0
     with torch.no_grad():
         for X_val_batch, y_val_batch in data_loader:
-            X_val_batch, y_val_batch = X_val_batch.to(device), y_val_batch.to(device)
+            X_val_batch, y_val_batch = X_val_batch.to(
+                device), y_val_batch.to(device)
             val_outputs = model(X_val_batch)
             total_loss += criterion(val_outputs, y_val_batch).item()
     return total_loss / len(data_loader)
@@ -125,9 +141,12 @@ def evaluate_model(symbol, model, X, y, scaler_prices, scaler_volume, dates):
     model.eval()
     with torch.no_grad():
         predictions = (
-            model(torch.tensor(X, dtype=torch.float32).to(device)).cpu().numpy()
-        )
-        predictions = inverse_transform(predictions, scaler_prices, scaler_volume)
+            model(
+                torch.tensor(
+                    X,
+                    dtype=torch.float32).to(device)).cpu().numpy())
+        predictions = inverse_transform(
+            predictions, scaler_prices, scaler_volume)
         y_true = inverse_transform(y, scaler_prices, scaler_volume)
 
     plot_evaluation(symbol, predictions, y_true, dates)
@@ -144,12 +163,13 @@ def inverse_transform(data, scaler_prices, scaler_volume):
 
 
 def plot_evaluation(symbol, predictions, y_true, dates):
-    aligned_dates = dates[-len(y_true) :]
+    aligned_dates = dates[-len(y_true):]
 
     plt.figure(figsize=(14, 7))
     plt.title(f"{symbol} - Model Evaluation")
     plt.plot(aligned_dates, y_true[:, 0], label="True Price", color="blue")
-    plt.plot(aligned_dates, predictions[:, 0], label="Predicted Prices", color="red")
+    plt.plot(aligned_dates, predictions[:, 0],
+             label="Predicted Prices", color="red")
     plt.xlabel("Date")
     plt.ylabel("Price")
     plt.legend()
@@ -200,15 +220,22 @@ def main():
     )
 
     evaluate_model(
-        config.symbol, model, x, y, scaler_prices, scaler_volume, historical_data.index
-    )
+        config.symbol,
+        model,
+        x,
+        y,
+        scaler_prices,
+        scaler_volume,
+        historical_data.index)
 
 
 def parse_arguments():
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument(
-        "--config", type=str, required=True, help="Path to configuration JSON file"
-    )
+        "--config",
+        type=str,
+        required=True,
+        help="Path to configuration JSON file")
     arg_parser.add_argument(
         "--rebuild-features", action="store_true", help="Rebuild features"
     )
