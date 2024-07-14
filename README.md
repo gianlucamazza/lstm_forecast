@@ -6,7 +6,7 @@ This project aims to predict stock prices using Long Short-Term Memory (LSTM) ne
 The model is trained on historical stock data, which includes various technical indicators.
 The pipeline includes data preprocessing, feature engineering, model training, and prediction.
 
-## Features
+## Pipeline
 
 - **Data Loading**: Load historical stock data using the `yfinance` library.
 - **Data Preprocessing**: Preprocess the data by filling missing values and resampling the data.
@@ -247,12 +247,11 @@ These technical indicators are calculated using the `ta` library and added to hi
 ### Hyperparameters Optimization [optuna]
 
 The hyperparameters can be optimized using the `hyperparameter_optimization.py` script.
+The script uses the Optuna library to optimize the hyperparameters of the LSTM model.
 
 ```bash
 python src/hyperparameter_optimization.py --config config.json
 ```
-
-The script uses the Optuna library to optimize the hyperparameters of the LSTM model.
 
 ### Training
 
@@ -270,60 +269,9 @@ To predict stock prices, run:
 python src/predict.py --config config.json
 ```
 
-### Run all
-
-To run the entire pipeline, run:
-
-Options:
-- `--config`: Path to the config file.
-- `--skip-training`: Skip the training step.
-- `--rebuild-features`: Rebuild the features.
-
-```bash
-run.sh 
-```
-
-## Pipeline
-
-The pipeline consists of the following steps:
-
-1. **Data Loading**: Load historical stock data using the `yfinance` library.
-2. **Data Preprocessing**: Preprocess the data by filling missing values and resampling the data.
-3. **Feature Engineering**: Calculate technical indicators and add them to the dataset.
-4. **Feature Selection**: Select the best features using the `feature_engineering.py` script.
-5. **Model Training**: Train the LSTM model using the selected features.
-6. **Model Evaluation**: Evaluate the model using the Mean Squared Error (MSE) and Mean Absolute Error (MAE) metrics.
-7. **Prediction**: Generate predictions using the trained model.
-
-#### Logs
-
-`logs/data_loader.log` contains the data loading and preprocessing logs.
-
-`logs/feature_engineering.log` contains the feature engineering logs.
-
-`logs/model.log` contains the model training logs.
-
-`logs/train.log` contains the training logs.
-
-`logs/predict.log` contains the prediction logs.
-
-`logs/main.log` contains the main logs.
-
 #### Models
 
 `models/{symbol}_model.pth` contains the trained model.
-
-#### Evaluation
-
-`png/{symbol}_evaluation.png` contains the training and validation loss.
-
-#### Predictions
-
-`png/{symbol}_full.png` contains the prediction plot for the entire dataset.
-
-`png/{symbol}_365_days.png` contains the prediction plot zoomed in on the last 365 days.
-
-`png/{symbol}_90_days.png` contains the prediction plot zoomed in on the last 90 days.
 
 ## Contributors
 
