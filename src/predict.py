@@ -277,6 +277,7 @@ def main(config_path: str) -> None:
     x, y, scaler_features, scaler_prices, scaler_volume, selected_features = (
         preprocess_data(
             symbol=config.symbol,
+            data_sampling_interval=config.data_sampling_interval,
             historical_data=historical_data,
             targets=config.targets,
             look_back=config.look_back,

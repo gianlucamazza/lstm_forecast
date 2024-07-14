@@ -1,22 +1,11 @@
 from typing import List, Tuple, Dict, Any
-
 import numpy as np
 import pandas as pd
 import torch
 import yfinance as yf
-from catboost import CatBoostRegressor
-from lightgbm import LGBMRegressor
 from numpy import ndarray, dtype
-from sklearn.ensemble import (
-    RandomForestRegressor,
-    GradientBoostingRegressor,
-    ExtraTreesRegressor,
-)
-from sklearn.feature_selection import RFE
-from sklearn.linear_model import LassoCV, MultiTaskLassoCV
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from sklearn.svm import SVR
 from torch.utils.data import DataLoader, TensorDataset
 from xgboost import XGBRegressor
 
@@ -24,31 +13,6 @@ from src.feature_engineering import calculate_technical_indicators
 from src.logger import setup_logger
 
 logger = setup_logger("data_loader_logger", "logs/data_loader.log")
-
-FEATURE_SELECTION_ALGOS = {
-    "none": "none",  # No feature selection
-    "random_forest": RandomForestRegressor(
-        n_estimators=100, random_state=42, max_depth=10
-    ),
-    "gradient_boosting": GradientBoostingRegressor(n_estimators=100, random_state=42),
-    "extra_trees": ExtraTreesRegressor(n_estimators=100, random_state=42, max_depth=10),
-    "lasso": LassoCV(cv=5, random_state=42, max_iter=10000, tol=1e-6),
-    "multi_task_lasso": MultiTaskLassoCV(
-        cv=5, random_state=42, max_iter=20000, tol=1e-6
-    ),
-    "xgboost": XGBRegressor(n_estimators=100, random_state=42),
-    "lightgbm": LGBMRegressor(n_estimators=100, random_state=42),
-    "catboost": CatBoostRegressor(
-        iterations=100, random_seed=42, logging_level="Silent"
-    ),
-    "svr": RFE(estimator=SVR(kernel="linear"), n_features_to_select=10),
-    "rfe": RFE(
-        estimator=RandomForestRegressor(
-            n_estimators=100, random_state=42, max_depth=10
-        ),
-        n_features_to_select=10,
-    ),
-}
 
 
 def get_data(
@@ -61,23 +25,19 @@ def get_data(
         data_sampling_interval: str,
         data_resampling_frequency: str,
 ) -> Tuple[pd.DataFrame, List[str]]:
-    """Download and preprocess historical data."""
-    end_date = pd.to_datetime(end)
-
-    if data_sampling_interval != "1d":
-        start = adjust_start_date_if_needed(start, end, end_date)
-
+    """Download historical stock data and calculate technical indicators."""
     logger.info(f"Downloading data for {_ticker} from {start} to {end}")
     historical_data = yf.download(
         _ticker, start=start, end=end, interval=data_sampling_interval
     )
+
     historical_data, features = calculate_technical_indicators(
         historical_data,
         windows=windows,
         asset_type=asset_type,
         frequency=data_resampling_frequency,
     )
-    save_historical_data(symbol, historical_data)
+    save_historical_data(symbol, data_sampling_interval, historical_data)
     return historical_data, features
 
 
@@ -94,22 +54,22 @@ def adjust_start_date_if_needed(start: str, end: str, end_date: pd.Timestamp) ->
     return start
 
 
-def save_historical_data(symbol: str, historical_data: pd.DataFrame) -> None:
+def save_historical_data(symbol: str, interval: str,historical_data: pd.DataFrame) -> None:
     """Save historical data to CSV."""
-    historical_data.to_csv(f"data/{symbol}.csv")
+    historical_data.to_csv(f"data/{symbol}_{interval}.csv")
     logger.info(f"Data for {symbol} saved to data/{symbol}.csv")
 
 
 def preprocess_data(
         symbol: str,
+        data_sampling_interval: str,
         historical_data: pd.DataFrame,
         targets: List[str],
         look_back: int = 60,
         look_forward: int = 30,
         features: List[str] = None,
+        disabled_features: List[str] = None,
         best_features: List[str] = None,
-        max_iter: int = 100,
-        feature_selection_algo: str = "random_forest",
 ) -> Tuple[
     ndarray[Any, dtype[Any]],
     ndarray[Any, dtype[Any]],
@@ -122,8 +82,10 @@ def preprocess_data(
     logger.info("Starting preprocessing of data")
     log_preprocessing_params(targets, look_back, look_forward, features)
 
-    features = [f for f in features if f not in targets]  # Remove targets from features
-    logger.info(f"Features after removing targets: {features}")
+    features = [f for f in features if f not in targets]
+    if disabled_features:
+        features = [f for f in features if f not in disabled_features]
+    logger.info(f"Features after removing targets and disabled features: {features}")
 
     target_data, feature_data = split_data_into_targets_and_features(
         historical_data, targets, features
@@ -131,7 +93,7 @@ def preprocess_data(
     scaled_targets, scaler_prices, scaler_volume = scale_targets(target_data)
     scaled_features, scaler_features = scale_features(feature_data)
 
-    save_scaled_data(symbol, scaled_features, scaled_targets, features, targets)
+    save_scaled_data(symbol, data_sampling_interval, scaled_features, scaled_targets, features, targets)
 
     _X, _y = create_dataset(
         scaled_features, scaled_targets, look_back, look_forward, targets
@@ -152,7 +114,7 @@ def preprocess_data(
         )
 
     selected_features = select_features(
-        _X, _y, features, max_iter, feature_selection_algo
+        _X, _y
     )
     _X_selected = _X[:, :, selected_features]
 
@@ -166,84 +128,22 @@ def preprocess_data(
     )
 
 
-def select_features(
-        _x: np.ndarray, _y: np.ndarray, features: List[str], max_iter: int, algo: str
-) -> List[int]:
-    """Perform feature selection using the selected algorithm."""
+def select_features(_x: np.ndarray, _y: np.ndarray) -> ndarray:
+    """Perform feature selection using XGBoost and return the selected feature indices."""
     _X_reshaped = _x.reshape(_x.shape[0], -1)
     logger.info(f"Shape of _X_reshaped: {_X_reshaped.shape}")
 
-    if algo not in FEATURE_SELECTION_ALGOS:
-        logger.error(f"Feature selection algorithm {algo} is not recognized.")
-        raise ValueError(f"Feature selection algorithm {algo} is not recognized.")
+    model = XGBRegressor()
+    model.fit(_X_reshaped, _y)
+    feature_importances = model.feature_importances_
+    logger.info(f"Feature importances: {feature_importances}")
 
-    if algo == "none":
-        logger.info("No feature selection algorithm specified. Using all features.")
-        return list(range(len(features)))
+    num_features = _x.shape[2]
+    selected_features_indices = np.argsort(feature_importances)[::-1][:num_features]
+    original_feature_indices = np.unique(selected_features_indices % num_features)
+    logger.info(f"Selected feature indices: {original_feature_indices}")
 
-    logger.info(f"Starting feature selection using {algo}")
-    model = FEATURE_SELECTION_ALGOS[algo]
-
-    selected_features_indices = []
-
-    if algo in [
-        "gradient_boosting",
-        "random_forest",
-        "extra_trees",
-        "xgboost",
-        "lightgbm",
-        "catboost",
-        "svr",
-        "rfe",
-    ]:
-        for i in range(_y.shape[1]):
-            logger.info(f"Feature selection for target column {i + 1}/{_y.shape[1]}")
-            model.fit(_X_reshaped, _y[:, i])
-            if hasattr(model, "feature_importances_"):
-                importances = model.feature_importances_
-            elif hasattr(model, "ranking_"):  # For RFE
-                importances = -model.ranking_
-            else:
-                raise ValueError(
-                    "Model does not have feature importances or coefficients."
-                )
-
-            indices = np.argsort(importances)[::-1]
-            selected_features_indices.extend(indices[: min(len(indices), max_iter)])
-
-        selected_features_indices = list(set(selected_features_indices))
-        selected_features_indices.sort()
-
-    else:
-        if algo == "lasso" and _y.ndim > 1 and _y.shape[1] > 1:
-            logger.info("Using MultiTaskLassoCV for multi-task output.")
-            model = MultiTaskLassoCV(cv=5, random_state=42, max_iter=20000, tol=1e-6)
-
-        if algo == "rfe":
-            model = RFE(estimator=model, n_features_to_select=max_iter)
-
-        model.verbose = 1
-        model.fit(_X_reshaped, _y)
-
-        if hasattr(model, "coef_"):  # For Lasso and MultiTaskLasso
-            importances = np.abs(model.coef_).sum(axis=0)
-        elif hasattr(model, "feature_importances_"):  # For RandomForest and XGBoost
-            importances = model.feature_importances_
-        elif hasattr(model, "ranking_"):  # For RFE
-            importances = -model.ranking_
-        else:
-            raise ValueError("Model does not have feature importances or coefficients.")
-
-        indices = np.argsort(importances)[::-1]
-        selected_features_indices = indices[: min(len(indices), max_iter)].tolist()
-
-    logger.info(f"Selected feature indices: {selected_features_indices}")
-
-    max_index = len(features) - 1
-    selected_features_indices = [i for i in selected_features_indices if i <= max_index]
-    logger.info(f"Validated selected feature indices: {selected_features_indices}")
-
-    return selected_features_indices
+    return original_feature_indices
 
 
 def log_preprocessing_params(
@@ -287,6 +187,7 @@ def scale_features(feature_data: pd.DataFrame) -> Tuple[np.ndarray, StandardScal
 
 def save_scaled_data(
         symbol: str,
+        interval: str,
         scaled_features: np.ndarray,
         scaled_targets: np.ndarray,
         features: List[str],
@@ -295,7 +196,7 @@ def save_scaled_data(
     """Save scaled data to CSV."""
     scaled_data = np.concatenate((scaled_features, scaled_targets), axis=1)
     scaled_df = pd.DataFrame(scaled_data, columns=features + targets)
-    scaled_df.to_csv(f"data/{symbol}_scaled_data.csv", index=False)
+    scaled_df.to_csv(f"data/{symbol}_{interval}_scaled_data.csv", index=False)
     logger.info(f"Scaled dataset saved to data/{symbol}_scaled_data.csv")
 
 

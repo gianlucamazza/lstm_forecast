@@ -25,12 +25,12 @@ def setup_logger(name, log_file=LOG_FILE, level=logging.INFO):
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
 
-    logger = logging.getLogger(name)
-    logger.setLevel(level)
-    logger.addHandler(handler)
-    logger.addHandler(console_handler)
+    logger_module = logging.getLogger(name)
+    logger_module.setLevel(level)
+    logger_module.addHandler(handler)
+    logger_module.addHandler(console_handler)
 
-    return logger
+    return logger_module
 
 
 # Example of creating a logger for a specific module

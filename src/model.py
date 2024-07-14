@@ -106,6 +106,32 @@ class PricePredictor(nn.Module):
         logger.debug("Forward pass completed.")
         return out
 
+    def run_training_epoch(self, data_loader, criterion, optimizer):
+        """Run a single training epoch using the given data loader."""
+        self.train()
+        total_loss = 0.0
+        for x_batch, y_batch in data_loader:
+            x_batch, y_batch = x_batch.to(device), y_batch.to(device)
+            optimizer.zero_grad()
+            outputs = self(x_batch)
+            loss = criterion(outputs, y_batch)
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
+            optimizer.step()
+            total_loss += loss.item()
+        return total_loss / len(data_loader)
+
+    def run_validation_epoch(self, data_loader, criterion):
+        """Run a single validation epoch using the given data loader."""
+        self.eval()
+        total_loss = 0.0
+        with torch.no_grad():
+            for X_val_batch, y_val_batch in data_loader:
+                X_val_batch, y_val_batch = X_val_batch.to(device), y_val_batch.to(device)
+                val_outputs = self(X_val_batch)
+                total_loss += criterion(val_outputs, y_val_batch).item()
+        return total_loss / len(data_loader)
+
 
 def load_model(
     symbol: str, path: str, input_shape: int, model_params: dict

@@ -11,6 +11,7 @@ class Config:
         self.ticker = self.config.get("ticker")
         self.symbol = self.config.get("symbol")
         self.asset_type = self.config.get("asset_type")
+        self.historical_data_path = self.config.get("historical_data_path")
         self.data_sampling_interval = self.config.get("data_sampling_interval")
         self.start_date = self.config.get("start_date")
         self.end_date = self.config.get("end_date", time.strftime("%Y-%m-%d"))
@@ -26,9 +27,7 @@ class Config:
         self.targets = self.config.get("targets", [])
         self.backtesting_params = self.config.get("backtesting_params", {})
         self.best_features = self.config.get("best_features", [])
-        self.feature_selection_algo = self.config.get(
-            "feature_selection_algo", "random_forest"
-        )
+        self.disabled_features = self.config.get("disabled_features", [])
         self.model_params["fc_output_size"] = len(self.targets)
 
     def save(self):
