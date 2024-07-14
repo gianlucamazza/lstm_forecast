@@ -3,10 +3,8 @@ from src.logger import setup_logger
 
 logger = setup_logger("model_utils_logger", "logs/model_utils.log")
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
-def run_training_epoch(model, data_loader, criterion, optimizer):
+def run_training_epoch(model, data_loader, criterion, optimizer, device):
     """Run a single training epoch using the given data loader."""
     model.train()
     total_loss = 0.0
@@ -24,7 +22,7 @@ def run_training_epoch(model, data_loader, criterion, optimizer):
     return average_loss
 
 
-def run_validation_epoch(model, data_loader, criterion):
+def run_validation_epoch(model, data_loader, criterion, device):
     """Run a single validation epoch using the given data loader."""
     model.eval()
     total_loss = 0.0

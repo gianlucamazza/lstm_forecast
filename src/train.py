@@ -1,4 +1,3 @@
-
 import argparse
 import os
 import sys
@@ -14,31 +13,19 @@ from src.model import EarlyStopping, PricePredictor, init_weights
 from src.logger import setup_logger
 from src.data_loader import get_data, preprocess_data, split_data
 from src.config import load_config, update_config
-
+from src.model_utils import run_training_epoch, run_validation_epoch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 logger = setup_logger("train_logger", "logs/train.log")
 
 
 def initialize_model(config):
-    """
-    Initialize the model with the given configuration.
-
-    Parameters
-    ----------
-    config : Config
-        The configuration object.
-
-    Returns
-    -------
-    PricePredictor
-        The initialized model.
-    """
+    """ Initialize the model with the given configuration. """
     hidden_size = config.model_params.get("hidden_size", 64)
     num_layers = config.model_params.get("num_layers", 2)
     dropout = config.model_params.get("dropout", 0.2)
-    input_size = len(config.best_features)
-    fc_output_size = len(config.targets)
+    input_size = len(config.feature_settings["best_features"])
+    fc_output_size = len(config.data_settings["targets"])
 
     model = PricePredictor(
         input_size=input_size,
@@ -79,8 +66,8 @@ def train_model(
     model.train()
     for epoch in range(num_epochs):
         train_loss = run_training_epoch(
-            model, train_loader, criterion, optimizer)
-        val_loss = run_validation_epoch(model, val_loader, criterion)
+            model, train_loader, criterion, optimizer, device)
+        val_loss = run_validation_epoch(model, val_loader, criterion, device)
 
         scheduler.step(val_loss)
         early_stopping(val_loss)
@@ -98,35 +85,6 @@ def train_model(
             break
 
     save_best_model(best_model, model_dir, symbol)
-
-
-def run_training_epoch(model, data_loader, criterion, optimizer):
-    """Run a single training epoch using the given data loader."""
-    model.train()
-    total_loss = 0.0
-    for x_batch, y_batch in data_loader:
-        x_batch, y_batch = x_batch.to(device), y_batch.to(device)
-        optimizer.zero_grad()
-        outputs = model(x_batch)
-        loss = criterion(outputs, y_batch)
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-        optimizer.step()
-        total_loss += loss.item()
-    return total_loss / len(data_loader)
-
-
-def run_validation_epoch(model, data_loader, criterion):
-    """Run a single validation epoch using the given data loader."""
-    model.eval()
-    total_loss = 0.0
-    with torch.no_grad():
-        for X_val_batch, y_val_batch in data_loader:
-            X_val_batch, y_val_batch = X_val_batch.to(
-                device), y_val_batch.to(device)
-            val_outputs = model(X_val_batch)
-            total_loss += criterion(val_outputs, y_val_batch).item()
-    return total_loss / len(data_loader)
 
 
 def save_best_model(best_model, model_dir, symbol):
@@ -189,38 +147,36 @@ def main():
         rebuild_features(config)
 
     historical_data, features = get_historical_data(config)
-    x, y, scaler_features, scaler_prices, scaler_volume, selected_features = (
-        preprocess_data(
-            symbol=config.symbol,
-            data_sampling_interval=config.data_sampling_interval,
-            historical_data=historical_data,
-            targets=config.targets,
-            look_back=config.look_back,
-            look_forward=config.look_forward,
-            features=features,
-            disabled_features=config.disabled_features,
-            best_features=config.best_features,
-        )
+    x, y, scaler_features, scaler_prices, scaler_volume, selected_features = preprocess_data(
+        config.data_settings["symbol"],
+        config.data_settings["data_sampling_interval"],
+        historical_data,
+        config.data_settings["targets"],
+        config.training_settings["look_back"],
+        config.training_settings["look_forward"],
+        features,
+        config.data_settings["disabled_features"],
+        config.feature_settings["best_features"],
     )
 
     update_config_with_best_features(config, selected_features)
 
-    train_loader, val_loader = split_data(x, y, batch_size=config.batch_size)
+    train_loader, val_loader = split_data(x, y, batch_size=config.training_settings["batch_size"])
     model = initialize_model(config)
 
     train_model(
-        config.symbol,
+        config.data_settings["symbol"],
         model,
         train_loader,
         val_loader,
-        num_epochs=config.epochs,
-        learning_rate=config.model_params.get("learning_rate", 0.001),
-        model_dir=config.model_dir,
-        weight_decay=config.model_params.get("weight_decay", 0.0),
+        num_epochs=config.training_settings["epochs"],
+        learning_rate=config.model_settings.get("learning_rate", 0.001),
+        model_dir=config.training_settings["model_dir"],
+        weight_decay=config.model_settings.get("weight_decay", 0.0),
     )
 
     evaluate_model(
-        config.symbol,
+        config.data_settings["symbol"],
         model,
         x,
         y,
@@ -243,30 +199,30 @@ def parse_arguments():
 
 
 def rebuild_features(config):
-    update_config(config, "best_features", [])
+    update_config(config, "feature_settings.best_features", [])
     config.save()
     logger.info("Rebuilding features")
 
 
 def get_historical_data(config):
     logger.info(
-        f"Getting historical data for {config.ticker} from {config.start_date} to {config.end_date}"
+        f"Getting historical data for {config.data_settings['ticker']} from {config.data_settings['start_date']} to {config.data_settings['end_date']}"
     )
     return get_data(
-        config.ticker,
-        config.symbol,
-        config.asset_type,
-        config.start_date,
-        config.end_date,
-        config.indicator_windows,
-        config.data_sampling_interval,
-        config.data_resampling_frequency,
+        config.data_settings["ticker"],
+        config.data_settings["symbol"],
+        config.data_settings["asset_type"],
+        config.data_settings["start_date"],
+        config.data_settings["end_date"],
+        config.data_settings["technical_indicators"],
+        config.data_settings["data_sampling_interval"],
+        config.data_settings["data_resampling_frequency"],
     )
 
 
 def update_config_with_best_features(config, selected_features):
     logger.info(f"Selected features: {selected_features}")
-    update_config(config, "best_features", selected_features)
+    update_config(config, "feature_settings.best_features", selected_features)
     config.save()
 
 

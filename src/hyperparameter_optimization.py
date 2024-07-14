@@ -26,7 +26,7 @@ def objective(trial, config):
     weight_decay = trial.suggest_float("weight_decay", 1e-5, 1e-2, log=True)
 
     # Update model parameters in config
-    config.model_params.update({
+    config.model_settings.update({
         "hidden_size": hidden_size,
         "num_layers": num_layers,
         "dropout": dropout,
@@ -79,9 +79,9 @@ def objective(trial, config):
     model.train()
     val_loss = float('inf')
     for epoch in range(config.epochs):
-        train_loss = run_training_epoch(model, train_loader, criterion, optimizer)
+        train_loss = run_training_epoch(model, train_loader, criterion, optimizer, device)
         optuna_logger.info(f"Trial {trial.number}, Epoch {epoch + 1}/{config.epochs}, Train Loss: {train_loss:.4f}")
-        val_loss = run_validation_epoch(model, val_loader, criterion)
+        val_loss = run_validation_epoch(model, val_loader, criterion, device)
         optuna_logger.info(f"Trial {trial.number}, Epoch {epoch + 1}/{config.epochs}, Validation Loss: {val_loss:.4f}")
 
         if early_stopping(val_loss):
