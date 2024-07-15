@@ -61,8 +61,8 @@ def objective(optuna_trial, config):
         "weight_decay": weight_decay
     })
 
-    optuna_logger.info(f"Trial {optuna_trial.number}: hidden_size={hidden_size}, num_layers={num_layers}, dropout={dropout}, "
-                       f"learning_rate={learning_rate}, weight_decay={weight_decay}")
+    optuna_logger.info(f"Trial {optuna_trial.number}: hidden_size={hidden_size}, num_layers={num_layers}, "
+                       f"dropout={dropout}, learning_rate={learning_rate}, weight_decay={weight_decay}")
 
     try:
         train_loader, val_loader, selected_features, _, _, _ = load_and_preprocess_data(config)
@@ -107,7 +107,7 @@ def main():
         rebuild_features(config)
 
     study = optuna.create_study(direction="minimize")
-    study.optimize(lambda trial: objective(trial, config), n_trials=100)
+    study.optimize(lambda t: objective(t, config), n_trials=100)
 
     best_params = study.best_trial.params
     logger.info(f"Best hyperparameters: {best_params}")
