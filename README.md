@@ -250,16 +250,20 @@ The hyperparameters can be optimized using the `hyperparameter_optimization.py` 
 The script uses the Optuna library to optimize the hyperparameters of the LSTM model.
 
 ```bash
-python src/hyperparameter_optimization.py --config config.json
+python src/hyperparameter_optimization.py --config config.json # optional --rebuild-features
 ```
+
+Optional arguments include `--rebuild-features` to recalculate the features.
 
 ### Training
 
 To train the model, run:
 
 ```bash
-python src/train.py  --config config.json
+python src/train.py  --config config.json # optional --rebuild-features
 ```
+
+Optional arguments include `--rebuild-features` to recalculate the features.
 
 ### Prediction
 
