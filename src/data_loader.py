@@ -54,7 +54,7 @@ def adjust_start_date_if_needed(start: str, end: str, end_date: pd.Timestamp) ->
     return start
 
 
-def save_historical_data(symbol: str, interval: str,historical_data: pd.DataFrame) -> None:
+def save_historical_data(symbol: str, interval: str, historical_data: pd.DataFrame) -> None:
     """Save historical data to CSV."""
     historical_data.to_csv(f"data/{symbol}_{interval}.csv")
     logger.info(f"Data for {symbol} saved to data/{symbol}.csv")
@@ -283,3 +283,31 @@ def split_data(
         DataLoader(train_data, batch_size=batch_size, shuffle=True),
         DataLoader(val_data, batch_size=batch_size, shuffle=False),
     )
+
+
+def load_and_preprocess_data(config):
+    historical_data, features = get_data(
+        config.ticker,
+        config.symbol,
+        config.asset_type,
+        config.start_date,
+        config.end_date,
+        config.indicator_windows,
+        config.data_sampling_interval,
+        config.data_resampling_frequency,
+    )
+
+    x, y, scaler_features, scaler_prices, scaler_volume, selected_features = preprocess_data(
+        config.symbol,
+        config.data_sampling_interval,
+        historical_data,
+        config.targets,
+        config.look_back,
+        config.look_forward,
+        features,
+        config.disabled_features,
+        config.best_features,
+    )
+
+    train_loader, val_loader = split_data(x, y, batch_size=config.batch_size)
+    return train_loader, val_loader, selected_features, scaler_prices, scaler_volume, historical_data

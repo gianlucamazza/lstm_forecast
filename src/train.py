@@ -12,7 +12,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src.model import PricePredictor, init_weights
 from src.early_stopping import EarlyStopping
 from src.logger import setup_logger
-from src.data_loader import get_data, preprocess_data, split_data
+from src.data_loader import load_and_preprocess_data
 from src.config import load_config, update_config
 from src.model_utils import run_training_epoch, run_validation_epoch
 
@@ -42,14 +42,14 @@ def initialize_model(config):
 
 
 def train_model(
-    symbol,
-    model,
-    train_loader,
-    val_loader,
-    num_epochs,
-    learning_rate,
-    model_dir,
-    weight_decay,
+        symbol,
+        model,
+        train_loader,
+        val_loader,
+        num_epochs,
+        learning_rate,
+        model_dir,
+        weight_decay,
 ):
     """Train the model using the given data loaders."""
     criterion = nn.MSELoss()
@@ -95,14 +95,14 @@ def save_best_model(best_model, model_dir, symbol):
         logger.info(f"Best model saved to {model_dir}/{symbol}_model.pth")
 
 
-def evaluate_model(symbol, model, X, y, scaler_prices, scaler_volume, dates):
+def evaluate_model(symbol, model, x, y, scaler_prices, scaler_volume, dates):
     """Evaluate the model using the given data."""
     model.eval()
     with torch.no_grad():
         predictions = (
             model(
                 torch.tensor(
-                    X,
+                    x,
                     dtype=torch.float32).to(device)).cpu().numpy())
         predictions = inverse_transform(
             predictions, scaler_prices, scaler_volume)
@@ -147,22 +147,8 @@ def main():
     if args.rebuild_features:
         rebuild_features(config)
 
-    historical_data, features = get_historical_data(config)
-    x, y, scaler_features, scaler_prices, scaler_volume, selected_features = preprocess_data(
-        config.data_settings["symbol"],
-        config.data_settings["data_sampling_interval"],
-        historical_data,
-        config.data_settings["targets"],
-        config.training_settings["look_back"],
-        config.training_settings["look_forward"],
-        features,
-        config.data_settings["disabled_features"],
-        config.feature_settings["best_features"],
-    )
-
-    update_config_with_best_features(config, selected_features)
-
-    train_loader, val_loader = split_data(x, y, batch_size=config.training_settings["batch_size"])
+    train_loader, val_loader, selected_features, scaler_prices, scaler_volume, historical_data = (
+        load_and_preprocess_data(config))
     model = initialize_model(config)
 
     train_model(
@@ -175,6 +161,13 @@ def main():
         model_dir=config.training_settings["model_dir"],
         weight_decay=config.model_settings.get("weight_decay", 0.0),
     )
+
+    x, y = [], []
+    for data, target in train_loader:
+        x.append(data)
+        y.append(target)
+    x = torch.cat(x)
+    y = torch.cat(y)
 
     evaluate_model(
         config.data_settings["symbol"],
@@ -203,22 +196,6 @@ def rebuild_features(config):
     update_config(config, "feature_settings.best_features", [])
     config.save()
     logger.info("Rebuilding features")
-
-
-def get_historical_data(config):
-    logger.info(
-        f"Getting historical data for {config.data_settings['ticker']} from {config.data_settings['start_date']} to {config.data_settings['end_date']}"
-    )
-    return get_data(
-        config.data_settings["ticker"],
-        config.data_settings["symbol"],
-        config.data_settings["asset_type"],
-        config.data_settings["start_date"],
-        config.data_settings["end_date"],
-        config.data_settings["technical_indicators"],
-        config.data_settings["data_sampling_interval"],
-        config.data_settings["data_resampling_frequency"],
-    )
 
 
 def update_config_with_best_features(config, selected_features):

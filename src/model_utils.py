@@ -1,7 +1,7 @@
 import torch
 from src.logger import setup_logger
 
-logger = setup_logger("model_utils_logger", "logs/model_utils.log")
+logger = setup_logger("train_logger", "logs/train.log")
 
 
 def run_training_epoch(model, data_loader, criterion, optimizer, device):
