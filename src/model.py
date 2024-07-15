@@ -1,10 +1,9 @@
 from typing import List, Tuple
-
+import os
 import numpy as np
 import torch
 import torch.nn as nn
 from sklearn.preprocessing import StandardScaler
-
 from src.logger import setup_logger
 
 logger = setup_logger("model_logger", "logs/model.log")
@@ -17,26 +16,15 @@ def init_weights(m):
         m.bias.data.fill_(0.01)
     elif isinstance(m, nn.LSTM):
         for name, param in m.named_parameters():
-            if "weight_ih" in name:
-                nn.init.xavier_uniform_(param.data)
-            elif "weight_hh" in name:
-                nn.init.xavier_uniform_(param.data)
-            elif "bias" in name:
+            if 'weight_ih' in name or 'weight_hh' in name:
+                nn.init.orthogonal_(param.data)
+            elif 'bias' in name:
                 param.data.fill_(0)
 
 
 class PricePredictor(nn.Module):
     """
     A PyTorch neural network module for predicting prices using an LSTM model.
-
-    Attributes:
-    ----------
-    lstm : nn.LSTM
-        The LSTM layer(s) for processing the input sequence.
-    dropout : nn.Dropout
-        Dropout layer for regularization.
-    fc : nn.Linear
-        Fully connected layer for the final output.
     """
 
     def __init__(
@@ -49,19 +37,6 @@ class PricePredictor(nn.Module):
     ) -> None:
         """
         Initializes the PricePredictor model.
-
-        Parameters:
-        ----------
-        input_size : int
-            The number of expected features in the input sequence.
-        hidden_size : int
-            The number of features in the hidden state h.
-        num_layers : int
-            Number of recurrent layers.
-        dropout : float
-            Dropout rate for regularization.
-        fc_output_size : int
-            The size of the output of the fully connected layer.
         """
         super(PricePredictor, self).__init__()
         logger.info(
@@ -86,16 +61,6 @@ class PricePredictor(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Defines the forward pass of the model.
-
-        Parameters:
-        ----------
-        x : torch.Tensor
-            Input tensor of shape (batch_size, sequence_length, input_size).
-
-        Returns:
-        -------
-        torch.Tensor
-            Output tensor of shape (batch_size, 1), representing the predicted price.
         """
         h_0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
         c_0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
@@ -138,15 +103,6 @@ def load_model(
 ) -> nn.Module:
     """
     Load the trained model from a given path.
-
-    Args:
-        symbol (str): The stock symbol.
-        path (str): The path to the trained model.
-        input_shape (int): The input shape of the model.
-        model_params (dict): The model parameters.
-
-    Returns:
-        nn.Module: The trained model.
     """
     model = PricePredictor(
         input_size=input_shape,
@@ -156,11 +112,10 @@ def load_model(
         fc_output_size=model_params["fc_output_size"],
     ).to(device)
     model.device = device
+    model_path = os.path.join(path, f"{symbol}_model.pth")
     logger.info(f"Model: {model}")
-    logger.info(f"Loading model from {path}/{symbol}_model.pth")
-    model.load_state_dict(
-        torch.load(path + f"/{symbol}_model.pth", map_location=device)
-    )
+    logger.info(f"Loading model from {model_path}")
+    model.load_state_dict(torch.load(model_path, map_location=device))
     model.eval()
     logger.info("Model loaded and set to evaluation mode.")
     return model
@@ -175,16 +130,6 @@ def predict(
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Make predictions using the trained model.
-
-    Args:
-        model (nn.Module): The trained model.
-        x_data (np.ndarray): The input data.
-        scaler (StandardScaler): The scaler used for normalization.
-        future_days (int): Number of days to predict into the future.
-        features (List): List of feature names.
-
-    Returns:
-        Tuple[np.ndarray, np.ndarray]: Predictions and future predictions.
     """
     model.eval()
     with torch.no_grad():
@@ -229,31 +174,11 @@ def predict(
 class EarlyStopping:
     """
     A utility class to perform early stopping during training to prevent overfitting.
-
-    Attributes:
-    ----------
-    patience : int
-        Number of epochs to wait after the last improvement before stopping the training.
-    delta : float
-        Minimum change in the monitored quantity to qualify as an improvement.
-    counter : int
-        Counter to keep track of the number of epochs with no improvement.
-    best_loss : float or None
-        Best recorded loss value for early stopping.
-    early_stop : bool
-        Boolean flag to indicate whether to stop the training.
     """
 
     def __init__(self, patience=10, delta=0):
         """
         Initializes the EarlyStopping object.
-
-        Parameters:
-        ----------
-        patience : int, optional
-            Number of epochs with no improvement after which training will be stopped (default is 10).
-        delta : float, optional
-            Minimum change in the monitored quantity to qualify as an improvement (default is 0).
         """
         self.patience = patience
         self.delta = delta
@@ -267,15 +192,6 @@ class EarlyStopping:
     def __call__(self, val_loss):
         """
         Checks whether the training should be stopped based on the validation loss.
-
-        Parameters:
-        ----------
-        val_loss : float
-            The current epoch's validation loss.
-
-        Returns:
-        -------
-        None
         """
         if self.best_loss is None:
             self.best_loss = val_loss

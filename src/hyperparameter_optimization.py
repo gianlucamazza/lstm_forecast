@@ -9,7 +9,6 @@ from src.model_utils import run_training_epoch, run_validation_epoch
 import torch
 import torch.nn as nn
 import torch.optim as optim
-
 from src.train import initialize_model, train_model, evaluate_model
 
 logger = setup_logger("train_logger", "logs/train.log")
