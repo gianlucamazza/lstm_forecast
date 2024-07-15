@@ -2,7 +2,8 @@ import argparse
 import optuna
 from optuna.trial import TrialState
 from src.data_loader import preprocess_data, get_data, split_data
-from src.model import PricePredictor, EarlyStopping
+from src.model import PricePredictor
+from src.early_stopping import EarlyStopping
 from src.config import load_config, update_config
 from src.logger import setup_logger
 from src.model_utils import run_training_epoch, run_validation_epoch
@@ -45,12 +46,12 @@ def load_and_preprocess_data(config):
     return train_loader, val_loader, selected_features, scaler_prices, scaler_volume, historical_data
 
 
-def objective(trial, config):
-    hidden_size = trial.suggest_int("hidden_size", 32, 256)
-    num_layers = trial.suggest_int("num_layers", 1, 5)
-    dropout = trial.suggest_float("dropout", 0.1, 0.5)
-    learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-2, log=True)
-    weight_decay = trial.suggest_float("weight_decay", 1e-5, 1e-2, log=True)
+def objective(optuna_trial, config):
+    hidden_size = optuna_trial.suggest_int("hidden_size", 32, 256)
+    num_layers = optuna_trial.suggest_int("num_layers", 1, 5)
+    dropout = optuna_trial.suggest_float("dropout", 0.1, 0.5)
+    learning_rate = optuna_trial.suggest_float("learning_rate", 1e-5, 1e-2, log=True)
+    weight_decay = optuna_trial.suggest_float("weight_decay", 1e-5, 1e-2, log=True)
 
     config.model_settings.update({
         "hidden_size": hidden_size,
@@ -60,7 +61,7 @@ def objective(trial, config):
         "weight_decay": weight_decay
     })
 
-    optuna_logger.info(f"Trial {trial.number}: hidden_size={hidden_size}, num_layers={num_layers}, dropout={dropout}, "
+    optuna_logger.info(f"Trial {optuna_trial.number}: hidden_size={hidden_size}, num_layers={num_layers}, dropout={dropout}, "
                        f"learning_rate={learning_rate}, weight_decay={weight_decay}")
 
     try:
@@ -82,15 +83,17 @@ def objective(trial, config):
         val_loss = float('inf')
         for epoch in range(config.epochs):
             train_loss = run_training_epoch(model, train_loader, criterion, optimizer, device)
-            optuna_logger.info(f"Trial {trial.number}, Epoch {epoch + 1}/{config.epochs}, Train Loss: {train_loss:.4f}")
+            optuna_logger.info(f"Trial {optuna_trial.number}, Epoch {epoch + 1}/{config.epochs}, "
+                               f"Train Loss: {train_loss:.4f}")
             val_loss = run_validation_epoch(model, val_loader, criterion, device)
-            optuna_logger.info(f"Trial {trial.number}, Epoch {epoch + 1}/{config.epochs}, Validation Loss: {val_loss:.4f}")
+            optuna_logger.info(f"Trial {optuna_trial.number}, Epoch {epoch + 1}/{config.epochs}, "
+                               f"Validation Loss: {val_loss:.4f}")
 
             if early_stopping(val_loss):
-                optuna_logger.info(f"Early stopping triggered for trial {trial.number}")
+                optuna_logger.info(f"Early stopping triggered for trial {optuna_trial.number}")
                 break
     except Exception as e:
-        optuna_logger.error(f"Error during trial {trial.number}: {e}")
+        optuna_logger.error(f"Error during trial {optuna_trial.number}: {e}")
         raise e
 
     return val_loss
@@ -112,7 +115,8 @@ def main():
     config.model_settings.update(best_params)
     update_config(config, "model_settings", config.model_settings)
 
-    train_loader, val_loader, selected_features, scaler_prices, scaler_volume, historical_data = load_and_preprocess_data(config)
+    train_loader, val_loader, selected_features, scaler_prices, scaler_volume, historical_data = (
+        load_and_preprocess_data(config))
 
     update_config_with_best_features(config, selected_features)
 

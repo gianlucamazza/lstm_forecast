@@ -31,10 +31,3 @@ def setup_logger(name, log_file=LOG_FILE, level=logging.INFO):
     logger_module.addHandler(console_handler)
 
     return logger_module
-
-
-# Example of creating a logger for a specific module
-logger = setup_logger("main_logger")
-
-# Example of logging
-logger.info("Logger has been configured")

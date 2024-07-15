@@ -9,7 +9,8 @@ import torch.optim as optim
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.model import EarlyStopping, PricePredictor, init_weights
+from src.model import PricePredictor, init_weights
+from src.early_stopping import EarlyStopping
 from src.logger import setup_logger
 from src.data_loader import get_data, preprocess_data, split_data
 from src.config import load_config, update_config
