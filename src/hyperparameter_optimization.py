@@ -33,7 +33,8 @@ def objective(trial, config):
         "weight_decay": weight_decay
     })
 
-    optuna_logger.info(f"Trial {trial.number}: hidden_size={hidden_size}, num_layers={num_layers}, dropout={dropout}, learning_rate={learning_rate}, weight_decay={weight_decay}")
+    optuna_logger.info(f"Trial {trial.number}: hidden_size={hidden_size}, num_layers={num_layers}, dropout={dropout}, "
+                       f"learning_rate={learning_rate}, weight_decay={weight_decay}")
 
     # Load and preprocess data
     historical_data, features = get_data(
