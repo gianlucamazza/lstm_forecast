@@ -1,5 +1,6 @@
 import argparse
 import optuna
+import numpy as np
 from optuna.trial import TrialState
 from src.data_loader import load_and_preprocess_data
 from src.model import PricePredictor
@@ -39,41 +40,47 @@ def objective(optuna_trial, config):
                        f"dropout={dropout}, learning_rate={learning_rate}, weight_decay={weight_decay}")
 
     try:
-        train_loader, val_loader, selected_features, _, _, _ = load_and_preprocess_data(config)
+        folds, selected_features, _, _, _ = load_and_preprocess_data(config)
+        fold_val_losses = []
+        for fold_idx, (train_loader, val_loader) in enumerate(folds):
+            model = PricePredictor(
+                input_size=len(selected_features),
+                hidden_size=hidden_size,
+                num_layers=num_layers,
+                dropout=dropout,
+                fc_output_size=len(config.targets)
+            ).to(device)
 
-        model = PricePredictor(
-            input_size=len(selected_features),
-            hidden_size=hidden_size,
-            num_layers=num_layers,
-            dropout=dropout,
-            fc_output_size=len(config.targets)
-        ).to(device)
+            criterion = nn.MSELoss()
+            optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+            early_stopping = EarlyStopping(patience=10, delta=0.001, verbose=True)
 
-        criterion = nn.MSELoss()
-        optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-        early_stopping = EarlyStopping(patience=10, delta=0.001, verbose=True)
+            model.train()
+            val_loss = float('inf')
+            for epoch in range(config.epochs):
+                train_loss = run_training_epoch(model, train_loader, criterion, optimizer, device)
+                optuna_logger.info(f"Trial {optuna_trial.number}, Fold {fold_idx}, Epoch {epoch + 1}/{config.epochs}, "
+                                   f"Train Loss: {train_loss:.4f}")
+                val_loss = run_validation_epoch(model, val_loader, criterion, device)
+                optuna_logger.info(f"Trial {optuna_trial.number}, Fold {fold_idx}, Epoch {epoch + 1}/{config.epochs}, "
+                                   f"Validation Loss: {val_loss:.4f}")
 
-        model.train()
-        val_loss = float('inf')
-        for epoch in range(config.epochs):
-            train_loss = run_training_epoch(model, train_loader, criterion, optimizer, device)
-            train_logger.info(f"Trial {optuna_trial.number}, Epoch {epoch + 1}/{config.epochs}, "
-                               f"Train Loss: {train_loss:.4f}")
-            val_loss = run_validation_epoch(model, val_loader, criterion, device)
-            train_logger.info(f"Trial {optuna_trial.number}, Epoch {epoch + 1}/{config.epochs}, "
-                               f"Validation Loss: {val_loss:.4f}")
+                if early_stopping(val_loss, model):
+                    optuna_logger.info(f"Early stopping triggered for trial {optuna_trial.number} at epoch {epoch + 1}")
+                    break
 
-            if early_stopping(val_loss, model):
-                early_stopping_logger.info(f"Early stopping triggered for trial {optuna_trial.number} at epoch {epoch + 1}")
-                break
+            optuna_logger.info(
+                f"Trial {optuna_trial.number} Fold {fold_idx} completed with Validation Loss: {val_loss:.4f}")
+            fold_val_losses.append(val_loss)
 
-        optuna_logger.info(f"Trial {optuna_trial.number} completed with Validation Loss: {val_loss:.4f}")
+        avg_val_loss = np.mean(fold_val_losses)
+        optuna_logger.info(f"Trial {optuna_trial.number} completed with Average Validation Loss: {avg_val_loss:.4f}")
 
     except Exception as e:
         optuna_logger.error(f"Error during trial {optuna_trial.number}: {e}")
         raise e
 
-    return val_loss
+    return avg_val_loss
 
 
 def main():

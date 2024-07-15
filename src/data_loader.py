@@ -4,6 +4,7 @@ import pandas as pd
 import torch
 import yfinance as yf
 from numpy import ndarray, dtype
+from sklearn.model_selection import TimeSeriesSplit
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from torch.utils.data import DataLoader, TensorDataset
@@ -221,6 +222,20 @@ def create_dataset(
     return _X, _y
 
 
+def create_timeseries_window(_x: np.ndarray, _y: np.ndarray, n_splits: int):
+    tscv = TimeSeriesSplit(n_splits=n_splits)
+    splits = []
+    for train_index, val_index in tscv.split(_x):
+        x_train, x_val = _x[train_index], _x[val_index]
+        y_train, y_val = _y[train_index], _y[val_index]
+        train_loader = DataLoader(TensorDataset(torch.tensor(x_train).float(), torch.tensor(y_train).float()),
+                                  batch_size=32, shuffle=True)
+        val_loader = DataLoader(TensorDataset(torch.tensor(x_val).float(), torch.tensor(y_val).float()), batch_size=32,
+                                shuffle=False)
+        splits.append((train_loader, val_loader))
+    return splits
+
+
 def validate_data(_x: np.ndarray, _y: np.ndarray) -> None:
     """Validate dataset to ensure there are no NaN or infinite values."""
     if np.any(np.isnan(_x)) or np.any(np.isnan(_y)):
@@ -309,5 +324,11 @@ def load_and_preprocess_data(config):
         config.best_features,
     )
 
+    if config.training_settings.get("use_time_series_split", False):
+        logger.info("Using k-fold cross-validation with TimeSeriesSplit")
+        logger.info(f"Number of splits: {config.training_settings.get('time_series_splits', 5)}")
+        windows = create_timeseries_window(x, y, n_splits=config.training_settings.get("time_series_splits", 5))
+        return windows, selected_features, scaler_prices, scaler_volume, historical_data
+
     train_loader, val_loader = split_data(x, y, batch_size=config.batch_size)
-    return train_loader, val_loader, selected_features, scaler_prices, scaler_volume, historical_data
+    return [(train_loader, val_loader)], selected_features, scaler_prices, scaler_volume, historical_data
