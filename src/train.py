@@ -42,14 +42,17 @@ def initialize_model(config):
 def save_best_model(best_model, model_dir, symbol):
     """Save the best model to the given directory."""
     if best_model:
-        torch.save(best_model, f"{model_dir}/{symbol}_model.pth")
-        logger.info(f"Best model saved to {model_dir}/{symbol}_model.pth")
+        best_model_path = os.path.join(model_dir, f"{symbol}_model.pth")
+        torch.save(best_model, best_model_path)
+        logger.info(f"Best model saved to {best_model_path}")
 
 
-def save_model_checkpoint(symbol, model, model_dir, epoch):
+def save_model_checkpoint(symbol, model, checkpoint_dir, epoch):
     """Save a checkpoint of the given model."""
-    torch.save(model.state_dict(), f"{model_dir}/{symbol}_checkpoint_{epoch}.pth")
-    logger.info(f"Model checkpoint saved to {model_dir}/{symbol}_checkpoint_{epoch}.pth")
+    os.makedirs(checkpoint_dir, exist_ok=True)
+    checkpoint_path = os.path.join(checkpoint_dir, f"{symbol}_checkpoint_{epoch}.pth")
+    torch.save(model.state_dict(), checkpoint_path)
+    logger.info(f"Model checkpoint saved to {checkpoint_path}")
 
 
 def evaluate_model(model, data_loader, loss_fn, device):
@@ -77,17 +80,20 @@ def inverse_transform(data, scaler_prices, scaler_volume):
     return inverse_data
 
 
-def train_model(symbol, model, train_loader, val_loader, num_epochs, learning_rate, model_dir, weight_decay, device):
+def train_model(symbol, model, train_loader, val_loader, num_epochs, learning_rate, model_dir, weight_decay, device,
+                fold_idx=None):
     """Train the model with early stopping."""
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     loss_fn = torch.nn.MSELoss()
 
     early_stopping = EarlyStopping(patience=10, verbose=True, path=f"{model_dir}/{symbol}_best_model.pth")
+    checkpoint_dir = os.path.join(model_dir, "checkpoints")
 
     for epoch in range(num_epochs):
         train_loss = run_training_epoch(model, train_loader, loss_fn, optimizer, device)
         val_loss = run_validation_epoch(model, val_loader, loss_fn, device)
-        logger.info(f"Epoch {epoch + 1}/{num_epochs}, Training Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
+        logger.info(
+            f"Fold {fold_idx}, Epoch {epoch + 1}/{num_epochs}, Training Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
 
         # Check early stopping condition
         early_stopping(val_loss, model)
@@ -96,7 +102,7 @@ def train_model(symbol, model, train_loader, val_loader, num_epochs, learning_ra
             logger.info("Early stopping triggered. Stopping training.")
             break
 
-        save_model_checkpoint(symbol, model, model_dir, epoch)
+        save_model_checkpoint(symbol, model, checkpoint_dir, epoch)
 
 
 def plot_evaluation(symbol, predictions, y_true, dates):
@@ -161,7 +167,7 @@ def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model.to(device)
 
-    for train_loader, val_loader in train_val_loaders:
+    for fold_idx, (train_loader, val_loader) in enumerate(train_val_loaders, 1):
         train_model(
             config.data_settings["symbol"],
             model,
@@ -171,7 +177,8 @@ def main():
             learning_rate=config.model_settings.get("learning_rate", 0.001),
             model_dir=config.training_settings["model_dir"],
             weight_decay=config.model_settings.get("weight_decay", 0.0),
-            device=device
+            device=device,
+            fold_idx=fold_idx
         )
 
         x, y = [], []
