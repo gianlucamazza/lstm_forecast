@@ -2,7 +2,7 @@
     "data_settings": {
         "ticker": "BTC-USD",
         "symbol": "BTCUSD",
-        "historical_data_path": "data/BTCUSD_1d_historical.csv",
+        "historical_data_path": "data/BTCUSD_1d.csv",
         "asset_type": "commodity",
         "data_sampling_interval": "1d",
         "start_date": "2013-01-01",
@@ -70,6 +70,28 @@
         "max_open_trades": 5
     },
     "feature_settings": {
-        "best_features": []
+        "best_features": [
+            "Open",
+            "High",
+            "Low",
+            "Close",
+            "Adj Close",
+            "Volume",
+            "SMA_50",
+            "SMA_200",
+            "EMA",
+            "MACD",
+            "MACD_Signal",
+            "RSI",
+            "Bollinger_High",
+            "Bollinger_Low",
+            "ADX",
+            "CCI",
+            "CMF",
+            "Ichimoku_Tenkan",
+            "Ichimoku_Kijun",
+            "Ichimoku_Senkou_Span_A",
+            "Ichimoku_Senkou_Span_B"
+        ]
     }
 }

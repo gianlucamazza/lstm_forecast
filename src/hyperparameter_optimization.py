@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 import optuna
+import pandas as pd
 import numpy as np
 import torch
 import torch.nn as nn
@@ -10,6 +11,7 @@ from optuna.trial import TrialState
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from src.feature_engineering import calculate_technical_indicators, update_config_with_best_features
 from src.data_loader import load_and_preprocess_data
 from src.model import PricePredictor
 from src.early_stopping import EarlyStopping
@@ -109,8 +111,6 @@ def main():
     train_loader, val_loader, selected_features, scaler_prices, scaler_volume, historical_data = (
         load_and_preprocess_data(config))
 
-    update_config_with_best_features(config, selected_features)
-
     model = initialize_model(config)
 
     train_model(
@@ -161,6 +161,26 @@ def main():
         optuna_logger.info(f"    {key}: {value}")
 
 
+
+def rebuild_features(config):
+    # Load historical data
+    historical_data = pd.read_csv(config.historical_data_path, index_col='Date')
+    
+    # Calculate technical indicators
+    historical_data, features = calculate_technical_indicators(
+        historical_data,
+        windows=config.indicator_windows,
+        asset_type=config.asset_type,
+        frequency=config.data_resampling_frequency
+    )
+    
+    # Update config with the selected features
+    update_config_with_best_features(config, features)
+    
+    optuna_logger.info(f"Rebuilt features: {features}")
+    
+
+
 def parse_arguments():
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument(
@@ -172,19 +192,7 @@ def parse_arguments():
         "--rebuild-features", action="store_true", help="Rebuild features"
     )
     return arg_parser.parse_args()
-
-
-def rebuild_features(config):
-    config.feature_settings["best_features"] = []
-    config.save()
-    optuna_logger.info("Rebuilding features")
-
-
-def update_config_with_best_features(config, selected_features):
-    optuna_logger.info(f"Selected features: {selected_features}")
-    config.feature_settings["best_features"] = selected_features
-    config.save()
-
+    
 
 if __name__ == "__main__":
     main()
