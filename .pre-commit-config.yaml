@@ -5,4 +5,4 @@ repos:
         name: Run generate_html.py
         entry: python src/generate_html.py
         language: python
-        stages: [commit]
+        stages: [ commit ]

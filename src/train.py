@@ -1,198 +1,199 @@
-import torch
-import torch.optim as optim
-import torch.nn as nn
-import matplotlib.pyplot as plt
-import numpy as np
 import argparse
 import os
 import sys
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.model import EarlyStopping, PricePredictor
-from src.data_loader import get_data, preprocess_data, split_data
+from src.model import PricePredictor, init_weights
+from src.early_stopping import EarlyStopping
 from src.logger import setup_logger
+from src.data_loader import load_and_preprocess_data
 from src.config import load_config, update_config
+from src.model_utils import run_training_epoch, run_validation_epoch
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-logger = setup_logger('train_logger', 'logs/train.log')
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+logger = setup_logger("train_logger", "logs/train.log")
 
 
 def initialize_model(config):
-    """ Initialize the model with the given configuration. """
-    hidden_size = config.model_params.get('hidden_size', 64)
-    num_layers = config.model_params.get('num_layers', 2)
-    dropout = config.model_params.get('dropout', 0.2)
-    input_size = len(config.best_features)
-    fc_output_size = len(config.targets)
+    """Initialize the model with the given configuration."""
+    hidden_size = config.model_settings.get("hidden_size", 64)
+    num_layers = config.model_settings.get("num_layers", 2)
+    dropout = config.model_settings.get("dropout", 0.2)
+    input_size = len(config.feature_settings["best_features"])
+    fc_output_size = len(config.data_settings["targets"])
 
     model = PricePredictor(
         input_size=input_size,
         hidden_size=hidden_size,
         num_layers=num_layers,
         dropout=dropout,
-        fc_output_size=fc_output_size
+        fc_output_size=fc_output_size,
     ).to(device)
+
+    model.apply(init_weights)
 
     return model
 
 
-def train_model(symbol, model, train_loader, val_loader, num_epochs, learning_rate, model_dir):
-    """ Train the model using the given data loaders. """
-    criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.5)
-    early_stopping = EarlyStopping(patience=10, delta=0)
-
-    best_model = None
-    best_val_loss = float('inf')
-
-    model.train()
-    for epoch in range(num_epochs):
-        train_loss = run_training_epoch(model, train_loader, criterion, optimizer)
-        val_loss = run_validation_epoch(model, val_loader, criterion)
-
-        scheduler.step(val_loss)
-        early_stopping(val_loss)
-
-        logger.info(f'Epoch {epoch + 1}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}')
-
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
-            best_model = model.state_dict()
-
-        if early_stopping.early_stop:
-            logger.info("Early stopping triggered.")
-            break
-
-    save_best_model(best_model, model_dir, symbol)
-
-
-def run_training_epoch(model, data_loader, criterion, optimizer):
-    """ Run a single training epoch using the given data loader. """
-    model.train()
-    total_loss = 0.0
-    for X_batch, y_batch in data_loader:
-        X_batch, y_batch = X_batch.to(device), y_batch.to(device)
-        optimizer.zero_grad()
-        outputs = model(X_batch)
-        loss = criterion(outputs, y_batch)
-        loss.backward()
-        optimizer.step()
-        total_loss += loss.item()
-    return total_loss / len(data_loader)
-
-
-def run_validation_epoch(model, data_loader, criterion):
-    """ Run a single validation epoch using the given data loader. """
-    model.eval()
-    total_loss = 0.0
-    with torch.no_grad():
-        for X_val_batch, y_val_batch in data_loader:
-            X_val_batch, y_val_batch = X_val_batch.to(device), y_val_batch.to(device)
-            val_outputs = model(X_val_batch)
-            total_loss += criterion(val_outputs, y_val_batch).item()
-    return total_loss / len(data_loader)
-
-
 def save_best_model(best_model, model_dir, symbol):
-    """ Save the best model to the given directory. """
+    """Save the best model to the given directory."""
     if best_model:
-        torch.save(best_model, f'{model_dir}/{symbol}_model.pth')
-        logger.info(f'Best model saved to {model_dir}/{symbol}_model.pth')
+        best_model_path = os.path.join(model_dir, f"{symbol}_model.pth")
+        torch.save(best_model, best_model_path)
+        logger.info(f"Best model saved to {best_model_path}")
 
 
-def evaluate_model(symbol, model, X, y, scaler_prices, scaler_volume, dates):
-    """ Evaluate the model using the given data. """
+def save_model_checkpoint(symbol, model, checkpoint_dir, epoch):
+    """Save a checkpoint of the given model."""
+    os.makedirs(checkpoint_dir, exist_ok=True)
+    checkpoint_path = os.path.join(checkpoint_dir, f"{symbol}_checkpoint_{epoch}.pth")
+    torch.save(model.state_dict(), checkpoint_path)
+    logger.info(f"Model checkpoint saved to {checkpoint_path}")
+
+
+def evaluate_model(model, data_loader, loss_fn, device):
+    """Evaluate the model on the given data loader."""
     model.eval()
+    total_loss = 0.0
     with torch.no_grad():
-        predictions = model(torch.tensor(X, dtype=torch.float32).to(device)).cpu().numpy()
-        predictions = inverse_transform(predictions, scaler_prices, scaler_volume)
-        y_true = inverse_transform(y, scaler_prices, scaler_volume)
+        for batch in data_loader:
+            x_batch, y_batch = batch
+            x_batch, y_batch = x_batch.to(device), y_batch.to(device)
+            y_pred = model(x_batch)
+            loss = loss_fn(y_pred, y_batch)
+            total_loss += loss.item()
 
-    plot_evaluation(symbol, predictions, y_true, dates)
+    return total_loss / len(data_loader)
 
 
 def inverse_transform(data, scaler_prices, scaler_volume):
-    """ Inverse transform the given data using the given scalers. """
+    """Inverse transform the given data using the given scalers."""
     inverse_data = np.zeros_like(data)
     inverse_data[:, :-1] = scaler_prices.inverse_transform(data[:, :-1])
-    inverse_data[:, -1] = scaler_volume.inverse_transform(data[:, -1].reshape(-1, 1)).flatten()
+    inverse_data[:, -1] = scaler_volume.inverse_transform(
+        data[:, -1].reshape(-1, 1)
+    ).flatten()
     return inverse_data
 
 
+def train_model(symbol, model, train_loader, val_loader, num_epochs, learning_rate, model_dir, weight_decay, device,
+                fold_idx=None):
+    """Train the model with early stopping."""
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    loss_fn = torch.nn.MSELoss()
+
+    early_stopping = EarlyStopping(patience=10, verbose=True, path=f"{model_dir}/{symbol}_best_model.pth")
+    checkpoint_dir = os.path.join(model_dir, "checkpoints")
+
+    for epoch in range(num_epochs):
+        train_loss = run_training_epoch(model, train_loader, loss_fn, optimizer, device)
+        val_loss = run_validation_epoch(model, val_loader, loss_fn, device)
+        logger.info(
+            f"Fold {fold_idx}, Epoch {epoch + 1}/{num_epochs}, Training Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
+
+        # Check early stopping condition
+        early_stopping(val_loss, model)
+
+        if early_stopping.early_stop:
+            logger.info("Early stopping triggered. Stopping training.")
+            break
+
+        save_model_checkpoint(symbol, model, checkpoint_dir, epoch)
+
+
 def plot_evaluation(symbol, predictions, y_true, dates):
+    """Plot the evaluation results."""
     aligned_dates = dates[-len(y_true):]
 
     plt.figure(figsize=(14, 7))
-    plt.title(f'{symbol} - Model Evaluation')
-    plt.plot(aligned_dates, y_true[:, 0], label='True Price', color='blue')
-    plt.plot(aligned_dates, predictions[:, 0], label='Predicted Prices', color='red')
-    plt.xlabel('Date')
-    plt.ylabel('Price')
+    plt.title(f"{symbol} - Model Evaluation")
+    plt.plot(aligned_dates, y_true[:, 0], label="True Price", color="blue")
+    plt.plot(aligned_dates, predictions[:, 0], label="Predicted Prices", color="red")
+    plt.xlabel("Date")
+    plt.ylabel("Price")
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig(f'png/{symbol}_evaluation.png')
+    plt.savefig(f"png/{symbol}_evaluation.png")
     plt.close()
-    logger.info('Model evaluation completed and plot saved.')
-
-
-def main():
-    args = parse_arguments()
-    config = load_config(args.config)
-    logger.info(f'Loaded configuration from {args.config}')
-
-    if args.rebuild_features:
-        rebuild_features(config)
-
-    historical_data, features = get_historical_data(config)
-    x, y, scaler_features, scaler_prices, scaler_volume, selected_features = preprocess_data(
-        symbol=config.symbol,
-        historical_data=historical_data,
-        targets=config.targets,
-        look_back=config.look_back,
-        look_forward=config.look_forward,
-        features=features,
-        best_features=config.best_features,
-        max_iter=100
-    )
-
-    update_config_with_best_features(config, selected_features)
-
-    train_loader, val_loader = split_data(x, y, batch_size=config.batch_size)
-    model = initialize_model(config)
-
-    train_model(config.symbol, model, train_loader, val_loader, num_epochs=config.epochs,
-                learning_rate=config.model_params.get('learning_rate', 0.001), model_dir=config.model_dir)
-
-    evaluate_model(config.symbol, model, x, y, scaler_prices, scaler_volume, historical_data.index)
+    logger.info("Model evaluation completed and plot saved.")
 
 
 def parse_arguments():
+    """Parse command-line arguments."""
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument('--config', type=str, required=True, help='Path to configuration JSON file')
-    arg_parser.add_argument('--rebuild-features', action='store_true', help='Rebuild features')
+    arg_parser.add_argument(
+        "--config",
+        type=str,
+        required=True,
+        help="Path to configuration JSON file")
+    arg_parser.add_argument(
+        "--rebuild-features", action="store_true", help="Rebuild features"
+    )
     return arg_parser.parse_args()
 
 
 def rebuild_features(config):
-    update_config(config, 'best_features', [])
+    """Rebuild features if specified."""
+    update_config(config, "feature_settings.best_features", [])
     config.save()
-    logger.info('Rebuilding features')
-
-
-def get_historical_data(config):
-    logger.info(f'Getting historical data for {config.ticker} from {config.start_date} to {config.end_date}')
-    return get_data(config.ticker, config.symbol, config.asset_type, config.start_date,
-                    config.end_date, config.indicator_windows, config.data_sampling_interval,
-                    config.data_resampling_frequency)
+    logger.info("Rebuilding features")
 
 
 def update_config_with_best_features(config, selected_features):
-    logger.info(f'Selected features: {selected_features}')
-    update_config(config, 'best_features', selected_features)
+    """Update configuration with the best features."""
+    logger.info(f"Selected features: {selected_features}")
+    update_config(config, "feature_settings.best_features", selected_features)
     config.save()
+
+
+def main():
+    """Main function to run the training and evaluation."""
+    args = parse_arguments()
+    config = load_config(args.config)
+    logger.info(f"Loaded configuration from {args.config}")
+    logger.info(f"Configuration: {config}")
+    if args.rebuild_features:
+        rebuild_features(config)
+
+    train_val_loaders, selected_features, scaler_prices, scaler_volume, historical_data, scaler_features = (
+        load_and_preprocess_data(config))
+
+    model = initialize_model(config)
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model.to(device)
+
+    for fold_idx, (train_loader, val_loader) in enumerate(train_val_loaders, 1):
+        train_model(
+            config.data_settings["symbol"],
+            model,
+            train_loader,
+            val_loader,
+            num_epochs=config.training_settings["epochs"],
+            learning_rate=config.model_settings.get("learning_rate", 0.001),
+            model_dir=config.training_settings["model_dir"],
+            weight_decay=config.model_settings.get("weight_decay", 0.0),
+            device=device,
+            fold_idx=fold_idx
+        )
+
+        x, y = [], []
+        for data, target in train_loader:
+            x.append(data)
+            y.append(target)
+        x = torch.cat(x).to(device)
+        y = torch.cat(y).to(device)
+
+        evaluate_model(
+            model,
+            train_loader,
+            torch.nn.MSELoss(),
+            device
+        )
 
 
 if __name__ == "__main__":

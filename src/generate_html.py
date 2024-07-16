@@ -1,7 +1,7 @@
 import os
 
 # Define the path to the directory containing the Plotly HTML files
-html_directory = 'docs'
+html_directory = "docs"
 
 # Define the template for the index.html file
 INDEX_TEMPLATE = """
@@ -119,7 +119,7 @@ def extract_symbol_from_filename(filename):
     Returns:
         str: The extracted symbol.
     """
-    return filename.split('_')[0]
+    return filename.split("_")[0]
 
 
 def extract_features_from_filename(filename):
@@ -132,31 +132,33 @@ def extract_features_from_filename(filename):
     Returns:
         str: The extracted features.
     """
-    parts = filename.split('_')
+    parts = filename.split("_")
     if len(parts) > 2:
-        return ', '.join(parts[1:-1])
-    return 'Unknown'
+        return ", ".join(parts[1:-1])
+    return "Unknown"
 
 
 def generate_index_html():
     # Get a list of all HTML files in the directory
-    files = [f for f in os.listdir(html_directory) if f.endswith('_predictions.html')]
+    files = [f for f in os.listdir(html_directory) if f.endswith("_predictions.html")]
 
     # Generate the list of links and rows
     rows = []
     for file in files:
         symbol = extract_symbol_from_filename(file)
         features = extract_features_from_filename(file)
-        rows.append(f'<tr><td><a href="{file}" target="_blank">{symbol}</a></td><td>{features}</td></tr>')
+        rows.append(
+            f'<tr><td><a href="{file}" target="_blank">{symbol}</a></td><td>{features}</td></tr>'
+        )
 
     # Create the final HTML content
-    html_content = INDEX_TEMPLATE.format(rows='\n'.join(rows))
+    html_content = INDEX_TEMPLATE.format(rows="\n".join(rows))
 
     # Write the HTML content to index.html
-    with open(os.path.join(html_directory, 'index.html'), 'w') as f:
+    with open(os.path.join(html_directory, "index.html"), "w") as f:
         f.write(html_content)
-    print(f'index.html generated with {len(files)} links.')
+    print(f"index.html generated with {len(files)} links.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     generate_index_html()

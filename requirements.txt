@@ -7,3 +7,5 @@ torch~=2.2.2
 plotly~=5.3.1
 scikit-learn~=1.5.1
 pre-commit
+xgboost~=2.1.0
+optuna
