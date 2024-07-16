@@ -242,7 +242,7 @@ def main(config_path: str) -> None:
     )
 
     model = load_model(
-        config.symbol, config.model_dir, len(selected_features), config.model_params
+        config.symbol, config.model_dir, len(selected_features), config.model_settings
     )
     predictions, future_predictions = predict(
         _model=model,

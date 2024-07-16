@@ -112,7 +112,7 @@ def load_model(
         fc_output_size=model_params["fc_output_size"],
     ).to(device)
     model.device = device
-    model_path = os.path.join(path, f"{symbol}_model.pth")
+    model_path = os.path.join(path, f"{symbol}_best_model.pth")
     logger.info(f"Model: {model}")
     logger.info(f"Loading model from {model_path}")
     model.load_state_dict(torch.load(model_path, map_location=device))
