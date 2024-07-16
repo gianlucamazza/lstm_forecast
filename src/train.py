@@ -142,7 +142,7 @@ def main():
     if args.rebuild_features:
         rebuild_features(config)
 
-    train_val_loaders, selected_features, scaler_prices, scaler_volume, historical_data, scaler_features = (
+    train_val_loaders, selected_features, _, _, _, _ = (
         load_and_preprocess_data(config))
 
     update_config_with_best_features(config, selected_features)

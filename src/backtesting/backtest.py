@@ -144,9 +144,9 @@ if __name__ == "__main__":
     model_dir = config['model_dir']
     model_params = config.get('model_params', {})
     start_date = config['start_date']
-    look_back = config['look_back']
-    look_forward = config['look_forward']
-    best_features = config.get('best_features', [])
+    look_back = config[.look_back
+    look_forward = config.look_forward
+    best_features = config.best_features
     target = config.get('targets', ['Close'])
     data_resampling_frequency = config['data_resampling_frequency']
     indicator_windows = config['indicator_windows']

@@ -45,9 +45,11 @@ def objective(optuna_trial, config):
                        f"dropout={dropout}, learning_rate={learning_rate}, weight_decay={weight_decay}")
 
     try:
-        folds, selected_features, _, _, _ = load_and_preprocess_data(config)
+        train_val_loaders, selected_features, _, _, _, _ = (
+            load_and_preprocess_data(config))
+        
         fold_val_losses = []
-        for fold_idx, (train_loader, val_loader) in enumerate(folds):
+        for fold_idx, (train_loader, val_loader) in enumerate(train_val_loaders):
             model = PricePredictor(
                 input_size=len(selected_features),
                 hidden_size=hidden_size,
@@ -173,14 +175,14 @@ def parse_arguments():
 
 
 def rebuild_features(config):
-    update_config(config, "best_features", [])
+    config.feature_settings["best_features"] = []
     config.save()
     optuna_logger.info("Rebuilding features")
 
 
 def update_config_with_best_features(config, selected_features):
     optuna_logger.info(f"Selected features: {selected_features}")
-    update_config(config, "best_features", selected_features)
+    config.feature_settings["best_features"] = selected_features
     config.save()
 
 
