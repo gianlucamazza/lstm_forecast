@@ -1,12 +1,12 @@
 import logging
-
+import torch
 
 class EarlyStopping:
     """
     Early stops the training if validation loss doesn't improve after a given patience.
     """
 
-    def __init__(self, patience=10, delta=0.001, verbose=False):
+    def __init__(self, patience=10, delta=0.001, verbose=False, path="checkpoint.pt"):
         """
         Args:
             patience (int): How long to wait after last time validation loss improved.
@@ -15,10 +15,13 @@ class EarlyStopping:
                            Default: 0.001
             verbose (bool): If True, prints a message for each validation loss improvement.
                             Default: False
+            path (str): Path for the checkpoint to be saved to.
+                            Default: 'checkpoint.pt'
         """
         self.patience = patience
         self.delta = delta
         self.verbose = verbose
+        self.path = path
         self.counter = 0
         self.best_loss = None
         self.early_stop = False
@@ -52,6 +55,7 @@ class EarlyStopping:
         """Saves the best model state if a model is provided."""
         if model is not None:
             self.best_model_state = model.state_dict()
+            torch.save(self.best_model_state, self.path)
 
     def reset(self):
         """Resets the early stopping parameters."""
