@@ -70,13 +70,6 @@
         "max_open_trades": 5
     },
     "feature_settings": {
-        "best_features": [
-            "Bollinger_High",
-            "Bollinger_Low",
-            "Ichimoku_Tenkan",
-            "Ichimoku_Kijun",
-            "Ichimoku_Senkou_Span_A",
-            "Ichimoku_Senkou_Span_B"
-        ]
+        "best_features": []
     }
 }
