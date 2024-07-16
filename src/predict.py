@@ -55,49 +55,24 @@ def predict(
         logger.info(f"Inverse transformed predictions: {predictions.shape}")
 
         # Forecast future prices
+        last_x = _x[-1]
         future_predictions = []
+
         for day in range(future_days):
-            _X_tensor = torch.tensor(_x[-1:], dtype=torch.float32).to(device)
+            _X_tensor = torch.tensor(last_x[np.newaxis, :], dtype=torch.float32).to(device)
             future_pred = _model(_X_tensor).cpu().numpy()[0]
             future_predictions.append(future_pred)
 
-            logger.debug(f"Day {day + 1} future prediction: {future_pred}")
-
-            new_row = np.zeros((1, _x.shape[2]))
-            logger.debug(
-                f"New row shape: {new_row.shape}, future_pred shape: {future_pred.shape}"
-            )
-
-            if new_row.shape[1] < len(future_pred):
-                new_row = np.zeros((1, len(future_pred)))
-                logger.debug(f"Adjusted new row shape: {new_row.shape}")
-
+            new_row = np.zeros((1, last_x.shape[1]))
             new_row[0, :num_targets] = future_pred
+
             if new_row.shape[1] > num_targets:
-                new_row[0, num_targets:] = _x[-1, -1, num_targets:]
+                new_row[0, num_targets:] = last_x[-1, num_targets:]
 
-            logger.debug(f"New row for future prediction: {new_row}")
+            last_x = np.vstack((last_x[1:], new_row))
 
-            if _x[-1][1:].shape[1] != new_row.shape[1]:
-                logger.debug(
-                    f"Adjusting shapes for concatenation. _x[-1][1:].shape: {_x[-1][1:].shape}, "
-                    f"new_row.shape: {new_row.shape}"
-                )
-                if _x[-1][1:].shape[1] < new_row.shape[1]:
-                    new_row = new_row[:, : _x[-1][1:].shape[1]]
-                else:
-                    new_row_padded = np.zeros(
-                        (_x[-1][1:].shape[0], _x[-1][1:].shape[1])
-                    )
-                    new_row_padded[:, : new_row.shape[1]] = new_row
-                    new_row = new_row_padded
-
-            logger.debug(
-                f"_x[-1][1:].shape: {_x[-1][1:].shape}, new_row.shape: {new_row.shape}"
-            )
-
-            _x = np.append(_x, [np.vstack((_x[-1][1:], new_row))], axis=0)
-            logger.debug(f"Updated input data shape: {_x.shape}")
+        future_predictions = np.array(future_predictions)
+        logger.debug(f"Future predictions array shape: {future_predictions.shape}")
 
         future_predictions_reshaped = np.zeros(
             (future_days, len(_features) + num_targets)
@@ -154,27 +129,6 @@ def inverse_transform_predictions(
     )
 
     return predictions_reshaped[:, :num_targets]
-
-
-def forecast_future_prices(
-    model: nn.Module, x: np.ndarray, future_days: int, num_targets: int
-) -> np.ndarray:
-    future_predictions = []
-    for _ in range(future_days):
-        future_pred = make_future_prediction(model, x)
-        future_predictions.append(future_pred)
-        x = update_input_data(x, future_pred, num_targets)
-    future_predictions = np.array(future_predictions)
-    future_predictions = future_predictions.reshape((future_days, num_targets))
-    logger.info(f"Future predictions shape: {future_predictions.shape}")
-    return future_predictions
-
-
-def make_future_prediction(model: nn.Module, x: np.ndarray) -> np.ndarray:
-    x_tensor = torch.tensor(x[-1:], dtype=torch.float32).to(device)
-    future_pred = model(x_tensor).cpu().numpy()[0]
-    logger.debug(f"Future prediction: {future_pred}")
-    return future_pred
 
 
 def update_input_data(
