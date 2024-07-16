@@ -1,16 +1,21 @@
+import os
+import sys
 import argparse
 import optuna
 import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
 from optuna.trial import TrialState
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from src.data_loader import load_and_preprocess_data
 from src.model import PricePredictor
 from src.early_stopping import EarlyStopping
 from src.config import load_config, update_config
 from src.logger import setup_logger
 from src.model_utils import run_training_epoch, run_validation_epoch
-import torch
-import torch.nn as nn
-import torch.optim as optim
 from src.train import initialize_model, train_model, evaluate_model
 
 train_logger = setup_logger("train_logger", "logs/train.log")
