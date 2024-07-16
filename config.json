@@ -42,12 +42,12 @@
         ]
     },
     "model_settings": {
-        "hidden_size": 128,
-        "num_layers": 3,
-        "dropout": 0.3,
-        "learning_rate": 0.002,
+        "hidden_size": 162,
+        "num_layers": 1,
+        "dropout": 0.477,
+        "learning_rate": 0.0003,
         "fc_output_size": 5,
-        "weight_decay": 0.01
+        "weight_decay": 0.0069
     },
     "training_settings": {
         "look_back": 120,

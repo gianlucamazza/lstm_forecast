@@ -22,9 +22,9 @@ logger = setup_logger("train_logger", "logs/train.log")
 
 def initialize_model(config):
     """ Initialize the model with the given configuration. """
-    hidden_size = config.model_params.get("hidden_size", 64)
-    num_layers = config.model_params.get("num_layers", 2)
-    dropout = config.model_params.get("dropout", 0.2)
+    hidden_size = config.model_settings.get("hidden_size", 64)
+    num_layers = config.model_settings.get("num_layers", 2)
+    dropout = config.model_settings.get("dropout", 0.2)
     input_size = len(config.feature_settings["best_features"])
     fc_output_size = len(config.data_settings["targets"])
 
@@ -41,51 +41,51 @@ def initialize_model(config):
     return model
 
 
-def train_model(
-        symbol,
-        model,
-        train_loader,
-        val_loader,
-        num_epochs,
-        learning_rate,
-        model_dir,
-        weight_decay,
-):
-    """Train the model using the given data loaders."""
-    criterion = nn.MSELoss()
-    optimizer = optim.Adam(
-        model.parameters(), lr=learning_rate, weight_decay=weight_decay
-    )
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode="min", factor=0.1, patience=5
-    )
-    early_stopping = EarlyStopping(patience=10, delta=0)
+def main():
+    args = parse_arguments()
+    config = load_config(args.config)
+    logger.info(f"Loaded configuration from {args.config}")
+    logger.info(f"Configuration: {config}")
+    if args.rebuild_features:
+        rebuild_features(config)
 
-    best_model = None
-    best_val_loss = float("inf")
+    train_val_loaders, selected_features, scaler_prices, scaler_volume, historical_data, scaler_features = (
+        load_and_preprocess_data(config))
 
-    model.train()
-    for epoch in range(num_epochs):
-        train_loss = run_training_epoch(
-            model, train_loader, criterion, optimizer, device)
-        val_loss = run_validation_epoch(model, val_loader, criterion, device)
+    model = initialize_model(config)
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model.to(device)
 
-        scheduler.step(val_loss)
-        early_stopping(val_loss)
-
-        logger.info(
-            f"Epoch {epoch + 1}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}"
+    for train_loader, val_loader in train_val_loaders:
+        train_model(
+            config.data_settings["symbol"],
+            model,
+            train_loader,
+            val_loader,
+            num_epochs=config.training_settings["epochs"],
+            learning_rate=config.model_settings.get("learning_rate", 0.001),
+            model_dir=config.training_settings["model_dir"],
+            weight_decay=config.model_settings.get("weight_decay", 0.0),
+            device=device
         )
 
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
-            best_model = model.state_dict()
+        x, y = [], []
+        for data, target in train_loader:
+            x.append(data)
+            y.append(target)
+        x = torch.cat(x).to(device)
+        y = torch.cat(y).to(device)
 
-        if early_stopping.early_stop:
-            logger.info("Early stopping triggered.")
-            break
-
-    save_best_model(best_model, model_dir, symbol)
+        evaluate_model(
+            config.data_settings["symbol"],
+            model,
+            x,
+            y,
+            scaler_prices,
+            scaler_volume,
+            historical_data.index,
+            device
+        )
 
 
 def save_best_model(best_model, model_dir, symbol):
@@ -95,20 +95,18 @@ def save_best_model(best_model, model_dir, symbol):
         logger.info(f"Best model saved to {model_dir}/{symbol}_model.pth")
 
 
-def evaluate_model(symbol, model, x, y, scaler_prices, scaler_volume, dates):
-    """Evaluate the model using the given data."""
+def evaluate_model(model, data_loader, loss_fn, device):
     model.eval()
+    total_loss = 0.0
     with torch.no_grad():
-        predictions = (
-            model(
-                torch.tensor(
-                    x,
-                    dtype=torch.float32).to(device)).cpu().numpy())
-        predictions = inverse_transform(
-            predictions, scaler_prices, scaler_volume)
-        y_true = inverse_transform(y, scaler_prices, scaler_volume)
+        for batch in data_loader:
+            x_batch, y_batch = batch
+            x_batch, y_batch = x_batch.to(device), y_batch.to(device)
+            y_pred = model(x_batch)
+            loss = loss_fn(y_pred, y_batch)
+            total_loss += loss.item()
 
-    plot_evaluation(symbol, predictions, y_true, dates)
+    return total_loss / len(data_loader)
 
 
 def inverse_transform(data, scaler_prices, scaler_volume):
@@ -119,6 +117,24 @@ def inverse_transform(data, scaler_prices, scaler_volume):
         data[:, -1].reshape(-1, 1)
     ).flatten()
     return inverse_data
+
+
+def train_model(symbol, model, train_loader, val_loader, num_epochs, learning_rate, model_dir, weight_decay, device):
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    loss_fn = torch.nn.MSELoss()
+
+    for epoch in range(num_epochs):
+        train_loss = run_training_epoch(model, train_loader, loss_fn, optimizer, device)
+        val_loss = evaluate_model(model, val_loader, loss_fn, device)
+        logger.info(f"Epoch {epoch + 1}/{num_epochs}, Training Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
+
+        save_model_checkpoint(symbol, model, model_dir, epoch)
+
+
+def save_model_checkpoint(symbol, model, model_dir, epoch):
+    """Save a checkpoint of the given model."""
+    torch.save(model.state_dict(), f"{model_dir}/{symbol}_checkpoint_{epoch}.pth")
+    logger.info(f"Model checkpoint saved to {model_dir}/{symbol}_checkpoint_{epoch}.pth")
 
 
 def plot_evaluation(symbol, predictions, y_true, dates):
@@ -147,36 +163,39 @@ def main():
     if args.rebuild_features:
         rebuild_features(config)
 
-    train_loader, val_loader, selected_features, scaler_prices, scaler_volume, historical_data = (
+    train_val_loaders, selected_features, scaler_prices, scaler_volume, historical_data, scaler_features = (
         load_and_preprocess_data(config))
+
     model = initialize_model(config)
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model.to(device)
 
-    train_model(
-        config.data_settings["symbol"],
-        model,
-        train_loader,
-        val_loader,
-        num_epochs=config.training_settings["epochs"],
-        learning_rate=config.model_settings.get("learning_rate", 0.001),
-        model_dir=config.training_settings["model_dir"],
-        weight_decay=config.model_settings.get("weight_decay", 0.0),
-    )
+    for train_loader, val_loader in train_val_loaders:
+        train_model(
+            config.data_settings["symbol"],
+            model,
+            train_loader,
+            val_loader,
+            num_epochs=config.training_settings["epochs"],
+            learning_rate=config.model_settings.get("learning_rate", 0.001),
+            model_dir=config.training_settings["model_dir"],
+            weight_decay=config.model_settings.get("weight_decay", 0.0),
+            device=device
+        )
 
-    x, y = [], []
-    for data, target in train_loader:
-        x.append(data)
-        y.append(target)
-    x = torch.cat(x)
-    y = torch.cat(y)
+        x, y = [], []
+        for data, target in train_loader:
+            x.append(data)
+            y.append(target)
+        x = torch.cat(x).to(device)
+        y = torch.cat(y).to(device)
 
-    evaluate_model(
-        config.data_settings["symbol"],
-        model,
-        x,
-        y,
-        scaler_prices,
-        scaler_volume,
-        historical_data.index)
+        evaluate_model(
+            model,
+            train_loader,
+            torch.nn.MSELoss(),  # Assumendo che MSELoss sia la funzione di perdita
+            device
+        )
 
 
 def parse_arguments():

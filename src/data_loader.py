@@ -228,11 +228,9 @@ def create_timeseries_window(_x: np.ndarray, _y: np.ndarray, n_splits: int):
     for train_index, val_index in tscv.split(_x):
         x_train, x_val = _x[train_index], _x[val_index]
         y_train, y_val = _y[train_index], _y[val_index]
-        train_loader = DataLoader(TensorDataset(torch.tensor(x_train).float(), torch.tensor(y_train).float()),
-                                  batch_size=32, shuffle=True)
-        val_loader = DataLoader(TensorDataset(torch.tensor(x_val).float(), torch.tensor(y_val).float()), batch_size=32,
-                                shuffle=False)
-        splits.append((train_loader, val_loader))
+        train_data = (torch.tensor(x_train).float(), torch.tensor(y_train).float())
+        val_data = (torch.tensor(x_val).float(), torch.tensor(y_val).float())
+        splits.append((train_data, val_data))
     return splits
 
 
@@ -300,6 +298,11 @@ def split_data(
     )
 
 
+def create_dataloader(data, batch_size=32):
+    dataset = torch.utils.data.TensorDataset(*data)
+    return torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False)
+
+
 def load_and_preprocess_data(config):
     historical_data, features = get_data(
         config.ticker,
@@ -328,7 +331,11 @@ def load_and_preprocess_data(config):
         logger.info("Using k-fold cross-validation with TimeSeriesSplit")
         logger.info(f"Number of splits: {config.training_settings.get('time_series_splits', 5)}")
         windows = create_timeseries_window(x, y, n_splits=config.training_settings.get("time_series_splits", 5))
-        return windows, selected_features, scaler_prices, scaler_volume, historical_data
+        batch_size = config.batch_size
+        train_val_loaders = [(create_dataloader(train_data, batch_size),
+                              create_dataloader(val_data, batch_size)) for train_data, val_data in windows]
+        return train_val_loaders, selected_features, scaler_prices, scaler_volume, historical_data, scaler_features
 
     train_loader, val_loader = split_data(x, y, batch_size=config.batch_size)
-    return [(train_loader, val_loader)], selected_features, scaler_prices, scaler_volume, historical_data
+    return ([(train_loader, val_loader)], selected_features, scaler_prices, scaler_volume, historical_data,
+            scaler_features)
