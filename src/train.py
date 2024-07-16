@@ -2,7 +2,6 @@ import argparse
 import os
 import sys
 import matplotlib.pyplot as plt
-import numpy as np
 import torch
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -39,14 +38,6 @@ def initialize_model(config):
     return model
 
 
-def save_best_model(best_model, model_dir, symbol):
-    """Save the best model to the given directory."""
-    if best_model:
-        best_model_path = os.path.join(model_dir, f"{symbol}_model.pth")
-        torch.save(best_model, best_model_path)
-        logger.info(f"Best model saved to {best_model_path}")
-
-
 def save_model_checkpoint(symbol, model, checkpoint_dir, epoch):
     """Save a checkpoint of the given model."""
     os.makedirs(checkpoint_dir, exist_ok=True)
@@ -55,14 +46,14 @@ def save_model_checkpoint(symbol, model, checkpoint_dir, epoch):
     logger.info(f"Model checkpoint saved to {checkpoint_path}")
 
 
-def evaluate_model(model, data_loader, loss_fn, device):
+def evaluate_model(model, data_loader, loss_fn, _device):
     """Evaluate the model on the given data loader."""
     model.eval()
     total_loss = 0.0
     with torch.no_grad():
         for batch in data_loader:
             x_batch, y_batch = batch
-            x_batch, y_batch = x_batch.to(device), y_batch.to(device)
+            x_batch, y_batch = x_batch.to(_device), y_batch.to(_device)
             y_pred = model(x_batch)
             loss = loss_fn(y_pred, y_batch)
             total_loss += loss.item()
@@ -70,17 +61,7 @@ def evaluate_model(model, data_loader, loss_fn, device):
     return total_loss / len(data_loader)
 
 
-def inverse_transform(data, scaler_prices, scaler_volume):
-    """Inverse transform the given data using the given scalers."""
-    inverse_data = np.zeros_like(data)
-    inverse_data[:, :-1] = scaler_prices.inverse_transform(data[:, :-1])
-    inverse_data[:, -1] = scaler_volume.inverse_transform(
-        data[:, -1].reshape(-1, 1)
-    ).flatten()
-    return inverse_data
-
-
-def train_model(symbol, model, train_loader, val_loader, num_epochs, learning_rate, model_dir, weight_decay, device,
+def train_model(symbol, model, train_loader, val_loader, num_epochs, learning_rate, model_dir, weight_decay, _device,
                 fold_idx=None):
     """Train the model with early stopping."""
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
@@ -90,10 +71,11 @@ def train_model(symbol, model, train_loader, val_loader, num_epochs, learning_ra
     checkpoint_dir = os.path.join(model_dir, "checkpoints")
 
     for epoch in range(num_epochs):
-        train_loss = run_training_epoch(model, train_loader, loss_fn, optimizer, device)
-        val_loss = run_validation_epoch(model, val_loader, loss_fn, device)
+        train_loss = run_training_epoch(model, train_loader, loss_fn, optimizer, _device)
+        val_loss = run_validation_epoch(model, val_loader, loss_fn, _device)
         logger.info(
-            f"Fold {fold_idx}, Epoch {epoch + 1}/{num_epochs}, Training Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
+            f"Fold {fold_idx}, Epoch {epoch + 1}/{num_epochs}, Training Loss: {train_loss:.4f}, "
+            f"Validation Loss: {val_loss:.4f}")
 
         # Check early stopping condition
         early_stopping(val_loss, model)
@@ -163,8 +145,9 @@ def main():
     train_val_loaders, selected_features, scaler_prices, scaler_volume, historical_data, scaler_features = (
         load_and_preprocess_data(config))
 
+    update_config_with_best_features(config, selected_features)
+
     model = initialize_model(config)
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model.to(device)
 
     for fold_idx, (train_loader, val_loader) in enumerate(train_val_loaders, 1):
@@ -177,22 +160,8 @@ def main():
             learning_rate=config.model_settings.get("learning_rate", 0.001),
             model_dir=config.training_settings["model_dir"],
             weight_decay=config.model_settings.get("weight_decay", 0.0),
-            device=device,
+            _device=device,
             fold_idx=fold_idx
-        )
-
-        x, y = [], []
-        for data, target in train_loader:
-            x.append(data)
-            y.append(target)
-        x = torch.cat(x).to(device)
-        y = torch.cat(y).to(device)
-
-        evaluate_model(
-            model,
-            train_loader,
-            torch.nn.MSELoss(),
-            device
         )
 
 
