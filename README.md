@@ -108,7 +108,7 @@ Update the `config.json` file with the desired parameters.
         "max_open_trades": 5
     },
     "feature_settings": {
-        "best_features": [
+        "selected_features": [
             "Bollinger_High",
             "Bollinger_Low",
             "Ichimoku_Tenkan",
@@ -175,9 +175,9 @@ Update the `config.json` file with the desired parameters.
   - `max_open_trades`: Maximum number of open trades.
 
 - `feature_settings`: Dictionary containing feature selection settings.
-  - `best_features`: List of best features selected for training from the feature selection process.
+  - `selected_features`: List of best features selected for training from the feature selection process.
 
-If `best_features` is not present in the config file, the feature discovery process will be executed.
+If `selected_features` is not present in the config file, the feature discovery process will be executed.
 
 ### Features
 

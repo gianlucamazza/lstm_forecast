@@ -22,7 +22,7 @@ def initialize_model(config):
     hidden_size = config.model_settings.get("hidden_size", 64)
     num_layers = config.model_settings.get("num_layers", 2)
     dropout = config.model_settings.get("dropout", 0.2)
-    input_size = len(config.feature_settings["best_features"])
+    input_size = len(config.feature_settings["selected_features"])
     fc_output_size = len(config.data_settings["targets"])
 
     model = PricePredictor(
@@ -121,15 +121,15 @@ def parse_arguments():
 
 def rebuild_features(config):
     """Rebuild features if specified."""
-    update_config(config, "feature_settings.best_features", [])
+    update_config(config, "feature_settings.selected_features", [])
     config.save()
     logger.info("Rebuilding features")
 
 
-def update_config_with_best_features(config, selected_features):
+def update_config_with_selected_features(config, selected_features):
     """Update configuration with the best features."""
     logger.info(f"Selected features: {selected_features}")
-    update_config(config, "feature_settings.best_features", selected_features)
+    update_config(config, "feature_settings.selected_features", selected_features)
     config.save()
 
 
@@ -145,7 +145,7 @@ def main():
     train_val_loaders, selected_features, _, _, _, _ = (
         load_and_preprocess_data(config))
 
-    update_config_with_best_features(config, selected_features)
+    update_config_with_selected_features(config, selected_features)
 
     model = initialize_model(config)
     model.to(device)

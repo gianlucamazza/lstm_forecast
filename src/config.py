@@ -26,7 +26,8 @@ class Config:
         self.data_resampling_frequency = self.data_settings.get("data_resampling_frequency")
         self.targets = self.data_settings.get("targets", [])
         self.disabled_features = self.data_settings.get("disabled_features", [])
-
+        self.all_features = self.data_settings.get("all_features", [])
+        self.selected_features = self.data_settings.get("selected_features", [])
         self.log_dir = self.logging_settings.get("log_dir")
 
         self.look_back = self.training_settings.get("look_back")
@@ -37,8 +38,6 @@ class Config:
 
         self.model_settings["fc_output_size"] = len(self.targets)
 
-        self.all_features = self.feature_settings.get("all_features", [])
-        self.best_features = self.feature_settings.get("best_features", [])
 
     def save(self):
         with open(self.config_path, "w") as f:

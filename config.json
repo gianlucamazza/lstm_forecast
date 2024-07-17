@@ -45,6 +45,7 @@
             "High",
             "Low",
             "Close",
+            "Adj Close",
             "Volume",
             "SMA_50",
             "SMA_200",
@@ -59,7 +60,8 @@
             "CMF",
             "CCI",
             "Ichimoku"
-        ]
+        ],
+        "selected_features": []
     },
     "model_settings": {
         "hidden_size": 162,
@@ -88,29 +90,5 @@
         "stop_loss": 1.2,
         "trade_allocation": 0.1,
         "max_open_trades": 5
-    },
-    "all_features": {
-        "Open": "Open",
-        "High": "High",
-        "Low": "Low",
-        "Close": "Close",
-        "Adj Close": "Adj Close",
-        "Volume": "Volume",
-        "SMA_50": "SMA_50",
-        "SMA_200": "SMA_200",
-        "EMA": "EMA",
-        "MACD": "MACD",
-        "RSI": "RSI",
-        "Bollinger": "Bollinger",
-        "ATR": "ATR",
-        "Stochastic": "Stochastic",
-        "Aroon": "Aroon",
-        "Williams_R": "Williams_R",
-        "CMF": "CMF",
-        "CCI": "CCI",
-        "Ichimoku": "Ichimoku"
-    },
-    "feature_settings": {
-        "best_features": []
     }
 }

@@ -22,7 +22,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 logger.info(f"Device: {device}")
 
 def backtest(ticker: str, symbol: str, asset_type: str, data_sampling_interval: str, target: str, start_date: str,
-             model_dir: str, model_params: dict, look_back: int, look_forward: int, best_features: List, indicator_windows: dict,
+             model_dir: str, model_params: dict, look_back: int, look_forward: int, selected_features: List, indicator_windows: dict,
              data_resampling_frequency: str, initial_cash: float, trading_fee: float, take_profit: float = None,
              stop_loss: float = None, trade_allocation: float = 0.1, max_open_trades: int = 5) -> None:
     logger.info(f"Getting data for {symbol} from {start_date}")
@@ -34,7 +34,7 @@ def backtest(ticker: str, symbol: str, asset_type: str, data_sampling_interval: 
     logger.info(f"Preprocessing data")
     x_data, _, scaler, selected_features = preprocess_data(historical_data, target, look_back=look_back,
                                                            look_forward=look_forward, features=features,
-                                                           best_features=best_features)
+                                                           selected_features=selected_features)
     
     logger.info(f"Loaded model from {model_dir}")
     model = load_model(symbol, model_dir, input_shape=len(selected_features), model_params=model_params)
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     start_date = config['start_date']
     look_back = config[.look_back
     look_forward = config.look_forward
-    best_features = config.best_features
+    selected_features = config.selected_features
     target = config.get('targets', ['Close'])
     data_resampling_frequency = config['data_resampling_frequency']
     indicator_windows = config['indicator_windows']
@@ -155,7 +155,7 @@ if __name__ == "__main__":
     logger.info(f"Starting backtest for {ticker}")
     backtest(ticker=ticker, symbol=symbol, asset_type=asset_type, data_sampling_interval=data_sampling_interval,
              target=target, start_date=start_date, model_dir=model_dir, model_params=model_params, look_back=look_back, look_forward=look_forward,
-             best_features=best_features, indicator_windows=indicator_windows,
+             selected_features=selected_features, indicator_windows=indicator_windows,
              data_resampling_frequency=data_resampling_frequency, initial_cash=backtesting_params['initial_cash'],
              trading_fee=backtesting_params['trading_fee'], take_profit=backtesting_params.get('take_profit'),
              stop_loss=backtesting_params.get('stop_loss'), trade_allocation=backtesting_params['trade_allocation'],

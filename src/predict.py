@@ -237,7 +237,7 @@ def main(config_path: str) -> None:
             look_back=config.look_back,
             look_forward=config.look_forward,
             features=features,
-            best_features=config.best_features,
+            selected_features=config.selected_features,
         )
     )
 

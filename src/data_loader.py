@@ -57,7 +57,7 @@ def preprocess_data(
         look_forward: int = 30,
         features: List[str] = None,
         disabled_features: List[str] = None,
-        best_features: List[str] = None,
+        selected_features: List[str] = None,
 ) -> Tuple[
     ndarray[Any, dtype[Any]],
     ndarray[Any, dtype[Any]],
@@ -89,11 +89,11 @@ def preprocess_data(
 
     validate_data(_X, _y)
 
-    if best_features:
-        return select_best_features(
+    if selected_features:
+        return select_selected_features(
             _X,
             _y,
-            best_features,
+            selected_features,
             features,
             scaled_features,
             scaler_features,
@@ -231,10 +231,10 @@ def validate_data(_x: np.ndarray, _y: np.ndarray) -> None:
         raise ValueError("Infinite values found in input data.")
 
 
-def select_best_features(
+def select_selected_features(
         _x: np.ndarray,
         _y: np.ndarray,
-        best_features: List[str],
+        selected_features: List[str],
         features: List[str],
         scaled_features: np.ndarray,
         scaler_features: StandardScaler,
@@ -244,12 +244,12 @@ def select_best_features(
     np.ndarray, np.ndarray, StandardScaler, StandardScaler, MinMaxScaler, List[str]
 ]:
     """Select predefined best features."""
-    logger.info(f"Using predefined best features: {best_features}")
-    feature_indices = [features.index(feature) for feature in best_features]
+    logger.info(f"Using predefined best features: {selected_features}")
+    feature_indices = [features.index(feature) for feature in selected_features]
     validate_feature_indices(feature_indices, scaled_features.shape[1])
     _X_selected = _x[:, :, feature_indices]
     logger.info(f"Shape of _X_selected: {_X_selected.shape}")
-    return _X_selected, _y, scaler_features, scaler_prices, scaler_volume, best_features
+    return _X_selected, _y, scaler_features, scaler_prices, scaler_volume, selected_features
 
 
 def validate_feature_indices(feature_indices: List[int], max_index: int) -> None:
@@ -311,8 +311,11 @@ def load_and_preprocess_data(config):
         config.look_forward,
         features,
         config.disabled_features,
-        config.best_features,
+        config.selected_features,
     )
+    
+    config.selected_features = selected_features
+    config.save()
 
     if config.training_settings.get("use_time_series_split", False):
         logger.info("Using k-fold cross-validation with TimeSeriesSplit")

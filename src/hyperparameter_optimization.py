@@ -62,7 +62,7 @@ def objective(optuna_trial, config):
 
             criterion = nn.MSELoss()
             optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-            early_stopping = EarlyStopping(patience=10, delta=0.001, verbose=True)
+            early_stopping = EarlyStopping(patience=10, delta=0.001, verbose=True, path=f"models/optuna/model_{optuna_trial.number}_fold_{fold_idx}.pt")
 
             model.train()
             val_loss = float('inf')
@@ -108,9 +108,8 @@ def parse_arguments():
 def rebuild_features(config):
     """Rebuild features using Optuna for feature selection."""
     def feature_selection_objective(optuna_trial):
-        # Use the list of all possible features
-        all_features = config.all_features
         selected_features = []
+        all_features = config.all_features
         
         # Create a boolean parameter for each feature to decide if it's included or not
         for feature in all_features:
@@ -119,10 +118,6 @@ def rebuild_features(config):
         
         if len(selected_features) == 0:
             return float('inf')  # Penalize trials with no features selected
-
-        # Update the configuration with the selected features
-        config.feature_settings['selected_features'] = selected_features
-        update_config(config, "feature_settings.selected_features", selected_features)
 
         # Load and preprocess data with the selected features
         train_val_loaders, selected_features, _, _, _, _ = load_and_preprocess_data(config)
@@ -160,12 +155,14 @@ def rebuild_features(config):
     study.optimize(feature_selection_objective, n_trials=50)  # You can adjust n_trials as needed
 
     # Get the best set of features
-    best_features = [feature for feature in config.all_features if study.best_trial.params.get(f"use_{feature}", False)]
+    best_trial = study.best_trial
+    selected_features = [feature for feature in best_trial.params.keys() if best_trial.params[feature]]
     
     # Update the configuration with the best features
-    update_config(config, "feature_settings.selected_features", best_features)
+    config.selected_features = selected_features
+    config.save()
     
-    train_logger.info(f"Rebuilt features using Optuna. Best features: {best_features}")
+    train_logger.info(f"Rebuilt features using Optuna. Best features: {selected_features}")
 
 
 def main():
@@ -177,7 +174,6 @@ def main():
     windows = config.indicator_windows
     asset_type = config.asset_type
     data_resampling_frequency = config.data_resampling_frequency
-    all_features = config.all_features
     
     if args.rebuild_features:
         historical_data = pd.read_csv(config.historical_data_path, index_col="Date", parse_dates=True)
@@ -187,7 +183,6 @@ def main():
             asset_type=asset_type,
             frequency=data_resampling_frequency,
         )
-        config.all_features = features
         rebuild_features(config)
 
     study = optuna.create_study(direction="minimize")
