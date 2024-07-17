@@ -134,7 +134,7 @@ def rebuild_features(config):
 
             criterion = nn.MSELoss()
             optimizer = optim.Adam(model.parameters(), lr=config.model_settings['learning_rate'], weight_decay=config.model_settings['weight_decay'])
-            early_stopping = EarlyStopping(patience=10, delta=0.001, verbose=True)
+            early_stopping = EarlyStopping(patience=10, delta=0.001, verbose=True, path=f"models/optuna/feature_selection_{optuna_trial.number}_fold_{fold_idx}.pt")
 
             model.train()
             val_loss = float('inf')
