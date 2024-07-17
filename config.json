@@ -39,6 +39,26 @@
         ],
         "disabled_features": [
             "Adj Close"
+        ],
+        "all_features": [
+            "Open",
+            "High",
+            "Low",
+            "Close",
+            "Volume",
+            "SMA_50",
+            "SMA_200",
+            "EMA",
+            "MACD",
+            "RSI",
+            "Bollinger",
+            "ATR",
+            "Stochastic",
+            "Aroon",
+            "Williams_R",
+            "CMF",
+            "CCI",
+            "Ichimoku"
         ]
     },
     "model_settings": {
@@ -69,29 +89,28 @@
         "trade_allocation": 0.1,
         "max_open_trades": 5
     },
+    "all_features": {
+        "Open": "Open",
+        "High": "High",
+        "Low": "Low",
+        "Close": "Close",
+        "Adj Close": "Adj Close",
+        "Volume": "Volume",
+        "SMA_50": "SMA_50",
+        "SMA_200": "SMA_200",
+        "EMA": "EMA",
+        "MACD": "MACD",
+        "RSI": "RSI",
+        "Bollinger": "Bollinger",
+        "ATR": "ATR",
+        "Stochastic": "Stochastic",
+        "Aroon": "Aroon",
+        "Williams_R": "Williams_R",
+        "CMF": "CMF",
+        "CCI": "CCI",
+        "Ichimoku": "Ichimoku"
+    },
     "feature_settings": {
-        "best_features": [
-            "Open",
-            "High",
-            "Low",
-            "Close",
-            "Adj Close",
-            "Volume",
-            "SMA_50",
-            "SMA_200",
-            "EMA",
-            "MACD",
-            "MACD_Signal",
-            "RSI",
-            "Bollinger_High",
-            "Bollinger_Low",
-            "ADX",
-            "CCI",
-            "CMF",
-            "Ichimoku_Tenkan",
-            "Ichimoku_Kijun",
-            "Ichimoku_Senkou_Span_A",
-            "Ichimoku_Senkou_Span_B"
-        ]
+        "best_features": []
     }
 }

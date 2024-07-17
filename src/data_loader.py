@@ -42,19 +42,6 @@ def get_data(
     return historical_data, features
 
 
-def adjust_start_date_if_needed(start: str, end: str, end_date: pd.Timestamp) -> str:
-    """Adjust the start date if the interval is not daily and the date range is more than 1 year."""
-    deltatime = pd.to_datetime(end) - pd.to_datetime(start)
-    if deltatime.days > 365:
-        logger.warning(
-            "Interval is not 1d and the time range is more than 1 year. Changing the start date to 1 "
-            "year before the end date."
-        )
-        start = (end_date - pd.DateOffset(years=1)).strftime("%Y-%m-%d")
-        logger.info(f"New start date: {start}")
-    return start
-
-
 def save_historical_data(symbol: str, interval: str, historical_data: pd.DataFrame) -> None:
     """Save historical data to CSV."""
     historical_data.to_csv(f"data/{symbol}_{interval}.csv")

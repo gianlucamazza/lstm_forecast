@@ -224,18 +224,3 @@ def calculate_technical_indicators(
 
     features = list(historical_data.columns)
     return historical_data, features
-
-
-def update_config_with_best_features(config, features):
-    """
-    Update the configuration object with the best features selected during feature selection.
-
-    Parameters
-    ----------
-    config : Config
-        Configuration object.
-    features : list
-        List of best features selected during feature selection.
-    """
-    config.feature_settings["best_features"] = features
-    config.save()

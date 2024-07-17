@@ -37,6 +37,7 @@ class Config:
 
         self.model_settings["fc_output_size"] = len(self.targets)
 
+        self.all_features = self.feature_settings.get("all_features", [])
         self.best_features = self.feature_settings.get("best_features", [])
 
     def save(self):

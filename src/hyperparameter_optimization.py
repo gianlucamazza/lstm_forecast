@@ -11,8 +11,8 @@ from optuna.trial import TrialState
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.feature_engineering import calculate_technical_indicators, update_config_with_best_features
 from src.data_loader import load_and_preprocess_data
+from src.feature_engineering import calculate_technical_indicators
 from src.model import PricePredictor
 from src.early_stopping import EarlyStopping
 from src.config import load_config, update_config
@@ -92,11 +92,102 @@ def objective(optuna_trial, config):
     return avg_val_loss
 
 
+def parse_arguments():
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument(
+        "--config",
+        type=str,
+        required=True,
+        help="Path to configuration JSON file")
+    arg_parser.add_argument(
+        "--rebuild-features", action="store_true", help="Rebuild features"
+    )
+    return arg_parser.parse_args()
+
+
+def rebuild_features(config):
+    """Rebuild features using Optuna for feature selection."""
+    def feature_selection_objective(optuna_trial):
+        # Use the list of all possible features
+        all_features = config.all_features
+        selected_features = []
+        
+        # Create a boolean parameter for each feature to decide if it's included or not
+        for feature in all_features:
+            if optuna_trial.suggest_categorical(f"use_{feature}", [False, True]):
+                selected_features.append(feature)
+        
+        if len(selected_features) == 0:
+            return float('inf')  # Penalize trials with no features selected
+
+        # Update the configuration with the selected features
+        config.feature_settings['selected_features'] = selected_features
+        update_config(config, "feature_settings.selected_features", selected_features)
+
+        # Load and preprocess data with the selected features
+        train_val_loaders, selected_features, _, _, _, _ = load_and_preprocess_data(config)
+
+        fold_val_losses = []
+        for fold_idx, (train_loader, val_loader) in enumerate(train_val_loaders):
+            model = PricePredictor(
+                input_size=len(selected_features),  # Update input_size based on selected features
+                hidden_size=config.model_settings['hidden_size'],
+                num_layers=config.model_settings['num_layers'],
+                dropout=config.model_settings['dropout'],
+                fc_output_size=len(config.targets)
+            ).to(device)
+
+            criterion = nn.MSELoss()
+            optimizer = optim.Adam(model.parameters(), lr=config.model_settings['learning_rate'], weight_decay=config.model_settings['weight_decay'])
+            early_stopping = EarlyStopping(patience=10, delta=0.001, verbose=True)
+
+            model.train()
+            val_loss = float('inf')
+            for epoch in range(config.epochs):
+                train_loss = run_training_epoch(model, train_loader, criterion, optimizer, device)
+                val_loss = run_validation_epoch(model, val_loader, criterion, device)
+
+                if early_stopping(val_loss, model):
+                    break
+
+            fold_val_losses.append(val_loss)
+
+        avg_val_loss = np.mean(fold_val_losses)
+        return avg_val_loss
+
+    # Run the Optuna optimization for feature selection
+    study = optuna.create_study(direction="minimize")
+    study.optimize(feature_selection_objective, n_trials=50)  # You can adjust n_trials as needed
+
+    # Get the best set of features
+    best_features = [feature for feature in config.all_features if study.best_trial.params.get(f"use_{feature}", False)]
+    
+    # Update the configuration with the best features
+    update_config(config, "feature_settings.selected_features", best_features)
+    
+    train_logger.info(f"Rebuilt features using Optuna. Best features: {best_features}")
+
+
 def main():
     args = parse_arguments()
+    
     config = load_config(args.config)
     optuna_logger.info(f"Loaded configuration from {args.config}")
+    
+    windows = config.indicator_windows
+    asset_type = config.asset_type
+    data_resampling_frequency = config.data_resampling_frequency
+    all_features = config.all_features
+    
     if args.rebuild_features:
+        historical_data = pd.read_csv(config.historical_data_path, index_col="Date", parse_dates=True)
+        historical_data, features = calculate_technical_indicators(
+            historical_data,
+            windows=windows,
+            asset_type=asset_type,
+            frequency=data_resampling_frequency,
+        )
+        config.all_features = features
         rebuild_features(config)
 
     study = optuna.create_study(direction="minimize")
@@ -160,38 +251,11 @@ def main():
     for key, value in trial.params.items():
         optuna_logger.info(f"    {key}: {value}")
 
+if __name__ == "__main__":
+    main()
 
 
-def rebuild_features(config):
-    # Load historical data
-    historical_data = pd.read_csv(config.historical_data_path, index_col='Date')
-    
-    # Calculate technical indicators
-    historical_data, features = calculate_technical_indicators(
-        historical_data,
-        windows=config.indicator_windows,
-        asset_type=config.asset_type,
-        frequency=config.data_resampling_frequency
-    )
-    
-    # Update config with the selected features
-    update_config_with_best_features(config, features)
-    
-    optuna_logger.info(f"Rebuilt features: {features}")
-    
 
-
-def parse_arguments():
-    arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument(
-        "--config",
-        type=str,
-        required=True,
-        help="Path to configuration JSON file")
-    arg_parser.add_argument(
-        "--rebuild-features", action="store_true", help="Rebuild features"
-    )
-    return arg_parser.parse_args()
     
 
 if __name__ == "__main__":
