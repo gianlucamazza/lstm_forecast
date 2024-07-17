@@ -3,7 +3,9 @@ logs/*.log
 png/*.png
 reports/*.csv
 models/*.pth
-models/*/*.pth
+models/optuna/*.pth
+models/checkpoints/*.pth
+
 # IDEs
 .idea/
 .vscode/
