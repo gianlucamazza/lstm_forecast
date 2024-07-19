@@ -41,12 +41,6 @@
             "Adj Close"
         ],
         "all_features": [
-            "Open",
-            "High",
-            "Low",
-            "Close",
-            "Adj Close",
-            "Volume",
             "SMA_50",
             "SMA_200",
             "EMA",
