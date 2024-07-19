@@ -22,7 +22,7 @@ def initialize_model(config):
     hidden_size = config.model_settings.get("hidden_size", 64)
     num_layers = config.model_settings.get("num_layers", 2)
     dropout = config.model_settings.get("dropout", 0.2)
-    input_size = len(config.feature_settings["selected_features"])
+    input_size = len(config.data_settings["selected_features"])
     fc_output_size = len(config.data_settings["targets"])
 
     model = PricePredictor(
@@ -113,17 +113,7 @@ def parse_arguments():
         type=str,
         required=True,
         help="Path to configuration JSON file")
-    arg_parser.add_argument(
-        "--rebuild-features", action="store_true", help="Rebuild features"
-    )
     return arg_parser.parse_args()
-
-
-def rebuild_features(config):
-    """Rebuild features if specified."""
-    update_config(config, "feature_settings.selected_features", [])
-    config.save()
-    logger.info("Rebuilding features")
 
 
 def update_config_with_selected_features(config, selected_features):
@@ -139,8 +129,6 @@ def main():
     config = load_config(args.config)
     logger.info(f"Loaded configuration from {args.config}")
     logger.info(f"Configuration: {config}")
-    if args.rebuild_features:
-        rebuild_features(config)
 
     train_val_loaders, selected_features, _, _, _, _ = (
         load_and_preprocess_data(config))

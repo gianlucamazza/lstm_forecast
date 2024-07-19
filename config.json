@@ -64,12 +64,12 @@
         "selected_features": []
     },
     "model_settings": {
-        "hidden_size": 162,
+        "hidden_size": 249,
         "num_layers": 1,
-        "dropout": 0.477,
-        "learning_rate": 0.0003,
+        "dropout": 0.43743241703206914,
+        "learning_rate": 4.3944632089497874e-05,
         "fc_output_size": 5,
-        "weight_decay": 0.0069
+        "weight_decay": 0.0057127154459821255
     },
     "training_settings": {
         "look_back": 120,

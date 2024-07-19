@@ -90,7 +90,7 @@ def preprocess_data(
     validate_data(_X, _y)
 
     if selected_features:
-        return select_selected_features(
+        return get_selected_features(
             _X,
             _y,
             selected_features,
@@ -231,7 +231,7 @@ def validate_data(_x: np.ndarray, _y: np.ndarray) -> None:
         raise ValueError("Infinite values found in input data.")
 
 
-def select_selected_features(
+def get_selected_features(
         _x: np.ndarray,
         _y: np.ndarray,
         selected_features: List[str],
@@ -243,7 +243,7 @@ def select_selected_features(
 ) -> Tuple[
     np.ndarray, np.ndarray, StandardScaler, StandardScaler, MinMaxScaler, List[str]
 ]:
-    """Select predefined best features."""
+    """Get selected features from the dataset."""
     logger.info(f"Using predefined best features: {selected_features}")
     feature_indices = [features.index(feature) for feature in selected_features]
     validate_feature_indices(feature_indices, scaled_features.shape[1])
