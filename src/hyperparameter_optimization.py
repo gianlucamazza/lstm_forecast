@@ -5,6 +5,7 @@ import optuna
 import pandas as pd
 import numpy as np
 import torch
+import time
 import torch.nn as nn
 import torch.optim as optim
 from optuna.trial import TrialState
@@ -180,7 +181,16 @@ def main():
     if args.rebuild_features:
         optuna_logger.info("Rebuilding features")
         if not os.path.exists(config.historical_data_path):
-            get_data(config)
+            get_data(
+                _ticker=config.ticker,
+                symbol=config.symbol,
+                asset_type=config.asset_type,
+                start=config.start_date,
+                end=time.strftime("%Y-%m-%d"),
+                windows=config.indicator_windows,
+                data_sampling_interval=config.data_sampling_interval,
+                data_resampling_frequency=config.data_resampling_frequency,
+            )
         historical_data = pd.read_csv(config.historical_data_path, index_col="Date", parse_dates=True)
         _, _ = calculate_technical_indicators(
             historical_data,
