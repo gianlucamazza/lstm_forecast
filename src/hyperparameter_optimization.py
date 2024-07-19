@@ -168,7 +168,6 @@ def rebuild_features(config, n_trials=50):
     # Update the configuration with the best features
     config.selected_features = selected_features
     config.save()
-    train_logger.info(f"Feature selection completed. Best features: {selected_features}")
     optuna_logger.info(f"Feature selection completed. Best features: {selected_features}")
 
 
