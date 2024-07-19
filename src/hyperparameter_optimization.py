@@ -11,7 +11,7 @@ from optuna.trial import TrialState
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.data_loader import load_and_preprocess_data
+from src.data_loader import load_and_preprocess_data, get_data
 from src.feature_engineering import calculate_technical_indicators
 from src.model import PricePredictor
 from src.early_stopping import EarlyStopping
@@ -179,6 +179,8 @@ def main():
 
     if args.rebuild_features:
         optuna_logger.info("Rebuilding features")
+        if not os.path.exists(config.historical_data_path):
+            get_data(config)
         historical_data = pd.read_csv(config.historical_data_path, index_col="Date", parse_dates=True)
         _, _ = calculate_technical_indicators(
             historical_data,

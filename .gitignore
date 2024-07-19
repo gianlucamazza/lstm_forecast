@@ -3,8 +3,8 @@ logs/*.log
 png/*.png
 reports/*.csv
 models/*.pth
-models/optuna/*.pth
-models/checkpoints/*.pth
+models/optuna/*
+models/checkpoints/*
 
 # IDEs
 .idea/
