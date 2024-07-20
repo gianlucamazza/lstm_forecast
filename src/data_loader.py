@@ -291,7 +291,8 @@ def create_dataloader(data, batch_size=32):
     return torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False)
 
 
-def load_and_preprocess_data(config):
+def load_and_preprocess_data(config, selected_features=None):
+    # Carica i dati storici e calcola le feature
     historical_data, features = get_data(
         config.ticker,
         config.symbol,
@@ -303,6 +304,9 @@ def load_and_preprocess_data(config):
         config.data_resampling_frequency,
     )
 
+    if selected_features is not None:
+        features = [feature for feature in features if feature in selected_features]
+
     x, y, scaler_features, scaler_prices, scaler_volume, selected_features = preprocess_data(
         config.symbol,
         config.data_sampling_interval,
@@ -312,7 +316,7 @@ def load_and_preprocess_data(config):
         config.look_forward,
         features,
         config.disabled_features,
-        config.selected_features,
+        selected_features if selected_features is not None else config.selected_features,
     )
     
     config.selected_features = selected_features
