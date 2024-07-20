@@ -5,7 +5,6 @@ import optuna
 import pandas as pd
 import numpy as np
 import torch
-import time
 import torch.nn as nn
 import torch.optim as optim
 from optuna.trial import TrialState
@@ -97,6 +96,8 @@ def objective(optuna_trial, config):
 def parse_arguments():
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("--config", type=str, required=True, help="Path to configuration JSON file")
+    arg_parser.add_argument("--n_trials", type=int, default=100, help="Number of trials for hyperparameter tuning")
+    arg_parser.add_argument("--n_feature_trials", type=int, default=15, help="Number of trials for feature selection")
     return arg_parser.parse_args()
 
 
@@ -222,4 +223,4 @@ def main(n_trials=100, n_feature_trials=15):
         optuna_logger.info(f"    {key}: {value}")
 
 if __name__ == "__main__":
-    main
+    main()
