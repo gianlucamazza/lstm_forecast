@@ -5,6 +5,7 @@ import optuna
 import pandas as pd
 import numpy as np
 import torch
+import time
 import torch.nn as nn
 import torch.optim as optim
 from optuna.trial import TrialState
@@ -12,6 +13,7 @@ from optuna.trial import TrialState
 # Import custom modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src.data_loader import load_and_preprocess_data
+from src.feature_engineering import calculate_technical_indicators
 from src.model import PricePredictor
 from src.early_stopping import EarlyStopping
 from src.config import load_config, update_config
@@ -19,17 +21,14 @@ from src.logger import setup_logger
 from src.model_utils import run_training_epoch, run_validation_epoch
 from src.train import initialize_model, train_model, evaluate_model
 
-
 # Setup loggers
 train_logger = setup_logger("train_logger", "logs/train.log")
 optuna_logger = setup_logger("optuna_logger", "logs/optuna.log")
 
-
 # Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
-def objective(optuna_trial, config):
+def objective(optuna_trial, config, selected_features):
     # Suggest hyperparameters
     hidden_size = optuna_trial.suggest_int("hidden_size", 32, 256)
     num_layers = optuna_trial.suggest_int("num_layers", 1, 5)
@@ -50,7 +49,7 @@ def objective(optuna_trial, config):
 
     try:
         # Load and preprocess data
-        train_val_loaders, selected_features, _, _, _, _ = load_and_preprocess_data(config)
+        train_val_loaders, _, _, _, _, _ = load_and_preprocess_data(config, selected_features)
 
         fold_val_losses = []
         for fold_idx, (train_loader, val_loader) in enumerate(train_val_loaders):
@@ -91,14 +90,12 @@ def objective(optuna_trial, config):
 
     return avg_val_loss
 
-
 def parse_arguments():
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("--config", type=str, required=True, help="Path to configuration JSON file")
     arg_parser.add_argument("--n_trials", type=int, default=100, help="Number of trials for hyperparameter tuning")
     arg_parser.add_argument("--n_feature_trials", type=int, default=15, help="Number of trials for feature selection")
     return arg_parser.parse_args()
-
 
 def feature_selection_objective(optuna_trial, config):
     all_features = config.all_features
@@ -108,10 +105,10 @@ def feature_selection_objective(optuna_trial, config):
 
     if not selected_features:
         optuna_logger.warning(f"Trial {optuna_trial.number}: No features selected, returning infinity loss")
-        return float('inf')  # Penalize trials with no features selected
+        return float('inf')  # Penalize trials con nessuna feature selezionata
 
     # Load and preprocess data with the selected features
-    train_val_loaders, _, _, _, _, _ = load_and_preprocess_data(config)
+    train_val_loaders, _, _, _, _, _ = load_and_preprocess_data(config, selected_features)
     optuna_logger.info(f"Trial {optuna_trial.number}: Data loaded and preprocessed")
 
     fold_val_losses = []
@@ -149,16 +146,20 @@ def feature_selection_objective(optuna_trial, config):
     optuna_logger.info(f"Trial {optuna_trial.number} completed with Average Validation Loss: {avg_val_loss:.4f}")
     return avg_val_loss
 
-
-def main(n_trials=100, n_feature_trials=15):
+def main():
     args = parse_arguments()
     config = load_config(args.config)
     optuna_logger.info(f"Loaded configuration from {args.config}")
 
     # Feature selection using Optuna
     optuna_logger.info("Starting feature selection")
-    feature_study = optuna.create_study(direction="minimize", study_name="feature_selection", storage="sqlite:///data/feature_selection.db", load_if_exists=True)
-    feature_study.optimize(lambda t: feature_selection_objective(t, config), n_trials=n_feature_trials)
+    feature_study = optuna.create_study(
+        direction="minimize",
+        study_name="feature_selection_study",
+        storage="sqlite:///data/optuna_feature_selection.db",
+        load_if_exists=True
+    )
+    feature_study.optimize(lambda t: feature_selection_objective(t, config), n_trials=args.n_feature_trials)
 
     best_feature_trial = feature_study.best_trial
     selected_features = [feature for feature in best_feature_trial.params if best_feature_trial.params[feature]]
@@ -169,8 +170,13 @@ def main(n_trials=100, n_feature_trials=15):
 
     # Hyperparameter tuning using Optuna
     optuna_logger.info("Starting hyperparameter tuning")
-    study = optuna.create_study(direction="minimize", study_name="hyperparameter_optimization", storage="sqlite:///data/hyperparameter_optimization.db", load_if_exists=True)
-    study.optimize(lambda t: objective(t, config), n_trials=n_trials)
+    study = optuna.create_study(
+        direction="minimize",
+        study_name="hyperparameter_tuning_study",
+        storage="sqlite:///data/optuna_hyperparameter_tuning.db",
+        load_if_exists=True
+    )
+    study.optimize(lambda t: objective(t, config, selected_features), n_trials=args.n_trials)
 
     best_params = study.best_trial.params
     optuna_logger.info(f"Best hyperparameters: {best_params}")
@@ -178,7 +184,7 @@ def main(n_trials=100, n_feature_trials=15):
     config.model_settings.update(best_params)
     update_config(config, "model_settings", config.model_settings)
 
-    train_val_loaders, selected_features, _, _, _, _ = load_and_preprocess_data(config)
+    train_val_loaders, _, _, _, _, historical_data = load_and_preprocess_data(config, selected_features)
 
     model = initialize_model(config)
     train_loader, val_loader = train_val_loaders[0]
