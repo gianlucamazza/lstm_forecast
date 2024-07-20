@@ -116,13 +116,6 @@ def parse_arguments():
     return arg_parser.parse_args()
 
 
-def update_config_with_selected_features(config, selected_features):
-    """Update configuration with the best features."""
-    logger.info(f"Selected features: {selected_features}")
-    update_config(config, "feature_settings.selected_features", selected_features)
-    config.save()
-
-
 def main():
     """Main function to run the training and evaluation."""
     args = parse_arguments()
@@ -133,7 +126,8 @@ def main():
     train_val_loaders, selected_features, _, _, _, _ = (
         load_and_preprocess_data(config))
 
-    update_config_with_selected_features(config, selected_features)
+    update_config(config, "feature_settings.selected_features", selected_features)
+    config.save()
 
     model = initialize_model(config)
     model.to(device)

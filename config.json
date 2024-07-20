@@ -91,5 +91,15 @@
         "stop_loss": 1.2,
         "trade_allocation": 0.1,
         "max_open_trades": 5
+    },
+    "feature_settings": {
+        "selected_features": [
+            "SMA_200",
+            "EMA",
+            "MACD_Signal",
+            "Ichimoku_Tenkan",
+            "Ichimoku_Senkou_Span_A",
+            "Ichimoku_Senkou_Span_B"
+        ]
     }
 }

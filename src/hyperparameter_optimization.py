@@ -12,7 +12,6 @@ from optuna.trial import TrialState
 # Import custom modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src.data_loader import load_and_preprocess_data
-from src.feature_engineering import calculate_technical_indicators
 from src.model import PricePredictor
 from src.early_stopping import EarlyStopping
 from src.config import load_config, update_config
@@ -158,7 +157,7 @@ def main(n_trials=100, n_feature_trials=15):
 
     # Feature selection using Optuna
     optuna_logger.info("Starting feature selection")
-    feature_study = optuna.create_study(direction="minimize")
+    feature_study = optuna.create_study(direction="minimize", study_name="feature_selection", storage="sqlite:///data/feature_selection.db", load_if_exists=True)
     feature_study.optimize(lambda t: feature_selection_objective(t, config), n_trials=n_feature_trials)
 
     best_feature_trial = feature_study.best_trial
@@ -170,7 +169,7 @@ def main(n_trials=100, n_feature_trials=15):
 
     # Hyperparameter tuning using Optuna
     optuna_logger.info("Starting hyperparameter tuning")
-    study = optuna.create_study(direction="minimize")
+    study = optuna.create_study(direction="minimize", study_name="hyperparameter_optimization", storage="sqlite:///data/hyperparameter_optimization.db", load_if_exists=True)
     study.optimize(lambda t: objective(t, config), n_trials=n_trials)
 
     best_params = study.best_trial.params
