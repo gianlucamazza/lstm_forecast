@@ -112,7 +112,7 @@ def feature_selection_objective(optuna_trial, config):
         return float('inf')  # Penalize trials with no features selected
 
     # Load and preprocess data with the selected features
-    train_val_loaders, _, _, _, _, _ = load_and_preprocess_data(config, selected_features)
+    train_val_loaders, _, _, _, _, _ = load_and_preprocess_data(config)
     optuna_logger.info(f"Trial {optuna_trial.number}: Data loaded and preprocessed")
 
     fold_val_losses = []
@@ -179,7 +179,7 @@ def main(n_trials=100, n_feature_trials=15):
     config.model_settings.update(best_params)
     update_config(config, "model_settings", config.model_settings)
 
-    train_val_loaders, _, _, _, _, historical_data = load_and_preprocess_data(config)
+    train_val_loaders, selected_features, _, _, _, _ = load_and_preprocess_data(config)
 
     model = initialize_model(config)
     train_loader, val_loader = train_val_loaders[0]
