@@ -222,7 +222,7 @@ def main():
     train_loader, val_loader = train_val_loaders[0]
 
     train_model(
-        config.symbol,
+        config,
         model,
         train_loader,
         val_loader,
