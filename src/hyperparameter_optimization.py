@@ -90,7 +90,7 @@ def objective(optuna_trial, config, selected_features):
 
     except Exception as e:
         optuna_logger.error(f"Error during trial {optuna_trial.number}: {e}")
-        raise e
+        return float('inf')
 
     return avg_val_loss
 
@@ -155,12 +155,6 @@ def main():
     config = load_config(args.config)
     optuna_logger.info(f"Loaded configuration from {args.config}")
 
-    train_val_loaders, selected_features, _, _, _, _ = (
-        load_and_preprocess_data(config))
-    
-    update_config(config, "feature_settings.selected_features", selected_features)
-    config.save()
-
     # Feature selection using Optuna
     optuna_logger.info("Starting feature selection")
     feature_study = optuna.create_study(
@@ -172,7 +166,7 @@ def main():
     feature_study.optimize(lambda t: feature_selection_objective(t, config), n_trials=args.n_feature_trials)
 
     best_feature_trial = feature_study.best_trial
-    selected_features = [feature for feature in best_feature_trial.params if best_feature_trial.params[feature]]
+    selected_features = [feature for feature in config.data_settings["all_features"] if best_feature_trial.params.get(f"use_{feature}", False)]
 
     config.selected_features = selected_features
     update_config(config, "selected_features", selected_features)
