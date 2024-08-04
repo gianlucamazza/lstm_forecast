@@ -119,11 +119,8 @@ def main():
     logger.info(f"Loaded configuration from {args.config}")
     logger.info(f"Configuration: {config}")
 
-    train_val_loaders, selected_features, _, _, _, _ = (
+    train_val_loaders, _, _, _, _, _ = (
         load_and_preprocess_data(config))
-
-    update_config(config, "feature_settings.selected_features", selected_features)
-    config.save()
 
     model = initialize_model(config)
     model.to(device)

@@ -147,6 +147,7 @@ Update the `config.json` file with the desired parameters.
       - `window3`: Window size for the Senkou Span B.
   - `targets`: List of target variables for prediction.
   - `disabled_features`: List of features to be disabled.
+  - `selected_features`: List of best features selected for training from the feature selection process.
 
 - `model_settings`: Dictionary containing model parameters.
   - `hidden_size`: Number of hidden units in the LSTM layer.
@@ -174,10 +175,6 @@ Update the `config.json` file with the desired parameters.
   - `trade_allocation`: Trade allocation percentage.
   - `max_open_trades`: Maximum number of open trades.
 
-- `feature_settings`: Dictionary containing feature selection settings.
-  - `selected_features`: List of best features selected for training from the feature selection process.
-
-If `selected_features` is not present in the config file, the feature discovery process will be executed.
 
 ### Features
 

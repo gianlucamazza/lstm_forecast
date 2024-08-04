@@ -188,7 +188,7 @@ def main():
     config.model_settings.update(best_params)
     update_config(config, "model_settings", config.model_settings)
 
-    train_val_loaders, _, _, _, _, historical_data = load_and_preprocess_data(config, selected_features)
+    train_val_loaders, _, _, _, _, _ = load_and_preprocess_data(config, selected_features)
 
     model = initialize_model(config)
     train_loader, val_loader = train_val_loaders[0]

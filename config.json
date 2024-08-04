@@ -57,15 +57,28 @@
             "Ichimoku_Senkou_Span_A",
             "Ichimoku_Senkou_Span_B"
         ],
-        "selected_features": []
+        "selected_features": [
+            "SMA_50",
+            "MACD",
+            "RSI",
+            "Bollinger_High",
+            "Bollinger_Low",
+            "ADX",
+            "CCI",
+            "CMF",
+            "Ichimoku_Tenkan",
+            "Ichimoku_Kijun",
+            "Ichimoku_Senkou_Span_A",
+            "Ichimoku_Senkou_Span_B"
+        ]
     },
     "model_settings": {
-        "hidden_size": 249,
+        "hidden_size": 172,
         "num_layers": 1,
-        "dropout": 0.43743241703206914,
-        "learning_rate": 4.3944632089497874e-05,
+        "dropout": 0.25727408308344324,
+        "learning_rate": 5.4591416076258706e-05,
         "fc_output_size": 5,
-        "weight_decay": 0.0057127154459821255
+        "weight_decay": 0.009791194088863642
     },
     "training_settings": {
         "look_back": 120,
@@ -86,18 +99,5 @@
         "stop_loss": 1.2,
         "trade_allocation": 0.1,
         "max_open_trades": 5
-    },
-    "feature_settings": {
-        "selected_features": [
-            "SMA_50",
-            "SMA_200",
-            "EMA",
-            "Bollinger_High",
-            "Bollinger_Low",
-            "Ichimoku_Tenkan",
-            "Ichimoku_Kijun",
-            "Ichimoku_Senkou_Span_A",
-            "Ichimoku_Senkou_Span_B"
-        ]
     }
 }

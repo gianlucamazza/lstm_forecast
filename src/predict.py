@@ -227,11 +227,10 @@ def main(config_path: str) -> None:
     logger.info(f"Loaded configuration from {config_path}")
     logger.info(f"Starting prediction for {config.data_settings['ticker']}")
 
-    # Usa le feature selezionate dalla configurazione
-    selected_features = config.feature_settings["selected_features"]
+    selected_features = config.data_settings["selected_features"]
 
     historical_data, features = get_historical_data(config)
-    x, y, scaler_features, scaler_prices, scaler_volume, _ = (
+    x, _, _, scaler_prices, scaler_volume, _ = (
         preprocess_data(
             symbol=config.data_settings["symbol"],
             data_sampling_interval=config.data_settings["data_sampling_interval"],
@@ -265,7 +264,7 @@ def main(config_path: str) -> None:
         _features=selected_features,
         _targets=config.data_settings["targets"],
     )
-    
+
     candles = historical_data[["Open", "High", "Low", "Close"]]
     plot_predictions(
         config.symbol,

@@ -13,7 +13,6 @@ class Config:
         self.training_settings = self.config.get("training_settings", {})
         self.logging_settings = self.config.get("logging_settings", {})
         self.backtesting_params = self.config.get("backtesting_params", {})
-        self.feature_settings = self.config.get("feature_settings", {})
 
         self.ticker = self.data_settings.get("ticker")
         self.symbol = self.data_settings.get("symbol")
