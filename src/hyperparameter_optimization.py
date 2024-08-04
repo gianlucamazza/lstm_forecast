@@ -180,7 +180,7 @@ def main():
     selected_features = [feature for feature in config.data_settings["all_features"] if best_feature_trial.params.get(f"use_{feature}", False)]
 
     # Apply advanced feature selection methods
-    data = pd.read_csv(config.data_settings['historical_data_path'])
+    data = pd.read_csv(config.data_settings["scaled_data_path"])
     selected_features = correlation_analysis(data[selected_features])
     selected_features = recursive_feature_elimination(data[selected_features], data[config.target_column], num_features=len(selected_features))
 

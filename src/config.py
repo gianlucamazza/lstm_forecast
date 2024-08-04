@@ -17,7 +17,7 @@ class Config:
         self.ticker = self.data_settings.get("ticker")
         self.symbol = self.data_settings.get("symbol")
         self.asset_type = self.data_settings.get("asset_type")
-        self.historical_data_path = self.data_settings.get("historical_data_path")
+        self.data_path = self.data_settings.get("data_path")
         self.data_sampling_interval = self.data_settings.get("data_sampling_interval")
         self.start_date = self.data_settings.get("start_date")
         self.end_date = self.data_settings.get("end_date", time.strftime("%Y-%m-%d"))

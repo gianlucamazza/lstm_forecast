@@ -54,7 +54,7 @@ Update the `config.json` file with the desired parameters.
     "data_settings": {
         "ticker": "BTC-USD",
         "symbol": "BTCUSD",
-        "historical_data_path": "data/BTCUSD_1d_historical.csv",
+        "data_path": "data/BTCUSD_1d_historical.csv",
         "asset_type": "commodity",
         "data_sampling_interval": "1d",
         "start_date": "2013-01-01",
@@ -123,7 +123,7 @@ Update the `config.json` file with the desired parameters.
 - `data_settings`: Dictionary containing data-related settings.
   - `ticker`: Stock ticker symbol.
   - `symbol`: Stock symbol.
-  - `historical_data_path`: Path to the historical data CSV file.
+  - `data_path`: Path to the historical data CSV file.
   - `asset_type`: Type of asset, e.g., 'commodity'.
   - `data_sampling_interval`: Interval for the historical data, e.g., '1d' for daily or '1h' for hourly.
   - `start_date`: Start date for the historical data.

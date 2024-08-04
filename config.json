@@ -2,7 +2,8 @@
     "data_settings": {
         "ticker": "BTC-USD",
         "symbol": "BTCUSD",
-        "historical_data_path": "data/BTCUSD_1d.csv",
+        "data_path": "data/BTCUSD_1d.csv",
+        "scaled_data_path": "data/BTCUSD_1d_scaled.csv",
         "asset_type": "commodity",
         "data_sampling_interval": "1d",
         "start_date": "2013-01-01",
