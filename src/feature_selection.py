@@ -21,7 +21,7 @@ def recursive_feature_elimination(X, y, num_features):
 
     # Initialize model
     model = LinearRegression()
-    rfe = RFE(model, num_features)
+    rfe = RFE(estimator=model, n_features_to_select=num_features)
 
     # Fit RFE for each target and aggregate results
     support_matrix = np.zeros((X.shape[1], y.shape[1]))

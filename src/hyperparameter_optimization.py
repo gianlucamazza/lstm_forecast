@@ -182,7 +182,7 @@ def main():
     # Apply advanced feature selection methods
     data = pd.read_csv(config.data_settings["scaled_data_path"])
     selected_features = correlation_analysis(data[selected_features])
-    selected_features = recursive_feature_elimination(data[selected_features], data[config.targets], num_features=len(selected_features))
+    selected_features = recursive_feature_elimination(data[selected_features], data[config.data_settings["targets"]], num_features=len(selected_features))
 
     config.selected_features = selected_features
     update_config(config, "selected_features", selected_features)
