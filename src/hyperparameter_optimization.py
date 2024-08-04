@@ -51,6 +51,10 @@ def objective(optuna_trial, config, selected_features):
         # Load and preprocess data
         train_val_loaders, _, _, _, _, _ = load_and_preprocess_data(config, selected_features)
 
+        if not train_val_loaders:
+            optuna_logger.warning(f"No data loaded for trial {optuna_trial.number}")
+            return float('inf')
+
         fold_val_losses = []
         for fold_idx, (train_loader, val_loader) in enumerate(train_val_loaders):
             model = PricePredictor(

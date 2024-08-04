@@ -98,14 +98,9 @@ class PricePredictor(nn.Module):
         return total_loss / len(data_loader)
 
 
-def load_model(
-    symbol: str, path: str, input_shape: int, model_params: dict
-) -> nn.Module:
-    """
-    Load the trained model from a given path.
-    """
+def load_model(symbol: str, path: str, model_params: dict, input_size: int) -> nn.Module:
     model = PricePredictor(
-        input_size=input_shape,
+        input_size=input_size,
         hidden_size=model_params["hidden_size"],
         num_layers=model_params["num_layers"],
         dropout=model_params["dropout"],

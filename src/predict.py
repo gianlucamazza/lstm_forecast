@@ -225,34 +225,47 @@ def update_layout(fig: go.Figure, symbol: str, interval: str) -> None:
 def main(config_path: str) -> None:
     config = load_config(config_path)
     logger.info(f"Loaded configuration from {config_path}")
-    logger.info(f"Starting prediction for {config.ticker}")
+    logger.info(f"Starting prediction for {config.data_settings['ticker']}")
+
+    # Usa le feature selezionate dalla configurazione
+    selected_features = config.feature_settings["selected_features"]
 
     historical_data, features = get_historical_data(config)
-    x, y, scaler_features, scaler_prices, scaler_volume, selected_features = (
+    x, y, scaler_features, scaler_prices, scaler_volume, _ = (
         preprocess_data(
-            symbol=config.symbol,
-            data_sampling_interval=config.data_sampling_interval,
+            symbol=config.data_settings["symbol"],
+            data_sampling_interval=config.data_settings["data_sampling_interval"],
             historical_data=historical_data,
-            targets=config.targets,
-            look_back=config.look_back,
-            look_forward=config.look_forward,
+            targets=config.data_settings["targets"],
+            look_back=config.training_settings["look_back"],
+            look_forward=config.training_settings["look_forward"],
             features=features,
-            selected_features=config.selected_features,
+            selected_features=selected_features,
         )
     )
 
+    logger.info(f"Loaded historical data for {config.data_settings['symbol']}")
+    logger.info(f"Selected features: {selected_features}")
+
     model = load_model(
-        config.symbol, config.model_dir, len(selected_features), config.model_settings
+        config.data_settings["symbol"],
+        config.training_settings["model_dir"],
+        config.model_settings,
+        len(selected_features)
     )
+
+    logger.info(f"Loaded model for {config.data_settings['symbol']}")
+
     predictions, future_predictions = predict(
         _model=model,
         _x=x,
         scaler_prices=scaler_prices,
         scaler_volume=scaler_volume,
-        future_days=config.look_forward,
+        future_days=config.training_settings["look_forward"],
         _features=selected_features,
-        _targets=config.targets,
+        _targets=config.data_settings["targets"],
     )
+    
     candles = historical_data[["Open", "High", "Low", "Close"]]
     plot_predictions(
         config.symbol,
