@@ -2,26 +2,23 @@ import os
 import sys
 import argparse
 import optuna
-import pandas as pd
 import numpy as np
+import pandas as pd
 import torch
-import time
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
-from optuna.trial import TrialState
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+from optuna.trial import TrialState
 
 # Import custom modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src.data_loader import load_and_preprocess_data
-from src.feature_engineering import calculate_technical_indicators
 from src.model import PricePredictor
+from src.train import train_model, evaluate_model
 from src.early_stopping import EarlyStopping
 from src.config import load_config, update_config
 from src.logger import setup_logger
 from src.model_utils import run_training_epoch, run_validation_epoch, clip_gradients
-from src.train import initialize_model, train_model, evaluate_model
 from src.feature_selection import recursive_feature_elimination, correlation_analysis
 from src.data_augmentation import augment_time_series_data
 
@@ -41,6 +38,7 @@ def objective(optuna_trial, config, selected_features):
     weight_decay = optuna_trial.suggest_float("weight_decay", 1e-8, 1e-2, log=True)
     batch_size = optuna_trial.suggest_int("batch_size", 16, 256)
     sequence_length = optuna_trial.suggest_int("sequence_length", 10, 100)
+    clip_value = optuna_trial.suggest_float("clip_value", 0.1, 5.0)
 
     # Update config with suggested hyperparameters
     config.model_settings.update({
@@ -50,7 +48,8 @@ def objective(optuna_trial, config, selected_features):
         "learning_rate": learning_rate,
         "weight_decay": weight_decay,
         "batch_size": batch_size,
-        "sequence_length": sequence_length
+        "sequence_length": sequence_length,
+        "clip_value": clip_value
     })
 
     optuna_logger.info(f"Starting Trial {optuna_trial.number} with params: {config.model_settings}")
@@ -85,7 +84,7 @@ def objective(optuna_trial, config, selected_features):
 
             model.train()
             for epoch in range(config.epochs):
-                train_loss = run_training_epoch(model, train_loader, criterion, optimizer, device)
+                train_loss = run_training_epoch(model, train_loader, criterion, optimizer, device, clip_value=clip_value)
                 val_loss = run_validation_epoch(model, val_loader, criterion, device)
                 scheduler.step(val_loss)
                 optuna_logger.info(f"Trial {optuna_trial.number}, Fold {fold_idx}, Epoch {epoch + 1}/{config.epochs}, "
@@ -121,7 +120,7 @@ def feature_selection_objective(optuna_trial, config):
 
     if not selected_features:
         optuna_logger.warning(f"Trial {optuna_trial.number}: No features selected, returning infinity loss")
-        return float('inf')  # Penalize trials con nessuna feature selezionata
+        return float('inf')  # Penalize trials with no features selected
 
     # Load and preprocess data with the selected features
     train_val_loaders, _, _, _, _, _ = load_and_preprocess_data(config, selected_features)
@@ -147,7 +146,7 @@ def feature_selection_objective(optuna_trial, config):
 
         model.train()
         for epoch in range(config.epochs):
-            train_loss = run_training_epoch(model, train_loader, criterion, optimizer, device)
+            train_loss = run_training_epoch(model, train_loader, criterion, optimizer, device, clip_value=config.model_settings['clip_value'])
             val_loss = run_validation_epoch(model, val_loader, criterion, device)
             optuna_logger.info(f"Trial {optuna_trial.number}, Fold {fold_idx}, Epoch {epoch + 1}/{config.epochs}, "
                                f"Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
@@ -180,9 +179,19 @@ def main():
     best_feature_trial = feature_study.best_trial
     selected_features = [feature for feature in config.data_settings["all_features"] if best_feature_trial.params.get(f"use_{feature}", False)]
 
+    # Apply advanced feature selection methods
+    data = pd.read_csv(config.data_path)  # Load your data here
+    selected_features = correlation_analysis(data[selected_features])
+    selected_features = recursive_feature_elimination(data[selected_features], data[config.target_column], num_features=len(selected_features))
+
     config.selected_features = selected_features
     update_config(config, "selected_features", selected_features)
     optuna_logger.info(f"Selected features: {selected_features}")
+
+    # Data Augmentation
+    augmented_data = augment_time_series_data(data[selected_features].values)
+    augmented_df = pd.DataFrame(augmented_data, columns=selected_features)
+    data = pd.concat([data, augmented_df], ignore_index=True)
 
     # Hyperparameter tuning using Optuna
     optuna_logger.info("Starting hyperparameter tuning")
@@ -202,7 +211,14 @@ def main():
 
     train_val_loaders, _, _, _, _, _ = load_and_preprocess_data(config, selected_features)
 
-    model = initialize_model(config)
+    model = PricePredictor(
+        input_size=len(selected_features),
+        hidden_size=config.model_settings['hidden_size'],
+        num_layers=config.model_settings['num_layers'],
+        dropout=config.model_settings['dropout'],
+        fc_output_size=len(config.targets)
+    ).to(device)
+
     train_loader, val_loader = train_val_loaders[0]
 
     train_model(

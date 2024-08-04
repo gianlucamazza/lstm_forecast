@@ -78,7 +78,8 @@
         "dropout": 0.25727408308344324,
         "learning_rate": 5.4591416076258706e-05,
         "fc_output_size": 5,
-        "weight_decay": 0.009791194088863642
+        "weight_decay": 0.009791194088863642,
+        "clip_value": 1.0
     },
     "training_settings": {
         "look_back": 120,
