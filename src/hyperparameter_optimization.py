@@ -8,7 +8,9 @@ import torch
 import time
 import torch.nn as nn
 import torch.optim as optim
+from torch.utils.data import DataLoader
 from optuna.trial import TrialState
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 # Import custom modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -18,8 +20,10 @@ from src.model import PricePredictor
 from src.early_stopping import EarlyStopping
 from src.config import load_config, update_config
 from src.logger import setup_logger
-from src.model_utils import run_training_epoch, run_validation_epoch
+from src.model_utils import run_training_epoch, run_validation_epoch, clip_gradients
 from src.train import initialize_model, train_model, evaluate_model
+from src.feature_selection import recursive_feature_elimination, correlation_analysis
+from src.data_augmentation import augment_time_series_data
 
 # Setup loggers
 train_logger = setup_logger("train_logger", "logs/train.log")
@@ -30,11 +34,13 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def objective(optuna_trial, config, selected_features):
     # Suggest hyperparameters
-    hidden_size = optuna_trial.suggest_int("hidden_size", 32, 256)
+    hidden_size = optuna_trial.suggest_int("hidden_size", 32, 512)
     num_layers = optuna_trial.suggest_int("num_layers", 1, 5)
-    dropout = optuna_trial.suggest_float("dropout", 0.1, 0.5)
+    dropout = optuna_trial.suggest_float("dropout", 0.0, 0.5)
     learning_rate = optuna_trial.suggest_float("learning_rate", 1e-5, 1e-2, log=True)
-    weight_decay = optuna_trial.suggest_float("weight_decay", 1e-5, 1e-2, log=True)
+    weight_decay = optuna_trial.suggest_float("weight_decay", 1e-8, 1e-2, log=True)
+    batch_size = optuna_trial.suggest_int("batch_size", 16, 256)
+    sequence_length = optuna_trial.suggest_int("sequence_length", 10, 100)
 
     # Update config with suggested hyperparameters
     config.model_settings.update({
@@ -42,7 +48,9 @@ def objective(optuna_trial, config, selected_features):
         "num_layers": num_layers,
         "dropout": dropout,
         "learning_rate": learning_rate,
-        "weight_decay": weight_decay
+        "weight_decay": weight_decay,
+        "batch_size": batch_size,
+        "sequence_length": sequence_length
     })
 
     optuna_logger.info(f"Starting Trial {optuna_trial.number} with params: {config.model_settings}")
@@ -54,6 +62,8 @@ def objective(optuna_trial, config, selected_features):
         if not train_val_loaders:
             optuna_logger.warning(f"No data loaded for trial {optuna_trial.number}")
             return float('inf')
+        
+        feature_penalty = 0.01 * len(selected_features)
 
         fold_val_losses = []
         for fold_idx, (train_loader, val_loader) in enumerate(train_val_loaders):
@@ -67,6 +77,7 @@ def objective(optuna_trial, config, selected_features):
 
             criterion = nn.MSELoss()
             optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+            scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10, verbose=True)
             early_stopping = EarlyStopping(
                 patience=10, delta=0.001, verbose=True,
                 path=f"models/optuna/model_{optuna_trial.number}_fold_{fold_idx}.pt"
@@ -76,6 +87,7 @@ def objective(optuna_trial, config, selected_features):
             for epoch in range(config.epochs):
                 train_loss = run_training_epoch(model, train_loader, criterion, optimizer, device)
                 val_loss = run_validation_epoch(model, val_loader, criterion, device)
+                scheduler.step(val_loss)
                 optuna_logger.info(f"Trial {optuna_trial.number}, Fold {fold_idx}, Epoch {epoch + 1}/{config.epochs}, "
                                    f"Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
 
@@ -92,7 +104,7 @@ def objective(optuna_trial, config, selected_features):
         optuna_logger.error(f"Error during trial {optuna_trial.number}: {e}")
         return float('inf')
 
-    return avg_val_loss
+    return avg_val_loss + feature_penalty
 
 def parse_arguments():
     arg_parser = argparse.ArgumentParser()

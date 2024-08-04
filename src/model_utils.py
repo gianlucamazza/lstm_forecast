@@ -36,3 +36,8 @@ def run_validation_epoch(model, data_loader, criterion, device):
     average_loss = total_loss / len(data_loader)
     logger.info(f"Validation epoch completed. Average loss: {average_loss:.4f}")
     return average_loss
+
+
+def clip_gradients(model, max_norm):
+    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
+    logger.info(f"Gradients clipped with max norm: {max_norm}")
