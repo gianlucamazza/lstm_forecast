@@ -151,6 +151,12 @@ def main():
     config = load_config(args.config)
     optuna_logger.info(f"Loaded configuration from {args.config}")
 
+    train_val_loaders, selected_features, _, _, _, _ = (
+        load_and_preprocess_data(config))
+    
+    update_config(config, "feature_settings.selected_features", selected_features)
+    config.save()
+
     # Feature selection using Optuna
     optuna_logger.info("Starting feature selection")
     feature_study = optuna.create_study(

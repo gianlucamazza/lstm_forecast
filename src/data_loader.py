@@ -1,5 +1,7 @@
 from typing import List, Tuple, Dict, Any
 import argparse
+import os
+import sys
 import numpy as np
 import pandas as pd
 import torch
@@ -11,8 +13,11 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from torch.utils.data import DataLoader, TensorDataset
 from xgboost import XGBRegressor
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from src.feature_engineering import calculate_technical_indicators
 from src.logger import setup_logger
+from src.config import load_config
 
 logger = setup_logger("data_loader_logger", "logs/data_loader.log")
 
@@ -334,3 +339,18 @@ def load_and_preprocess_data(config, selected_features=None):
     train_loader, val_loader = split_data(x, y, batch_size=config.batch_size)
     return ([(train_loader, val_loader)], selected_features, scaler_prices, scaler_volume, historical_data,
             scaler_features)
+
+
+def parse_arguments() -> argparse.Namespace:
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(description="Train and evaluate the model.")
+    parser.add_argument(
+        "--config",
+        type=str,
+        default="config.yaml",
+        help="Path to the configuration file (default: config.yaml)",
+    )
+    return parser.parse_args()
+
+    
+    

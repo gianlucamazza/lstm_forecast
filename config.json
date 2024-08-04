@@ -89,10 +89,13 @@
     },
     "feature_settings": {
         "selected_features": [
+            "SMA_50",
             "SMA_200",
             "EMA",
-            "MACD_Signal",
+            "Bollinger_High",
+            "Bollinger_Low",
             "Ichimoku_Tenkan",
+            "Ichimoku_Kijun",
             "Ichimoku_Senkou_Span_A",
             "Ichimoku_Senkou_Span_B"
         ]

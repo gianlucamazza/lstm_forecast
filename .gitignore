@@ -1,4 +1,5 @@
 data/*.csv
+data/*.db
 logs/*.log
 png/*.png
 reports/*.csv
