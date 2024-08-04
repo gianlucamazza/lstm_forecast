@@ -19,18 +19,14 @@ logger = setup_logger("train_logger", "logs/train.log")
 
 def initialize_model(config):
     """Initialize the model with the given configuration."""
-    hidden_size = config.model_settings.get("hidden_size", 64)
-    num_layers = config.model_settings.get("num_layers", 2)
-    dropout = config.model_settings.get("dropout", 0.2)
-    input_size = len(config.data_settings["selected_features"])
-    fc_output_size = len(config.data_settings["targets"])
+    input_size = len(config.selected_features)
 
     model = PricePredictor(
         input_size=input_size,
-        hidden_size=hidden_size,
-        num_layers=num_layers,
-        dropout=dropout,
-        fc_output_size=fc_output_size,
+        hidden_size=config.model_settings['hidden_size'],
+        num_layers=config.model_settings['num_layers'],
+        dropout=config.model_settings['dropout'],
+        fc_output_size=len(config.targets)
     ).to(device)
 
     model.apply(init_weights)
