@@ -191,6 +191,11 @@ def main():
     # Data Augmentation
     augmented_data = augment_time_series_data(data[selected_features].values)
     augmented_df = pd.DataFrame(augmented_data, columns=selected_features)
+
+    # Print data columns
+    optuna_logger.info(f"Data columns: {augmented_df.columns}")
+
+    # Append augmented data to original data
     data = pd.concat([data, augmented_df], ignore_index=True)
 
     # Hyperparameter tuning using Optuna
