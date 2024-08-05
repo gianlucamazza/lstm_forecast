@@ -11,7 +11,7 @@ from src.model import PricePredictor, init_weights
 from src.early_stopping import EarlyStopping
 from src.logger import setup_logger
 from src.data_loader import load_and_preprocess_data
-from src.config import load_config, update_config
+from src.config import load_config
 from src.model_utils import run_training_epoch, run_validation_epoch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -20,14 +20,16 @@ logger = setup_logger("train_logger", "logs/train.log")
 
 def initialize_model(config) -> PricePredictor:
     """Initialize the model with the given configuration."""
-    input_size = len(config.selected_features)
+    input_size = len(config.data_settings["selected_features"])
+
+    dropout = config.model_settings["dropout"] if config.model_settings["num_layers"] > 1 else 0
 
     model = PricePredictor(
         input_size=input_size,
-        hidden_size=config.model_settings['hidden_size'],
-        num_layers=config.model_settings['num_layers'],
-        dropout=config.model_settings['dropout'],
-        fc_output_size=len(config.targets)
+        hidden_size=config.model_settings["hidden_size"],
+        num_layers=config.model_settings["num_layers"],
+        dropout=dropout,
+        fc_output_size=len(config.data_settings["targets"]),
     ).to(device)
 
     model.apply(init_weights)
@@ -127,7 +129,7 @@ def main() -> None:
         model = initialize_model(config)
         model.to(device)
         train_model(
-            config.data_settings["symbol"],
+            config,
             model,
             train_loader,
             val_loader,

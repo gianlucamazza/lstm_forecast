@@ -59,34 +59,27 @@
             "Ichimoku_Senkou_Span_B"
         ],
         "selected_features": [
-            "SMA_50",
-            "MACD",
-            "RSI",
             "Bollinger_High",
-            "Bollinger_Low",
-            "ADX",
             "CCI",
             "CMF",
-            "Ichimoku_Tenkan",
-            "Ichimoku_Kijun",
-            "Ichimoku_Senkou_Span_A",
-            "Ichimoku_Senkou_Span_B"
+            "MACD"
         ]
     },
     "model_settings": {
-        "hidden_size": 172,
+        "hidden_size": 306,
         "num_layers": 1,
-        "dropout": 0.25727408308344324,
-        "learning_rate": 5.4591416076258706e-05,
+        "dropout": 0.43161239031237997,
+        "learning_rate": 0.00018123930183988458,
         "fc_output_size": 5,
-        "weight_decay": 0.009791194088863642,
-        "clip_value": 1.0
+        "weight_decay": 2.7417040630355e-05,
+        "clip_value": 1.0,
+        "batch_size": 235,
+        "sequence_length": 19
     },
     "training_settings": {
         "look_back": 120,
         "look_forward": 30,
         "epochs": 150,
-        "batch_size": 32,
         "model_dir": "models",
         "use_time_series_split": true,
         "time_series_splits": 5

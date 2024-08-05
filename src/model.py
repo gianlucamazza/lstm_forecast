@@ -23,10 +23,6 @@ def init_weights(m):
 
 
 class PricePredictor(nn.Module):
-    """
-    A PyTorch neural network module for predicting prices using an LSTM model.
-    """
-
     def __init__(
         self,
         input_size: int,
@@ -35,9 +31,6 @@ class PricePredictor(nn.Module):
         dropout: float,
         fc_output_size: int,
     ) -> None:
-        """
-        Initializes the PricePredictor model.
-        """
         super(PricePredictor, self).__init__()
         logger.info(
             f"Initializing PricePredictor with input size: {input_size}, hidden size: {hidden_size}, "
@@ -50,7 +43,7 @@ class PricePredictor(nn.Module):
             hidden_size=hidden_size,
             num_layers=num_layers,
             batch_first=True,
-            dropout=dropout,
+            dropout=dropout if num_layers > 1 else 0,
         )
         self.dropout = nn.Dropout(dropout)
         self.fc = nn.Linear(hidden_size, fc_output_size)
@@ -59,15 +52,22 @@ class PricePredictor(nn.Module):
         self.apply(init_weights)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Defines the forward pass of the model.
-        """
-        h_0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
-        c_0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
+        # Add batch dimension if input is unbatched
+        if x.dim() == 2:
+            x = x.unsqueeze(0)
+
+        batch_size, seq_len, _ = x.size()
+        h_0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).to(x.device)
+        c_0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).to(x.device)
 
         out, _ = self.lstm(x, (h_0, c_0))
         out = self.dropout(out[:, -1, :])
         out = self.fc(out)
+
+        # Remove batch dimension if input was unbatched
+        if batch_size == 1:
+            out = out.squeeze(0)
+
         logger.debug("Forward pass completed.")
         return out
 
@@ -164,4 +164,3 @@ def predict(
         future_predictions = scaler.inverse_transform(future_predictions_reshaped)[:, 0]
 
     return predictions, future_predictions
-

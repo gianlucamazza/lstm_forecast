@@ -25,10 +25,8 @@ def run_training_epoch(model, data_loader, loss_fn, optimizer, device, clip_valu
     return total_loss / len(data_loader)
 
 
-
 def run_validation_epoch(model, data_loader, criterion, device):
     """Run a single validation epoch using the given data loader."""
-
     model.eval()
     total_loss = 0.0
     with torch.no_grad():
