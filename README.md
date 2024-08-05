@@ -49,12 +49,15 @@ pip install -r requirements.txt
 
 Update the `config.json` file with the desired parameters.
 
+Sure, here's the corrected markdown with proper JSON formatting and structured documentation:
+
 ```json
 {
     "data_settings": {
         "ticker": "BTC-USD",
         "symbol": "BTCUSD",
-        "data_path": "data/BTCUSD_1d_historical.csv",
+        "data_path": "data/BTCUSD_1d.csv",
+        "scaled_data_path": "data/BTCUSD_1d_scaled_data.csv",
         "asset_type": "commodity",
         "data_sampling_interval": "1d",
         "start_date": "2013-01-01",
@@ -63,7 +66,11 @@ Update the `config.json` file with the desired parameters.
             "SMA_50": 50,
             "SMA_200": 200,
             "EMA": 20,
-            "MACD": [12, 26, 9],
+            "MACD": [
+                12,
+                26,
+                9
+            ],
             "RSI": 14,
             "Bollinger": 20,
             "ATR": 14,
@@ -78,23 +85,58 @@ Update the `config.json` file with the desired parameters.
                 "window3": 52
             }
         },
-        "targets": ["Open", "High", "Low", "Close", "Volume"],
-        "disabled_features": ["Adj Close"]
+        "targets": [
+            "Open",
+            "High",
+            "Low",
+            "Close",
+            "Volume"
+        ],
+        "disabled_features": [
+            "Adj Close"
+        ],
+        "all_features": [
+            "SMA_50",
+            "SMA_200",
+            "EMA",
+            "MACD",
+            "MACD_Signal",
+            "RSI",
+            "Bollinger_High",
+            "Bollinger_Low",
+            "ADX",
+            "CCI",
+            "CMF",
+            "Ichimoku_Tenkan",
+            "Ichimoku_Kijun",
+            "Ichimoku_Senkou_Span_A",
+            "Ichimoku_Senkou_Span_B"
+        ],
+        "selected_features": [
+            "Bollinger_High",
+            "CCI",
+            "CMF",
+            "MACD"
+        ]
     },
     "model_settings": {
-        "hidden_size": 128,
-        "num_layers": 3,
-        "dropout": 0.3,
-        "learning_rate": 0.002,
+        "hidden_size": 306,
+        "num_layers": 1,
+        "dropout": 0.43161239031237997,
+        "learning_rate": 0.00018123930183988458,
         "fc_output_size": 5,
-        "weight_decay": 0.01
+        "weight_decay": 2.7417040630355e-05,
+        "clip_value": 1.0,
+        "batch_size": 235,
+        "sequence_length": 19
     },
     "training_settings": {
         "look_back": 120,
         "look_forward": 30,
         "epochs": 150,
-        "batch_size": 32,
-        "model_dir": "models"
+        "model_dir": "models",
+        "use_time_series_split": true,
+        "time_series_splits": 5
     },
     "logging_settings": {
         "log_dir": "logs"
@@ -106,16 +148,6 @@ Update the `config.json` file with the desired parameters.
         "stop_loss": 1.2,
         "trade_allocation": 0.1,
         "max_open_trades": 5
-    },
-    "feature_settings": {
-        "selected_features": [
-            "Bollinger_High",
-            "Bollinger_Low",
-            "Ichimoku_Tenkan",
-            "Ichimoku_Kijun",
-            "Ichimoku_Senkou_Span_A",
-            "Ichimoku_Senkou_Span_B"
-        ]
     }
 }
 ```
@@ -124,6 +156,7 @@ Update the `config.json` file with the desired parameters.
   - `ticker`: Stock ticker symbol.
   - `symbol`: Stock symbol.
   - `data_path`: Path to the historical data CSV file.
+  - `scaled_data_path`: Path to the scaled data CSV file.
   - `asset_type`: Type of asset, e.g., 'commodity'.
   - `data_sampling_interval`: Interval for the historical data, e.g., '1d' for daily or '1h' for hourly.
   - `start_date`: Start date for the historical data.
@@ -147,6 +180,7 @@ Update the `config.json` file with the desired parameters.
       - `window3`: Window size for the Senkou Span B.
   - `targets`: List of target variables for prediction.
   - `disabled_features`: List of features to be disabled.
+  - `all_features`: List of all available features.
   - `selected_features`: List of best features selected for training from the feature selection process.
 
 - `model_settings`: Dictionary containing model parameters.
@@ -156,13 +190,17 @@ Update the `config.json` file with the desired parameters.
   - `learning_rate`: Learning rate for the optimizer.
   - `fc_output_size`: Output size of the fully connected layer.
   - `weight_decay`: Weight decay for the optimizer.
+  - `clip_value`: Gradient clipping value.
+  - `batch_size`: Batch size for training.
+  - `sequence_length`: Sequence length for the LSTM model.
 
 - `training_settings`: Dictionary containing training parameters.
   - `look_back`: Number of days to look back for the LSTM model.
   - `look_forward`: Number of days to predict.
   - `epochs`: Number of epochs for training.
-  - `batch_size`: Batch size for training.
   - `model_dir`: Directory to store the trained model.
+  - `use_time_series_split`: Boolean to use time series split for cross-validation.
+  - `time_series_splits`: Number of time series splits for cross-validation.
 
 - `logging_settings`: Dictionary containing logging settings.
   - `log_dir`: Directory to store the logs.
@@ -174,7 +212,6 @@ Update the `config.json` file with the desired parameters.
   - `stop_loss`: Stop loss ratio.
   - `trade_allocation`: Trade allocation percentage.
   - `max_open_trades`: Maximum number of open trades.
-
 
 ### Features
 

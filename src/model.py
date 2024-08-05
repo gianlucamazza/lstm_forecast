@@ -23,6 +23,119 @@ def init_weights(m):
 
 
 class PricePredictor(nn.Module):
+    """
+    A neural network model for predicting prices using LSTM.
+    
+    Attributes:
+        hidden_size (int): The number of features in the hidden state of the LSTM.
+        num_layers (int): The number of recurrent layers in the LSTM.
+        lstm (nn.LSTM): The LSTM layer.
+        dropout (nn.Dropout): The dropout layer.
+        fc (nn.Linear): The fully connected output layer.
+    """
+
+    def __init__(
+        self,
+        input_size: int,
+        hidden_size: int,
+        num_layers: int,
+        dropout: float,
+        fc_output_size: int,
+    ) -> None:
+        super(PricePredictor, self).__init__()
+        logger.info(
+            f"Initializing PricePredictor with input size: {input_size}, hidden size: {hidden_size}, "
+            f"num layers: {num_layers}, dropout: {dropout}"
+        )
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.lstm = nn.LSTM(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            batch_first=True,
+            dropout=dropout if num_layers > 1 else 0,
+        )
+        self.dropout = nn.Dropout(dropout)
+        self.fc = nn.Linear(hidden_size, fc_output_size)
+
+        # Apply weight initialization
+        self.apply(init_weights)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Forward pass of the model.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape (batch_size, seq_len, input_size)
+
+        Returns:
+            torch.Tensor: Output tensor of shape (batch_size, fc_output_size)
+        """
+        # Add batch dimension if input is unbatched
+        if x.dim() == 2:
+            x = x.unsqueeze(0)
+
+        batch_size, seq_len, _ = x.size()
+        h_0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).to(x.device)
+        c_0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).to(x.device)
+
+        out, _ = self.lstm(x, (h_0, c_0))
+        out = self.dropout(out[:, -1, :])
+        out = self.fc(out)
+
+        # Remove batch dimension if input was unbatched
+        if batch_size == 1:
+            out = out.squeeze(0)
+
+        logger.debug("Forward pass completed.")
+        return out
+
+    def run_training_epoch(self, data_loader: torch.utils.data.DataLoader, criterion: nn.Module, optimizer: torch.optim.Optimizer) -> float:
+        """
+        Run a single training epoch.
+
+        Args:
+            data_loader (DataLoader): The data loader for training data.
+            criterion (nn.Module): The loss function.
+            optimizer (Optimizer): The optimizer.
+
+        Returns:
+            float: The average loss for this epoch.
+        """
+        self.train()
+        total_loss = 0.0
+        for x_batch, y_batch in data_loader:
+            x_batch, y_batch = x_batch.to(device), y_batch.to(device)
+            optimizer.zero_grad()
+            outputs = self(x_batch)
+            loss = criterion(outputs, y_batch)
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
+            optimizer.step()
+            total_loss += loss.item()
+        return total_loss / len(data_loader)
+
+    def run_validation_epoch(self, data_loader: torch.utils.data.DataLoader, criterion: nn.Module) -> float:
+        """
+        Run a single validation epoch.
+
+        Args:
+            data_loader (DataLoader): The data loader for validation data.
+            criterion (nn.Module): The loss function.
+
+        Returns:
+            float: The average loss for this epoch.
+        """
+        self.eval()
+        total_loss = 0.0
+        with torch.no_grad():
+            for X_val_batch, y_val_batch in data_loader:
+                X_val_batch, y_val_batch = X_val_batch.to(device), y_val_batch.to(device)
+                val_outputs = self(X_val_batch)
+                total_loss += criterion(val_outputs, y_val_batch).item()
+        return total_loss / len(data_loader)
+
     def __init__(
         self,
         input_size: int,
@@ -99,20 +212,40 @@ class PricePredictor(nn.Module):
 
 
 def load_model(symbol: str, path: str, model_params: dict, input_size: int) -> nn.Module:
-    model = PricePredictor(
-        input_size=input_size,
-        hidden_size=model_params["hidden_size"],
-        num_layers=model_params["num_layers"],
-        dropout=model_params["dropout"],
-        fc_output_size=model_params["fc_output_size"],
-    ).to(device)
-    model.device = device
     model_path = os.path.join(path, f"{symbol}_best_model.pth")
-    logger.info(f"Model: {model}")
     logger.info(f"Loading model from {model_path}")
-    model.load_state_dict(torch.load(model_path, map_location=device))
+    
+    state_dict = torch.load(model_path, map_location=device)
+    
+    hidden_size = state_dict['lstm.weight_hh_l0'].size(1)
+    saved_input_size = state_dict['lstm.weight_ih_l0'].size(1)
+    
+    num_lstm_layers = sum(1 for key in state_dict.keys() if key.startswith('lstm.weight_ih_l'))
+    
+    fc_output_size = state_dict['fc.weight'].size(0)
+    
+    logger.info(f"Inferred model parameters - Input size: {saved_input_size}, Hidden size: {hidden_size}, "
+                f"LSTM layers: {num_lstm_layers}, FC output size: {fc_output_size}")
+    
+    model = PricePredictor(
+        input_size=saved_input_size,
+        hidden_size=hidden_size,
+        num_layers=num_lstm_layers,
+        dropout=model_params["dropout"],
+        fc_output_size=fc_output_size,
+    ).to(device)
+    
+    model.load_state_dict(state_dict)
+    
+    logger.info(f"Model: {model}")
     model.eval()
     logger.info("Model loaded and set to evaluation mode.")
+    
+    if saved_input_size != input_size:
+        logger.warning(f"Loaded model expects input size of {saved_input_size}, "
+                       f"but current data has input size of {input_size}. "
+                       f"This may cause issues during prediction.")
+    
     return model
 
 

@@ -6,7 +6,6 @@ from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
 import torch
 import torch.nn as nn
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
@@ -15,6 +14,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.model import load_model
 from src.data_loader import preprocess_data, get_data
+from src.predict_utils import inverse_transform_predictions, plot_predictions, save_predictions_report
 from src.logger import setup_logger
 from src.config import load_config
 
@@ -58,7 +58,7 @@ def predict(
         last_x = _x[-1]
         future_predictions = []
 
-        for day in range(future_days):
+        for _ in range(future_days):
             _X_tensor = torch.tensor(last_x[np.newaxis, :], dtype=torch.float32).to(device)
             future_pred = _model(_X_tensor).cpu().numpy()[0]
             future_predictions.append(future_pred)
@@ -107,118 +107,18 @@ def predict(
     return predictions, future_predictions
 
 
-def make_initial_predictions(model: nn.Module, x: np.ndarray) -> np.ndarray:
-    logger.info("Making predictions on the input data.")
-    x_tensor = torch.tensor(x, dtype=torch.float32).to(device)
-    predictions = model(x_tensor).cpu().numpy()
-    logger.info(f"Initial predictions shape: {predictions.shape}")
-    return predictions
 
-
-def inverse_transform_predictions(
-    predictions, scaler_prices, scaler_volume, features, num_targets
-):
-    predictions_reshaped = np.zeros((predictions.shape[0], len(features) + num_targets))
-    predictions_reshaped[:, :num_targets] = predictions
-
-    predictions_reshaped[:, : num_targets - 1] = scaler_prices.inverse_transform(
-        predictions[:, : num_targets - 1]
-    )
-    predictions_reshaped[:, num_targets - 1 : num_targets] = (
-        scaler_volume.inverse_transform(predictions[:, num_targets - 1 : num_targets])
-    )
-
-    return predictions_reshaped[:, :num_targets]
-
-
-def update_input_data(
-    x: np.ndarray, future_pred: np.ndarray, num_targets: int
-) -> np.ndarray:
-    new_row = np.zeros((1, x.shape[2]))
-    new_row[0, :num_targets] = future_pred
-    new_row[0, num_targets:] = x[-1, -1, num_targets:]
-    x = np.append(x, [np.vstack((x[-1][1:], new_row))], axis=0)
-    logger.debug(f"Updated input data shape: {x.shape}")
-    return x
-
-
-def create_candles(
-    predictions: np.ndarray, freq: str, start_date: pd.Timestamp
-) -> pd.DataFrame:
-    columns = ["Open", "High", "Low", "Close"]
-    if predictions.shape[1] == 5:
-        columns.append("Volume")
-    df = pd.DataFrame(predictions, columns=columns)
-    df.index = pd.date_range(start=start_date, periods=len(df), freq=freq)
-    return df
-
-
-def plot_predictions(
-    symbol: str,
-    filename: str,
-    candles: pd.DataFrame,
-    predictions: np.ndarray,
-    future_predictions: np.ndarray,
-    freq: str,
-    interval: str,
-) -> None:
-    logger.info("Plotting predictions")
-
-    start_date = candles.index[-1]
-
-    fig = go.Figure()
-    add_candlestick_trace(fig, candles, "Actual Candlestick")
-
-    historical_candles = create_candles(
-        predictions, freq, candles.index[-len(predictions)]
-    )
-    add_candlestick_trace(fig, historical_candles, "Predicted Candlestick")
-
-    future_candles = create_candles(future_predictions, freq, start_date)
-    add_candlestick_trace(
-        fig,
-        future_candles,
-        "Future Predicted Candlestick",
-        increasing_color="blue",
-        decreasing_color="orange",
-    )
-
-    update_layout(fig, symbol, interval)
-
-    fig.write_html(filename)
-    logger.info(f"Predictions plot saved to {filename}")
-
-
-def add_candlestick_trace(
-    fig: go.Figure,
-    candles: pd.DataFrame,
-    name: str,
-    increasing_color="green",
-    decreasing_color="red",
-) -> None:
-    logger.debug(f"Adding candlestick trace for {name}")
-    fig.add_trace(
-        go.Candlestick(
-            x=candles.index,
-            open=candles["Open"],
-            high=candles["High"],
-            low=candles["Low"],
-            close=candles["Close"],
-            name=name,
-            increasing=dict(line=dict(color=increasing_color)),
-            decreasing=dict(line=dict(color=decreasing_color)),
-        )
-    )
-
-
-def update_layout(fig: go.Figure, symbol: str, interval: str) -> None:
-    fig.update_layout(
-        title=f"{symbol} - Predictions",
-        xaxis_title="Date" if "d" in interval else "Date/Time",
-        yaxis_title="Price",
-        xaxis_rangeslider_visible=False,
-        template="plotly_white",
-        xaxis=dict(tickformat="%Y-%m-%d %H:%M" if "h" in interval else "%Y-%m-%d"),
+def get_historical_data(config) -> Tuple[pd.DataFrame, List[str]]:
+    logger.info(f"Getting data for {config.symbol} from {config.start_date}")
+    return get_data(
+        config.ticker,
+        config.symbol,
+        asset_type=config.asset_type,
+        start=config.start_date,
+        end=time.strftime("%Y-%m-%d"),
+        windows=config.indicator_windows,
+        data_sampling_interval=config.data_sampling_interval,
+        data_resampling_frequency=config.data_resampling_frequency,
     )
 
 
@@ -285,36 +185,6 @@ def main(config_path: str) -> None:
     )
     logger.info(f"Prediction for {config.symbol} completed")
 
-
-def get_historical_data(config) -> Tuple[pd.DataFrame, List[str]]:
-    logger.info(f"Getting data for {config.symbol} from {config.start_date}")
-    return get_data(
-        config.ticker,
-        config.symbol,
-        asset_type=config.asset_type,
-        start=config.start_date,
-        end=time.strftime("%Y-%m-%d"),
-        windows=config.indicator_windows,
-        data_sampling_interval=config.data_sampling_interval,
-        data_resampling_frequency=config.data_resampling_frequency,
-    )
-
-
-def save_predictions_report(
-    predictions: np.ndarray,
-    targets: List[str],
-    start_date: pd.Timestamp,
-    freq: str,
-    symbol: str,
-) -> None:
-    if predictions.shape[1] < len(targets):
-        padding_width = len(targets) - predictions.shape[1]
-        predictions = np.pad(predictions, ((0, 0), (0, padding_width)), "constant")
-
-    report = pd.DataFrame(data=predictions, columns=targets)
-    report.index = pd.date_range(start=start_date, periods=len(predictions), freq=freq)
-    report.to_csv(f"reports/{symbol}_predictions.csv", index=False)
-    logger.info(f"Predictions report saved to reports/{symbol}_predictions.csv")
 
 
 if __name__ == "__main__":
