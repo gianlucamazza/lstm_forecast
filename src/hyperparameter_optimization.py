@@ -106,8 +106,12 @@ def objective(optuna_trial, config, selected_features):
     return avg_val_loss + feature_penalty
 
 def filter_available_features(data, selected_features):
-    available_features = data.columns.tolist()
-    return [feature for feature in selected_features if feature in available_features]
+    available_features = set(data.columns)
+    filtered_features = [feature for feature in selected_features if feature in available_features]
+    if len(filtered_features) < len(selected_features):
+        optuna_logger.warning(f"Some selected features are not available in the data. "
+                              f"Available: {len(filtered_features)}, Selected: {len(selected_features)}")
+    return filtered_features
 
 def feature_selection_objective(optuna_trial, config, data):
     all_features = config.all_features
@@ -191,7 +195,11 @@ def main():
     
     # Filter selected features based on available data
     selected_features = filter_available_features(data, selected_features)
-
+    
+    if not selected_features:
+        optuna_logger.error("No valid features selected. Aborting.")
+        return
+    
     # Apply advanced feature selection methods
     selected_features = correlation_analysis(data[selected_features])
     selected_features = recursive_feature_elimination(data[selected_features], data[config.data_settings["targets"]], num_features=len(selected_features))
@@ -201,14 +209,14 @@ def main():
     optuna_logger.info(f"Selected features: {selected_features}")
 
     # Data Augmentation
-    augmented_data = augment_time_series_data(data[selected_features].values)
-    augmented_df = pd.DataFrame(augmented_data, columns=selected_features)
+    # augmented_data = augment_time_series_data(data[selected_features].values)
+    ## augmented_df = pd.DataFrame(augmented_data, columns=selected_features)
 
     # Print data columns
-    optuna_logger.info(f"Data columns: {augmented_df.columns}")
+    # optuna_logger.info(f"Data columns: {augmented_df.columns}")
 
     # Append augmented data to original data
-    data = pd.concat([data, augmented_df], ignore_index=True)
+    # data = pd.concat([data, augmented_df], ignore_index=True)
 
     # Hyperparameter tuning using Optuna
     optuna_logger.info("Starting hyperparameter tuning")
