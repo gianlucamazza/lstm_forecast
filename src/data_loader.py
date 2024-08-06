@@ -309,19 +309,33 @@ def load_and_preprocess_data(config, selected_features=None):
         config.data_resampling_frequency,
     )
 
-    if selected_features is not None:
-        features = [feature for feature in features if feature in selected_features]
+    # Se non sono state fornite feature selezionate, esegui la selezione delle feature
+    if selected_features is None:
+        X = historical_data[features]
+        y = historical_data[config.targets]
+        
+        # Esegui la selezione delle feature per serie temporali
+        selected_features = time_series_feature_selection(
+            X, 
+            y, 
+            num_features=config.num_features_to_select,
+            window_size=config.window_size,
+            max_lag=config.max_lag
+        )
+        logger.info(f"Selected features: {selected_features}")
+    else:
+        selected_features = [feature for feature in features if feature in selected_features]
 
-    x, y, scaler_features, scaler_prices, scaler_volume, selected_features = preprocess_data(
+    x, y, scaler_features, scaler_prices, scaler_volume, _ = preprocess_data(
         config.symbol,
         config.data_sampling_interval,
         historical_data,
         config.targets,
         config.look_back,
         config.look_forward,
-        features,
+        selected_features,
         config.disabled_features,
-        selected_features if selected_features is not None else config.selected_features,
+        selected_features,
     )
     
     config.selected_features = selected_features
