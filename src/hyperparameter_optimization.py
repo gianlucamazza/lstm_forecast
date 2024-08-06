@@ -19,7 +19,7 @@ from src.early_stopping import EarlyStopping
 from src.config import load_config, update_config
 from src.logger import setup_logger
 from src.model_utils import run_training_epoch, run_validation_epoch, clip_gradients
-from src.feature_selection import recursive_feature_elimination, correlation_analysis
+from src.feature_selection import time_series_feature_selection, correlation_analysis
 from src.data_augmentation import augment_time_series_data
 
 # Setup loggers
@@ -202,7 +202,7 @@ def main():
     
     # Apply advanced feature selection methods
     selected_features = correlation_analysis(data[selected_features])
-    selected_features = recursive_feature_elimination(data[selected_features], data[config.data_settings["targets"]], num_features=len(selected_features))
+    selected_features = time_series_feature_selection(data[selected_features], data[config.data_settings["targets"]], num_features=len(selected_features))
 
     config.selected_features = selected_features
     update_config(config, "selected_features", selected_features)

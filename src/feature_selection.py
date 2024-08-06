@@ -3,7 +3,6 @@ import numpy as np
 from sklearn.feature_selection import RFE
 from sklearn.ensemble import RandomForestRegressor
 from statsmodels.tsa.stattools import grangercausalitytests
-from sklearn.model_selection import TimeSeriesSplit
 
 def rolling_feature_selection(X, y, window_size, num_features):
     """
