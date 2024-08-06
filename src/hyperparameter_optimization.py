@@ -105,16 +105,16 @@ def objective(optuna_trial, config, selected_features):
 
     return avg_val_loss + feature_penalty
 
-def parse_arguments():
-    arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("--config", type=str, required=True, help="Path to configuration JSON file")
-    arg_parser.add_argument("--n_trials", type=int, default=100, help="Number of trials for hyperparameter tuning")
-    arg_parser.add_argument("--n_feature_trials", type=int, default=15, help="Number of trials for feature selection")
-    return arg_parser.parse_args()
+def filter_available_features(data, selected_features):
+    available_features = data.columns.tolist()
+    return [feature for feature in selected_features if feature in available_features]
 
-def feature_selection_objective(optuna_trial, config):
+def feature_selection_objective(optuna_trial, config, data):
     all_features = config.all_features
-    selected_features = [feature for feature in all_features if optuna_trial.suggest_categorical(f"use_{feature}", [False, True])]
+    available_features = data.columns.tolist()
+    selected_features = [feature for feature in all_features 
+                         if feature in available_features and 
+                         optuna_trial.suggest_categorical(f"use_{feature}", [False, True])]
 
     optuna_logger.info(f"Trial {optuna_trial.number}: Selected features: {selected_features}")
 
@@ -122,9 +122,9 @@ def feature_selection_objective(optuna_trial, config):
         optuna_logger.warning(f"Trial {optuna_trial.number}: No features selected, returning infinity loss")
         return float('inf')  # Penalize trials with no features selected
 
-    # Load and preprocess data with the selected features
     train_val_loaders, _, _, _, _, _ = load_and_preprocess_data(config, selected_features)
     optuna_logger.info(f"Trial {optuna_trial.number}: Data loaded and preprocessed")
+
 
     fold_val_losses = []
     for fold_idx, (train_loader, val_loader) in enumerate(train_val_loaders):
@@ -161,11 +161,21 @@ def feature_selection_objective(optuna_trial, config):
     optuna_logger.info(f"Trial {optuna_trial.number} completed with Average Validation Loss: {avg_val_loss:.4f}")
     return avg_val_loss
 
+def parse_arguments():
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument("--config", type=str, required=True, help="Path to configuration JSON file")
+    arg_parser.add_argument("--n_trials", type=int, default=100, help="Number of trials for hyperparameter tuning")
+    arg_parser.add_argument("--n_feature_trials", type=int, default=15, help="Number of trials for feature selection")
+    return arg_parser.parse_args()
+
 def main():
     args = parse_arguments()
     config = load_config(args.config)
     optuna_logger.info(f"Loaded configuration from {args.config}")
 
+    # Load data
+    data = pd.read_csv(config.data_settings["scaled_data_path"])
+    
     # Feature selection using Optuna
     optuna_logger.info("Starting feature selection")
     feature_study = optuna.create_study(
@@ -174,13 +184,15 @@ def main():
         storage="sqlite:///data/optuna_feature_selection.db",
         load_if_exists=True
     )
-    feature_study.optimize(lambda t: feature_selection_objective(t, config), n_trials=args.n_feature_trials)
+    feature_study.optimize(lambda t: feature_selection_objective(t, config, data), n_trials=args.n_feature_trials)
 
     best_feature_trial = feature_study.best_trial
     selected_features = [feature for feature in config.data_settings["all_features"] if best_feature_trial.params.get(f"use_{feature}", False)]
+    
+    # Filter selected features based on available data
+    selected_features = filter_available_features(data, selected_features)
 
     # Apply advanced feature selection methods
-    data = pd.read_csv(config.data_settings["scaled_data_path"])
     selected_features = correlation_analysis(data[selected_features])
     selected_features = recursive_feature_elimination(data[selected_features], data[config.data_settings["targets"]], num_features=len(selected_features))
 
