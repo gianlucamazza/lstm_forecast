@@ -14,7 +14,7 @@ from ta.trend import (
 from ta.volatility import BollingerBands
 from ta.volume import OnBalanceVolumeIndicator, ChaikinMoneyFlowIndicator
 
-from src.logger import setup_logger
+from lstm_forecast.logger import setup_logger
 
 logger = setup_logger("feature_engineering_logger", "logs/feature_engineering.log")
 

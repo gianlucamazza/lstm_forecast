@@ -1,18 +1,14 @@
-import argparse
 import os
-import sys
 import matplotlib.pyplot as plt
 import numpy as np
 import torch, onnx
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-from src.model import PricePredictor, init_weights
-from src.early_stopping import EarlyStopping
-from src.logger import setup_logger
-from src.data_loader import load_and_preprocess_data
-from src.config import load_config
-from src.model_utils import run_training_epoch, run_validation_epoch
+from lstm_forecast.model import PricePredictor, init_weights
+from lstm_forecast.early_stopping import EarlyStopping
+from lstm_forecast.logger import setup_logger
+from lstm_forecast.data_loader import load_and_preprocess_data
+from lstm_forecast.config import Config
+from lstm_forecast.model_utils import run_training_epoch, run_validation_epoch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 logger = setup_logger("train_logger", "logs/train.log")
@@ -131,22 +127,9 @@ def export_to_onnx(model, config, fold_idx):
     except Exception as e:
         logger.error(f"Error exporting model to ONNX: {str(e)}")
 
-def parse_arguments() -> argparse.Namespace:
-    """Parse command-line arguments."""
-    arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument(
-        "--config",
-        type=str,
-        required=True,
-        help="Path to configuration JSON file")
-    return arg_parser.parse_args()
-
-
-def main() -> None:
+def main(config: Config):
     """Main function to run the training and evaluation."""
-    args = parse_arguments()
-    config = load_config(args.config)
-    logger.info(f"Loaded configuration from {args.config}")
+    logger.info(f"Loaded configuration from {config}")
     logger.info(f"Configuration: {config}")
 
     train_val_loaders, _, _, _, _, _ = load_and_preprocess_data(config)

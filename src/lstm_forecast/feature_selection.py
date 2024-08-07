@@ -10,7 +10,7 @@ from statsmodels.tsa.api import VAR
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.logger import setup_logger
+from lstm_forecast.logger import setup_logger
 
 logger = setup_logger("feature_selection_logger", "logs/feature_selection.log")
 

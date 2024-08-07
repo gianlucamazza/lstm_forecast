@@ -1,6 +1,4 @@
 import os
-import sys
-import argparse
 import optuna
 import numpy as np
 import pandas as pd
@@ -10,16 +8,14 @@ import torch.optim as optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from optuna.trial import TrialState
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-from src.data_loader import load_and_preprocess_data
-from src.model import PricePredictor
-from src.train import train_model, evaluate_model
-from src.early_stopping import EarlyStopping
-from src.config import load_config, update_config
-from src.logger import setup_logger
-from src.model_utils import run_training_epoch, run_validation_epoch
-from src.feature_selection import time_series_feature_selection, correlation_analysis
+from lstm_forecast.data_loader import load_and_preprocess_data
+from lstm_forecast.model import PricePredictor
+from lstm_forecast.train import train_model, evaluate_model
+from lstm_forecast.early_stopping import EarlyStopping
+from lstm_forecast.config import update_config, Config
+from lstm_forecast.logger import setup_logger
+from lstm_forecast.model_utils import run_training_epoch, run_validation_epoch
+from lstm_forecast.feature_selection import time_series_feature_selection, correlation_analysis
 
 # Setup loggers
 train_logger = setup_logger("train_logger", "logs/train.log")
@@ -171,25 +167,14 @@ def feature_selection_objective(optuna_trial, config, data: pd.DataFrame, min_fe
     feature_penalty = 0.01 * num_selected_features
     return avg_val_loss + feature_penalty
 
-def parse_arguments():
-    arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("--config", type=str, required=True, help="Path to configuration JSON file")
-    arg_parser.add_argument("--n_trials", type=int, default=100, help="Number of trials for hyperparameter tuning")
-    arg_parser.add_argument("--n_feature_trials", type=int, default=50, help="Number of trials for feature selection")
-    arg_parser.add_argument("--min_features", type=int, default=5, help="Minimum number of features to select")
-    arg_parser.add_argument("--force", action="store_true", help="Force re-run of Optuna study, both feature selection and hyperparameter tuning")
-    return arg_parser.parse_args()
-
-def main():
+def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_features: int = 5, force: bool = False):
     try:
-        args = parse_arguments()
-        config = load_config(args.config)
-        optuna_logger.info(f"Loaded configuration from {args.config}")
+        optuna_logger.info(f"Loaded configuration from {config}")
 
         train_val_loaders, _, _, _, train_data, _ = load_and_preprocess_data(config)
         data = train_data
         
-        if args.force:
+        if force:
             optuna_logger.info("Forcing re-run of Optuna study")
             if os.path.exists("data/optuna_feature_selection.db"):
                 os.remove("data/optuna_feature_selection.db")
@@ -201,10 +186,10 @@ def main():
             direction="minimize",
             study_name="feature_selection_study",
             storage="sqlite:///data/optuna_feature_selection.db",
-            load_if_exists=not args.force
+            load_if_exists=not force
         )
 
-        feature_study.optimize(lambda t: feature_selection_objective(t, config, data, min_features=args.min_features), n_trials=args.n_feature_trials)
+        feature_study.optimize(lambda t: feature_selection_objective(t, config, data, min_features=min_features), n_trials=n_feature_trials)
 
         best_feature_trial = feature_study.best_trial
         selected_features = [feature for feature in config.data_settings["all_features"] if best_feature_trial.params.get(f"use_{feature}", False)]
@@ -227,9 +212,9 @@ def main():
             direction="minimize",
             study_name="hyperparameter_tuning_study",
             storage="sqlite:///data/optuna_hyperparameter_tuning.db",
-            load_if_exists=not args.force
+            load_if_exists=not force
         )
-        study.optimize(lambda t: objective(t, config, selected_features), n_trials=args.n_trials)
+        study.optimize(lambda t: objective(t, config, selected_features), n_trials=n_trials)
 
         best_params = study.best_trial.params
         optuna_logger.info(f"Best hyperparameters: {best_params}")

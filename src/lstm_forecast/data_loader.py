@@ -1,7 +1,5 @@
 from typing import List, Tuple
 import argparse
-import os
-import sys
 import numpy as np
 import pandas as pd
 import torch
@@ -10,11 +8,9 @@ from sklearn.model_selection import TimeSeriesSplit, train_test_split
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from torch.utils.data import DataLoader, TensorDataset
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-from src.feature_engineering import calculate_technical_indicators
-from src.logger import setup_logger
-from src.config import load_config
+from lstm_forecast.feature_engineering import calculate_technical_indicators
+from lstm_forecast.logger import setup_logger
+from lstm_forecast.config import load_config
 
 logger = setup_logger("data_loader_logger", "logs/data_loader.log")
 

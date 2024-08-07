@@ -1,16 +1,8 @@
-import logging
 import os
-import json
+import logging
 
-# Load logging configuration from config.json
-with open(os.path.join(os.path.dirname(__file__), "..", "config.json"), "r") as f:
-    config = json.load(f)
-
-LOG_DIR = config.get("log_dir", "logs")
-if not os.path.exists(LOG_DIR):
-    os.makedirs(LOG_DIR)
-
-LOG_FILE = os.path.join(LOG_DIR, "main.log")
+LOG_DIR = "logs"
+LOG_FILE = "logs/lstm_forecast.log"
 
 
 def setup_logger(name, log_file=LOG_FILE, level=logging.INFO):

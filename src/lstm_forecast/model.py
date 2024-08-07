@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from sklearn.preprocessing import StandardScaler
-from src.logger import setup_logger
+from lstm_forecast.logger import setup_logger
 
 logger = setup_logger("model_logger", "logs/model.log")
 device: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

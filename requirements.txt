@@ -7,7 +7,6 @@ matplotlib
 torch
 plotly
 scikit-learn
-pre-commit
 xgboost
 optuna
 onnxruntime
