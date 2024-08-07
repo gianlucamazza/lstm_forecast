@@ -78,7 +78,8 @@
         "epochs": 150,
         "model_dir": "models",
         "use_time_series_split": true,
-        "time_series_splits": 5
+        "time_series_splits": 5,
+        "max_lag": 5
     },
     "logging_settings": {
         "log_dir": "logs"

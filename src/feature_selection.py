@@ -1,10 +1,18 @@
+import os
+import sys
 import pandas as pd
 import numpy as np
 from sklearn.feature_selection import RFE
 from sklearn.ensemble import RandomForestRegressor
 from statsmodels.tsa.stattools import grangercausalitytests
 
-def rolling_feature_selection(X, y, window_size, num_features):
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from src.logger import setup_logger
+
+logger = setup_logger("feature_selection_logger", "logs/feature_selection.log")
+
+def rolling_feature_selection(X, y, window_size, num_features, lag=10):
     """
     Perform rolling window feature selection.
     
@@ -17,8 +25,9 @@ def rolling_feature_selection(X, y, window_size, num_features):
     Returns:
     - selected_features: list of selected feature names
     """
+    logger.info(f"Starting rolling feature selection with window size {window_size} and selecting {num_features} features")
     selected_features = []
-    for i in range(len(X) - window_size + 1):
+    for i in range(0, len(X) - window_size + 1, lag):
         X_window = X.iloc[i:i+window_size]
         y_window = y.iloc[i:i+window_size]
         
@@ -28,7 +37,11 @@ def rolling_feature_selection(X, y, window_size, num_features):
         rfe.fit(X_window, y_window)
         selected_features.extend(X.columns[rfe.support_].tolist())
     
-    return list(set(selected_features))
+    # compare most frequent features
+    feature_counts = pd.Series(selected_features).value_counts()
+    # print feature_counts
+    logger.info(f"Rolling feature selection completed. Selected features: {feature_counts.index.tolist()[:num_features]}")
+    return feature_counts.index.tolist()[:num_features]
 
 def granger_causality_test(X, y, max_lag=5, threshold=0.05):
     """
@@ -43,6 +56,7 @@ def granger_causality_test(X, y, max_lag=5, threshold=0.05):
     Returns:
     - causal_features: list of features that Granger-cause the target
     """
+    logger.info(f"Starting Granger Causality test with max lag {max_lag} and p-value threshold {threshold}")
     causal_features = []
     for column in X.columns:
         data = pd.concat([y, X[column]], axis=1)
@@ -52,6 +66,7 @@ def granger_causality_test(X, y, max_lag=5, threshold=0.05):
         if any(test_result[i+1][0]['ssr_ftest'][1] < threshold for i in range(max_lag)):
             causal_features.append(column)
     
+    logger.info(f"Granger Causality test completed. Causal features: {causal_features}")
     return causal_features
 
 def correlation_analysis(df, threshold=0.9):
@@ -65,10 +80,12 @@ def correlation_analysis(df, threshold=0.9):
     Returns:
     - selected_features: list of selected feature names
     """
+    logger.info(f"Starting correlation analysis with threshold {threshold}")
     corr_matrix = df.corr().abs()
     upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
     to_drop = [column for column in upper.columns if any(upper[column] > threshold)]
     selected_features = df.columns.difference(to_drop).tolist()
+    logger.info(f"Correlation analysis completed. Selected features: {selected_features}")
     return selected_features
 
 def time_series_feature_selection(X, y, num_features, window_size=252, max_lag=5):
@@ -85,8 +102,11 @@ def time_series_feature_selection(X, y, num_features, window_size=252, max_lag=5
     Returns:
     - final_features: list of selected feature names
     """
+    logger.info("Starting time series feature selection process")
+    logger.info(f"Parameters: num_features={num_features}, window_size={window_size}, max_lag={max_lag}")
+    
     # Step 1: Rolling window feature selection
-    rolling_features = rolling_feature_selection(X, y, window_size, num_features)
+    rolling_features = rolling_feature_selection(X, y, window_size, num_features, lag=max_lag)
     
     # Step 2: Granger Causality test
     if isinstance(y, pd.DataFrame):
@@ -98,5 +118,6 @@ def time_series_feature_selection(X, y, num_features, window_size=252, max_lag=5
     
     # Step 4: Final feature selection
     final_features = uncorrelated_features[:num_features]
+    logger.info(f"Time series feature selection completed. Final selected features: {final_features}")
     
     return final_features

@@ -10,17 +10,16 @@ import torch.optim as optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from optuna.trial import TrialState
 
-# Import custom modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from src.data_loader import load_and_preprocess_data
 from src.model import PricePredictor
 from src.train import train_model, evaluate_model
 from src.early_stopping import EarlyStopping
 from src.config import load_config, update_config
 from src.logger import setup_logger
-from src.model_utils import run_training_epoch, run_validation_epoch, clip_gradients
+from src.model_utils import run_training_epoch, run_validation_epoch
 from src.feature_selection import time_series_feature_selection, correlation_analysis
-from src.data_augmentation import augment_time_series_data
 
 # Setup loggers
 train_logger = setup_logger("train_logger", "logs/train.log")
@@ -126,7 +125,8 @@ def feature_selection_objective(optuna_trial, config, data):
         optuna_logger.warning(f"Trial {optuna_trial.number}: No features selected, returning infinity loss")
         return float('inf')  # Penalize trials with no features selected
 
-    train_val_loaders, _, _, _, _, _ = load_and_preprocess_data(config, selected_features)
+    filtered_data = data[selected_features + config.targets]
+    train_val_loaders, _, _, _, _, _ = load_and_preprocess_data(config, filtered_data)
     optuna_logger.info(f"Trial {optuna_trial.number}: Data loaded and preprocessed")
 
 
@@ -170,6 +170,7 @@ def parse_arguments():
     arg_parser.add_argument("--config", type=str, required=True, help="Path to configuration JSON file")
     arg_parser.add_argument("--n_trials", type=int, default=100, help="Number of trials for hyperparameter tuning")
     arg_parser.add_argument("--n_feature_trials", type=int, default=15, help="Number of trials for feature selection")
+    arg_parser.add_argument("--force", action="store_true", help="Force re-run of Optuna study")
     return arg_parser.parse_args()
 
 def main():
@@ -179,14 +180,14 @@ def main():
 
     # Load data
     data = pd.read_csv(config.data_settings["scaled_data_path"])
-    
+        
     # Feature selection using Optuna
     optuna_logger.info("Starting feature selection")
     feature_study = optuna.create_study(
         direction="minimize",
         study_name="feature_selection_study",
         storage="sqlite:///data/optuna_feature_selection.db",
-        load_if_exists=True
+        load_if_exists=not args.force
     )
     feature_study.optimize(lambda t: feature_selection_objective(t, config, data), n_trials=args.n_feature_trials)
 
@@ -208,23 +209,13 @@ def main():
     update_config(config, "selected_features", selected_features)
     optuna_logger.info(f"Selected features: {selected_features}")
 
-    # Data Augmentation
-    # augmented_data = augment_time_series_data(data[selected_features].values)
-    ## augmented_df = pd.DataFrame(augmented_data, columns=selected_features)
-
-    # Print data columns
-    # optuna_logger.info(f"Data columns: {augmented_df.columns}")
-
-    # Append augmented data to original data
-    # data = pd.concat([data, augmented_df], ignore_index=True)
-
     # Hyperparameter tuning using Optuna
     optuna_logger.info("Starting hyperparameter tuning")
     study = optuna.create_study(
         direction="minimize",
         study_name="hyperparameter_tuning_study",
         storage="sqlite:///data/optuna_hyperparameter_tuning.db",
-        load_if_exists=True
+        load_if_exists=not args.force
     )
     study.optimize(lambda t: objective(t, config, selected_features), n_trials=args.n_trials)
 

@@ -113,10 +113,6 @@ Sure, here's the corrected markdown with proper JSON formatting and structured d
             "Ichimoku_Senkou_Span_B"
         ],
         "selected_features": [
-            "Bollinger_High",
-            "CCI",
-            "CMF",
-            "MACD"
         ]
     },
     "model_settings": {
