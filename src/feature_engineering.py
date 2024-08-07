@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 import pandas as pd
 from ta.momentum import RSIIndicator, StochasticOscillator
@@ -19,47 +19,30 @@ from src.logger import setup_logger
 logger = setup_logger("feature_engineering_logger", "logs/feature_engineering.log")
 
 
-def calculate_common_indicators(
-    historical_data: pd.DataFrame, windows: dict
-) -> pd.DataFrame:
+def calculate_common_indicators(historical_data: pd.DataFrame, windows: Dict[str, int]) -> pd.DataFrame:
     """
     Calculate common technical indicators for all asset types.
 
-    Parameters
-    ----------
-    historical_data : pd.DataFrame
-        Historical data containing OHLCV values.
-    windows : dict
-        Dictionary containing window sizes for technical indicators.
+    Args:
+        historical_data (pd.DataFrame): Historical data containing OHLCV values.
+        windows (Dict[str, int]): Dictionary containing window sizes for technical indicators.
 
-    Returns
-    -------
-    pd.DataFrame
-        Historical data with calculated technical indicators.
+    Returns:
+        pd.DataFrame: Historical data with calculated common technical indicators.
     """
     logger.info("Calculating common indicators")
 
-    historical_data["SMA_50"] = SMAIndicator(
-        historical_data["Close"], window=50
-    ).sma_indicator()
-    historical_data["SMA_200"] = SMAIndicator(
-        historical_data["Close"], window=200
-    ).sma_indicator()
-    historical_data["EMA"] = EMAIndicator(
-        historical_data["Close"], window=windows.get("EMA", 20)
-    ).ema_indicator()
+    historical_data["SMA_50"] = SMAIndicator(historical_data["Close"], window=50).sma_indicator()
+    historical_data["SMA_200"] = SMAIndicator(historical_data["Close"], window=200).sma_indicator()
+    historical_data["EMA"] = EMAIndicator(historical_data["Close"], window=windows.get("EMA", 20)).ema_indicator()
 
     macd = MACD(historical_data["Close"])
     historical_data["MACD"] = macd.macd()
     historical_data["MACD_Signal"] = macd.macd_signal()
 
-    historical_data["RSI"] = RSIIndicator(
-        historical_data["Close"], window=windows.get("RSI", 14)
-    ).rsi()
+    historical_data["RSI"] = RSIIndicator(historical_data["Close"], window=windows.get("RSI", 14)).rsi()
 
-    bollinger = BollingerBands(
-        historical_data["Close"], window=windows.get("Bollinger", 20)
-    )
+    bollinger = BollingerBands(historical_data["Close"], window=windows.get("Bollinger", 20))
     historical_data["Bollinger_High"] = bollinger.bollinger_hband()
     historical_data["Bollinger_Low"] = bollinger.bollinger_lband()
 
@@ -67,118 +50,60 @@ def calculate_common_indicators(
         high=historical_data["High"],
         low=historical_data["Low"],
         close=historical_data["Close"],
-        window=windows.get("ADX", 14),
+        window=windows.get("ADX", 14)
     ).adx()
 
-    historical_data = historical_data.dropna()
-    logger.info("Dropped NA values from historical data")
-
     return historical_data
 
-
-def calculate_specific_indicators(
-    historical_data: pd.DataFrame, windows: dict, asset_type: str
-) -> pd.DataFrame:
+def calculate_all_specific_indicators(historical_data: pd.DataFrame, windows: Dict[str, int]) -> pd.DataFrame:
     """
-    Calculate specific technical indicators based on the asset type.
+    Calculate all specific technical indicators, regardless of asset type.
 
-    Parameters
-    ----------
-    historical_data : pd.DataFrame
-        Historical data containing OHLCV values.
-    windows : dict
-        Dictionary containing window sizes for technical indicators.
-    asset_type : str
-        Type of asset for which the indicators need to be calculated.
+    Args:
+        historical_data (pd.DataFrame): Historical data containing OHLCV values.
+        windows (Dict[str, int]): Dictionary containing window sizes for technical indicators.
 
-    Returns
-    -------
-    pd.DataFrame
-        Historical data with calculated technical indicators.
-
-    Raises
-    ------
-    ValueError
-        If the asset type is not supported.
+    Returns:
+        pd.DataFrame: Historical data with calculated specific technical indicators.
     """
-    logger.info(f"Calculating specific indicators for {asset_type}")
+    logger.info("Calculating all specific indicators")
 
-    if asset_type == "stocks":
-        historical_data["OBV"] = OnBalanceVolumeIndicator(
-            close=historical_data["Close"], volume=historical_data["Volume"]
-        ).on_balance_volume()
-        historical_data["VWAP"] = (
-            historical_data["Close"] * historical_data["Volume"]
-        ).cumsum() / historical_data["Volume"].cumsum()
-    elif asset_type == "forex":
-        historical_data["Stochastic"] = StochasticOscillator(
-            historical_data["High"],
-            historical_data["Low"],
-            historical_data["Close"],
-            window=windows.get("Stochastic", 14),
-        ).stoch()
-        historical_data["Aroon_Up"] = AroonIndicator(
-            high=historical_data["High"],
-            low=historical_data["Low"],
-            window=windows.get("Aroon", 25),
-        ).aroon_up()
-        historical_data["Aroon_Down"] = AroonIndicator(
-            high=historical_data["High"],
-            low=historical_data["Low"],
-            window=windows.get("Aroon", 25),
-        ).aroon_down()
-    elif asset_type == "commodity":
-        historical_data["CCI"] = CCIIndicator(
-            high=historical_data["High"],
-            low=historical_data["Low"],
-            close=historical_data["Close"],
-            window=windows.get("CCI", 20),
-        ).cci()
-        historical_data["CMF"] = ChaikinMoneyFlowIndicator(
-            high=historical_data["High"],
-            low=historical_data["Low"],
-            close=historical_data["Close"],
-            volume=historical_data["Volume"],
-            window=windows.get("CMF", 20),
-        ).chaikin_money_flow()
-    elif asset_type == "etf":
-        historical_data["CMF"] = ChaikinMoneyFlowIndicator(
-            high=historical_data["High"],
-            low=historical_data["Low"],
-            close=historical_data["Close"],
-            volume=historical_data["Volume"],
-            window=windows.get("CMF", 20),
-        ).chaikin_money_flow()
-    else:
-        logger.error(f"Unsupported asset type: {asset_type}")
-        raise ValueError(f"Unsupported asset type: {asset_type}")
+    historical_data["OBV"] = OnBalanceVolumeIndicator(close=historical_data["Close"], volume=historical_data["Volume"]).on_balance_volume()
+    historical_data["VWAP"] = (historical_data["Close"] * historical_data["Volume"]).cumsum() / historical_data["Volume"].cumsum()
+    historical_data["Stochastic"] = StochasticOscillator(
+        historical_data["High"], historical_data["Low"], historical_data["Close"],
+        window=windows.get("Stochastic", 14)
+    ).stoch()
+    
+    aroon_indicator = AroonIndicator(high=historical_data["High"], low=historical_data["Low"], window=windows.get("Aroon", 25))
+    historical_data["Aroon_Up"] = aroon_indicator.aroon_up()
+    historical_data["Aroon_Down"] = aroon_indicator.aroon_down()
+    
+    historical_data["CCI"] = CCIIndicator(
+        high=historical_data["High"], low=historical_data["Low"], close=historical_data["Close"],
+        window=windows.get("CCI", 20)
+    ).cci()
+    historical_data["CMF"] = ChaikinMoneyFlowIndicator(
+        high=historical_data["High"], low=historical_data["Low"],
+        close=historical_data["Close"], volume=historical_data["Volume"],
+        window=windows.get("CMF", 20)
+    ).chaikin_money_flow()
 
     return historical_data
-
 
 def calculate_ichimoku(historical_data: pd.DataFrame) -> pd.DataFrame:
     """
-    Calculate Ichimoku indicators for all asset types.
+    Calculate Ichimoku indicators.
 
-    Parameters
-    ----------
-    historical_data : pd.DataFrame
-        Historical data containing OHLCV values.
+    Args:
+        historical_data (pd.DataFrame): Historical data containing OHLCV values.
 
-    Returns
-    -------
-    pd.DataFrame
-        Historical data with calculated Ichimoku indicators.
+    Returns:
+        pd.DataFrame: Historical data with calculated Ichimoku indicators.
     """
     logger.info("Calculating Ichimoku indicators")
 
-    ichimoku = IchimokuIndicator(
-        historical_data["High"],
-        historical_data["Low"],
-        window1=9,
-        window2=26,
-        window3=52,
-    )
+    ichimoku = IchimokuIndicator(historical_data["High"], historical_data["Low"], window1=9, window2=26, window3=52)
     historical_data["Ichimoku_Tenkan"] = ichimoku.ichimoku_conversion_line()
     historical_data["Ichimoku_Kijun"] = ichimoku.ichimoku_base_line()
     historical_data["Ichimoku_Senkou_Span_A"] = ichimoku.ichimoku_a()
@@ -186,38 +111,52 @@ def calculate_ichimoku(historical_data: pd.DataFrame) -> pd.DataFrame:
 
     return historical_data
 
+def calculate_volume_indicators(historical_data: pd.DataFrame, windows: Dict[str, int]) -> pd.DataFrame:
+    """
+    Calculate volume-based indicators.
+
+    Args:
+        historical_data (pd.DataFrame): Historical data containing OHLCV values.
+        windows (Dict[str, int]): Dictionary containing window sizes for technical indicators.
+
+    Returns:
+        pd.DataFrame: Historical data with calculated volume-based indicators.
+    """
+    logger.info("Calculating volume-based indicators")
+
+    historical_data["Volume_SMA"] = SMAIndicator(historical_data["Volume"], window=windows.get("Volume_SMA", 20)).sma_indicator()
+    historical_data["Volume_Change"] = historical_data["Volume"].pct_change()
+    historical_data["Volume_RSI"] = RSIIndicator(historical_data["Volume"], window=windows.get("Volume_RSI", 14)).rsi()
+
+    return historical_data
 
 def calculate_technical_indicators(
-    historical_data: pd.DataFrame, windows: dict, asset_type: str, frequency: str
+    historical_data: pd.DataFrame,
+    windows: Dict[str, int],
+    frequency: str
 ) -> Tuple[pd.DataFrame, List[str]]:
     """
-    Calculate technical indicators based on asset type and add them to the historical data.
+    Calculate all technical indicators and add them to the historical data.
 
-    Parameters
-    ----------
-    historical_data : pd.DataFrame
-        Historical data containing OHLCV values.
-    windows : dict
-        Dictionary containing window sizes for technical indicators.
-    asset_type : str
-        Type of asset for which the indicators need to be calculated.
-    frequency : str
-        Frequency of the data.
+    Args:
+        historical_data (pd.DataFrame): Historical data containing OHLCV values.
+        windows (Dict[str, int]): Dictionary containing window sizes for technical indicators.
+        frequency (str): Frequency of the data.
 
-    Returns
-    -------
-    pd.DataFrame
-        Historical data with calculated technical indicators.
+    Returns:
+        Tuple[pd.DataFrame, List[str]]: 
+            - Historical data with calculated technical indicators.
+            - List of feature names.
     """
-    logger.info(f"Starting calculation of technical indicators for {asset_type}")
+    logger.info("Starting calculation of all technical indicators")
+    
     historical_data.index = pd.to_datetime(historical_data.index)
     historical_data = historical_data.asfreq(frequency)
 
     historical_data = calculate_common_indicators(historical_data, windows)
-    historical_data = calculate_specific_indicators(
-        historical_data, windows, asset_type
-    )
+    historical_data = calculate_all_specific_indicators(historical_data, windows)
     historical_data = calculate_ichimoku(historical_data)
+    historical_data = calculate_volume_indicators(historical_data, windows)
 
     historical_data = historical_data.dropna()
     logger.info("Dropped NA values from historical data")

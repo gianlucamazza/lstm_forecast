@@ -51,15 +51,22 @@
             "Bollinger_High",
             "Bollinger_Low",
             "ADX",
+            "OBV",
+            "VWAP",
+            "Stochastic",
+            "Aroon_Up",
+            "Aroon_Down",
             "CCI",
             "CMF",
             "Ichimoku_Tenkan",
             "Ichimoku_Kijun",
             "Ichimoku_Senkou_Span_A",
-            "Ichimoku_Senkou_Span_B"
+            "Ichimoku_Senkou_Span_B",
+            "Volume_SMA",
+            "Volume_Change",
+            "Volume_RSI"
         ],
-        "selected_features": [
-        ]
+        "selected_features": []
     },
     "model_settings": {
         "hidden_size": 306,

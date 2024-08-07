@@ -107,37 +107,41 @@ def objective(optuna_trial, config, selected_features):
 def filter_available_features(data, selected_features):
     available_features = set(data.columns)
     filtered_features = [feature for feature in selected_features if feature in available_features]
-    if len(filtered_features) < len(selected_features):
-        optuna_logger.warning(f"Some selected features are not available in the data. "
-                              f"Available: {len(filtered_features)}, Selected: {len(selected_features)}")
+    missing_features = [feature for feature in selected_features if feature not in available_features]
+    if missing_features:
+        optuna_logger.warning(f"Missing features: {missing_features}")
     return filtered_features
 
 def feature_selection_objective(optuna_trial, config, data):
-    all_features = config.all_features
+    all_features = config.data_settings["all_features"]
     available_features = data.columns.tolist()
-    selected_features = [feature for feature in all_features 
-                         if feature in available_features and 
-                         optuna_trial.suggest_categorical(f"use_{feature}", [False, True])]
+    selected_features = []
 
-    optuna_logger.info(f"Trial {optuna_trial.number}: Selected features: {selected_features}")
+    for feature in all_features:
+        if feature in available_features:
+            use_feature = optuna_trial.suggest_categorical(f"use_{feature}", [False, True])
+            if use_feature:
+                selected_features.append(feature)
+
+    num_selected_features = len(selected_features)
+    optuna_logger.info(f"Trial {optuna_trial.number}: Selected features: {selected_features} (Total: {num_selected_features})")
 
     if not selected_features:
         optuna_logger.warning(f"Trial {optuna_trial.number}: No features selected, returning infinity loss")
-        return float('inf')  # Penalize trials with no features selected
+        return float('inf')
 
-    filtered_data = data[selected_features + config.targets]
+    filtered_data = data[selected_features + config.data_settings["targets"]]
     train_val_loaders, _, _, _, _, _ = load_and_preprocess_data(config, filtered_data)
     optuna_logger.info(f"Trial {optuna_trial.number}: Data loaded and preprocessed")
-
 
     fold_val_losses = []
     for fold_idx, (train_loader, val_loader) in enumerate(train_val_loaders):
         model = PricePredictor(
-            input_size=len(selected_features),
+            input_size=num_selected_features,
             hidden_size=config.model_settings['hidden_size'],
             num_layers=config.model_settings['num_layers'],
             dropout=config.model_settings['dropout'],
-            fc_output_size=len(config.targets)
+            fc_output_size=len(config.data_settings["targets"])
         ).to(device)
 
         criterion = nn.MSELoss()
@@ -149,10 +153,10 @@ def feature_selection_objective(optuna_trial, config, data):
         )
 
         model.train()
-        for epoch in range(config.epochs):
+        for epoch in range(config.training_settings["epochs"]):
             train_loss = run_training_epoch(model, train_loader, criterion, optimizer, device, clip_value=config.model_settings['clip_value'])
             val_loss = run_validation_epoch(model, val_loader, criterion, device)
-            optuna_logger.info(f"Trial {optuna_trial.number}, Fold {fold_idx}, Epoch {epoch + 1}/{config.epochs}, "
+            optuna_logger.info(f"Trial {optuna_trial.number}, Fold {fold_idx}, Epoch {epoch + 1}/{config.training_settings['epochs']}, "
                                f"Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
 
             if early_stopping(val_loss, model):
@@ -163,117 +167,117 @@ def feature_selection_objective(optuna_trial, config, data):
 
     avg_val_loss = np.mean(fold_val_losses)
     optuna_logger.info(f"Trial {optuna_trial.number} completed with Average Validation Loss: {avg_val_loss:.4f}")
-    return avg_val_loss
+
+    feature_penalty = 0.01 * num_selected_features
+    return avg_val_loss + feature_penalty
 
 def parse_arguments():
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("--config", type=str, required=True, help="Path to configuration JSON file")
     arg_parser.add_argument("--n_trials", type=int, default=100, help="Number of trials for hyperparameter tuning")
-    arg_parser.add_argument("--n_feature_trials", type=int, default=15, help="Number of trials for feature selection")
+    arg_parser.add_argument("--n_feature_trials", type=int, default=50, help="Number of trials for feature selection")
     arg_parser.add_argument("--force", action="store_true", help="Force re-run of Optuna study")
     return arg_parser.parse_args()
 
 def main():
-    args = parse_arguments()
-    config = load_config(args.config)
-    optuna_logger.info(f"Loaded configuration from {args.config}")
+    try:
+        args = parse_arguments()
+        config = load_config(args.config)
+        optuna_logger.info(f"Loaded configuration from {args.config}")
 
-    # Load data
-    data = pd.read_csv(config.data_settings["scaled_data_path"])
+        data = pd.read_csv(config.data_settings["scaled_data_path"])
+            
+        optuna_logger.info("Starting feature selection")
+        feature_study = optuna.create_study(
+            direction="minimize",
+            study_name="feature_selection_study",
+            storage="sqlite:///data/optuna_feature_selection.db",
+            load_if_exists=not args.force
+        )
+        feature_study.optimize(lambda t: feature_selection_objective(t, config, data), n_trials=args.n_feature_trials)
+
+        best_feature_trial = feature_study.best_trial
+        selected_features = [feature for feature in config.data_settings["all_features"] if best_feature_trial.params.get(f"use_{feature}", False)]
         
-    # Feature selection using Optuna
-    optuna_logger.info("Starting feature selection")
-    feature_study = optuna.create_study(
-        direction="minimize",
-        study_name="feature_selection_study",
-        storage="sqlite:///data/optuna_feature_selection.db",
-        load_if_exists=not args.force
-    )
-    feature_study.optimize(lambda t: feature_selection_objective(t, config, data), n_trials=args.n_feature_trials)
+        selected_features = filter_available_features(data, selected_features)
+        
+        if not selected_features:
+            optuna_logger.error("No valid features selected. Aborting.")
+            return
+        
+        selected_features = correlation_analysis(data[selected_features])
+        selected_features = time_series_feature_selection(data[selected_features], data[config.data_settings["targets"]], num_features=len(selected_features))
 
-    best_feature_trial = feature_study.best_trial
-    selected_features = [feature for feature in config.data_settings["all_features"] if best_feature_trial.params.get(f"use_{feature}", False)]
-    
-    # Filter selected features based on available data
-    selected_features = filter_available_features(data, selected_features)
-    
-    if not selected_features:
-        optuna_logger.error("No valid features selected. Aborting.")
-        return
-    
-    # Apply advanced feature selection methods
-    selected_features = correlation_analysis(data[selected_features])
-    selected_features = time_series_feature_selection(data[selected_features], data[config.data_settings["targets"]], num_features=len(selected_features))
+        config.selected_features = selected_features
+        update_config(config, "selected_features", selected_features)
+        optuna_logger.info(f"Selected features: {selected_features}")
 
-    config.selected_features = selected_features
-    update_config(config, "selected_features", selected_features)
-    optuna_logger.info(f"Selected features: {selected_features}")
+        optuna_logger.info("Starting hyperparameter tuning")
+        study = optuna.create_study(
+            direction="minimize",
+            study_name="hyperparameter_tuning_study",
+            storage="sqlite:///data/optuna_hyperparameter_tuning.db",
+            load_if_exists=not args.force
+        )
+        study.optimize(lambda t: objective(t, config, selected_features), n_trials=args.n_trials)
 
-    # Hyperparameter tuning using Optuna
-    optuna_logger.info("Starting hyperparameter tuning")
-    study = optuna.create_study(
-        direction="minimize",
-        study_name="hyperparameter_tuning_study",
-        storage="sqlite:///data/optuna_hyperparameter_tuning.db",
-        load_if_exists=not args.force
-    )
-    study.optimize(lambda t: objective(t, config, selected_features), n_trials=args.n_trials)
+        best_params = study.best_trial.params
+        optuna_logger.info(f"Best hyperparameters: {best_params}")
 
-    best_params = study.best_trial.params
-    optuna_logger.info(f"Best hyperparameters: {best_params}")
+        config.model_settings.update(best_params)
+        update_config(config, "model_settings", config.model_settings)
 
-    config.model_settings.update(best_params)
-    update_config(config, "model_settings", config.model_settings)
+        train_val_loaders, _, _, _, _, _ = load_and_preprocess_data(config, selected_features)
 
-    train_val_loaders, _, _, _, _, _ = load_and_preprocess_data(config, selected_features)
+        model = PricePredictor(
+            input_size=len(selected_features),
+            hidden_size=config.model_settings['hidden_size'],
+            num_layers=config.model_settings['num_layers'],
+            dropout=config.model_settings['dropout'],
+            fc_output_size=len(config.targets)
+        ).to(device)
 
-    model = PricePredictor(
-        input_size=len(selected_features),
-        hidden_size=config.model_settings['hidden_size'],
-        num_layers=config.model_settings['num_layers'],
-        dropout=config.model_settings['dropout'],
-        fc_output_size=len(config.targets)
-    ).to(device)
+        train_loader, val_loader = train_val_loaders[0]
 
-    train_loader, val_loader = train_val_loaders[0]
+        train_model(
+            config,
+            model,
+            train_loader,
+            val_loader,
+            num_epochs=config.epochs,
+            learning_rate=config.model_settings.get("learning_rate", 0.001),
+            model_dir=config.model_dir,
+            weight_decay=config.model_settings.get("weight_decay", 0.0),
+            _device=device
+        )
 
-    train_model(
-        config,
-        model,
-        train_loader,
-        val_loader,
-        num_epochs=config.epochs,
-        learning_rate=config.model_settings.get("learning_rate", 0.001),
-        model_dir=config.model_dir,
-        weight_decay=config.model_settings.get("weight_decay", 0.0),
-        _device=device
-    )
+        evaluate_model(
+            model,
+            data_loader=train_loader,
+            loss_fn=nn.MSELoss(),
+            _device=device
+        )
 
-    evaluate_model(
-        model,
-        data_loader=train_loader,
-        loss_fn=nn.MSELoss(),
-        _device=device
-    )
+        trials_df = study.trials_dataframe(attrs=('number', 'value', 'params', 'state'))
+        trials_df.to_csv("reports/optuna_trials.csv", index=False)
 
-    trials_df = study.trials_dataframe(attrs=('number', 'value', 'params', 'state'))
-    trials_df.to_csv("reports/optuna_trials.csv", index=False)
+        pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
+        complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
 
-    pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
-    complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
+        optuna_logger.info("Study statistics:")
+        optuna_logger.info(f"  Number of finished trials: {len(study.trials)}")
+        optuna_logger.info(f"  Number of pruned trials: {len(pruned_trials)}")
+        optuna_logger.info(f"  Number of complete trials: {len(complete_trials)}")
 
-    optuna_logger.info("Study statistics:")
-    optuna_logger.info(f"  Number of finished trials: {len(study.trials)}")
-    optuna_logger.info(f"  Number of pruned trials: {len(pruned_trials)}")
-    optuna_logger.info(f"  Number of complete trials: {len(complete_trials)}")
+        optuna_logger.info("Best trial:")
+        trial = study.best_trial
 
-    optuna_logger.info("Best trial:")
-    trial = study.best_trial
-
-    optuna_logger.info(f"  Value: {trial.value}")
-    optuna_logger.info(f"  Params:")
-    for key, value in trial.params.items():
-        optuna_logger.info(f"    {key}: {value}")
+        optuna_logger.info(f"  Value: {trial.value}")
+        optuna_logger.info(f"  Params:")
+        for key, value in trial.params.items():
+            optuna_logger.info(f"    {key}: {value}")
+    except Exception as e:
+        optuna_logger.error(f"An error occurred: {e}")
 
 if __name__ == "__main__":
     main()

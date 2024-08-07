@@ -31,7 +31,6 @@ def get_data(config) -> Tuple[pd.DataFrame, List[str]]:
     historical_data, features = calculate_technical_indicators(
         historical_data,
         windows=config.indicator_windows,
-        asset_type=config.asset_type,
         frequency=config.data_resampling_frequency,
     )
 

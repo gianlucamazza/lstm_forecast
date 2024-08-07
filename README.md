@@ -303,6 +303,12 @@ To predict stock prices, run:
 python src/predict.py --config config.json
 ```
 
+### Run API
+
+```bash
+python -m src.api.app
+```
+
 #### Models
 
 `models/{symbol}_model.pth` contains the trained model.

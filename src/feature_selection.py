@@ -4,7 +4,9 @@ import pandas as pd
 import numpy as np
 from sklearn.feature_selection import RFE
 from sklearn.ensemble import RandomForestRegressor
+from xgboost import XGBRegressor
 from statsmodels.tsa.stattools import grangercausalitytests
+from statsmodels.tsa.api import VAR
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -31,15 +33,14 @@ def rolling_feature_selection(X, y, window_size, num_features, lag=10):
         X_window = X.iloc[i:i+window_size]
         y_window = y.iloc[i:i+window_size]
         
-        model = RandomForestRegressor(n_estimators=100, random_state=42)
+        model = XGBRegressor(n_estimators=100, random_state=42)
         rfe = RFE(estimator=model, n_features_to_select=num_features)
         
         rfe.fit(X_window, y_window)
         selected_features.extend(X.columns[rfe.support_].tolist())
     
-    # compare most frequent features
+    # Compare most frequent features
     feature_counts = pd.Series(selected_features).value_counts()
-    # print feature_counts
     logger.info(f"Rolling feature selection completed. Selected features: {feature_counts.index.tolist()[:num_features]}")
     return feature_counts.index.tolist()[:num_features]
 
@@ -67,6 +68,33 @@ def granger_causality_test(X, y, max_lag=5, threshold=0.05):
             causal_features.append(column)
     
     logger.info(f"Granger Causality test completed. Causal features: {causal_features}")
+    return causal_features
+
+def var_causality_test(X, y, max_lag=5, threshold=0.05):
+    """
+    Perform VAR (Vector Autoregression) Causality test for feature selection.
+    
+    Parameters:
+    - X: DataFrame, feature matrix
+    - y: Series, target variable
+    - max_lag: int, maximum number of lags to test
+    - threshold: float, p-value threshold for significance
+    
+    Returns:
+    - causal_features: list of features that VAR-cause the target
+    """
+    logger.info(f"Starting VAR Causality test with max lag {max_lag} and p-value threshold {threshold}")
+    causal_features = []
+    data = pd.concat([y, X], axis=1)
+    model = VAR(data)
+    result = model.fit(maxlags=max_lag, ic='aic')
+    
+    for column in X.columns:
+        test_result = result.test_causality(causing=column, caused=y.name)
+        if test_result.pvalue < threshold:
+            causal_features.append(column)
+    
+    logger.info(f"VAR Causality test completed. Causal features: {causal_features}")
     return causal_features
 
 def correlation_analysis(df, threshold=0.9):
@@ -97,7 +125,7 @@ def time_series_feature_selection(X, y, num_features, window_size=252, max_lag=5
     - y: DataFrame or Series, target variable(s)
     - num_features: int, number of features to select
     - window_size: int, size of the rolling window
-    - max_lag: int, maximum number of lags for Granger Causality test
+    - max_lag: int, maximum number of lags for causality tests
     
     Returns:
     - final_features: list of selected feature names
@@ -108,10 +136,10 @@ def time_series_feature_selection(X, y, num_features, window_size=252, max_lag=5
     # Step 1: Rolling window feature selection
     rolling_features = rolling_feature_selection(X, y, window_size, num_features, lag=max_lag)
     
-    # Step 2: Granger Causality test
+    # Step 2: VAR Causality test
     if isinstance(y, pd.DataFrame):
-        y = y.iloc[:, 0]  # Use the first target for Granger Causality test
-    causal_features = granger_causality_test(X[rolling_features], y, max_lag)
+        y = y.iloc[:, 0]  # Use the first target for causality test
+    causal_features = var_causality_test(X[rolling_features], y, max_lag)
     
     # Step 3: Correlation analysis
     uncorrelated_features = correlation_analysis(X[causal_features])
