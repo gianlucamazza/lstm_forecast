@@ -3,7 +3,7 @@ import os
 import sys
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
+import torch, onnx
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -105,6 +105,32 @@ def plot_evaluation(symbol: str, predictions: np.ndarray, y_true: np.ndarray, da
     logger.info("Model evaluation completed and plot saved.")
 
 
+def export_to_onnx(model, config, fold_idx):
+    """Export the model to ONNX format."""
+    try:
+        dummy_input = torch.randn(1, config.model_settings.get("sequence_length", 120), 
+                                  len(config.data_settings["selected_features"])).to(device)
+        onnx_file = f"{config.training_settings['model_dir']}/model_fold_{fold_idx}.onnx"
+        
+        torch.onnx.export(model,
+                          dummy_input,
+                          onnx_file,
+                          export_params=True,
+                          opset_version=11,
+                          do_constant_folding=True,
+                          input_names=['input'],
+                          output_names=['output'],
+                          dynamic_axes={'input': {0: 'batch_size'},
+                                        'output': {0: 'batch_size'}})
+        
+        # Verify the model
+        onnx_model = onnx.load(onnx_file)
+        onnx.checker.check_model(onnx_model)
+        
+        logger.info(f"Model exported to ONNX format: {onnx_file}")
+    except Exception as e:
+        logger.error(f"Error exporting model to ONNX: {str(e)}")
+
 def parse_arguments() -> argparse.Namespace:
     """Parse command-line arguments."""
     arg_parser = argparse.ArgumentParser()
@@ -141,6 +167,20 @@ def main() -> None:
             fold_idx=fold_idx
         )
 
+        val_loss = evaluate_model(model, val_loader, torch.nn.MSELoss(), device)
+        
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            best_model = model.state_dict()
+
+    if best_model is not None:
+        final_model = initialize_model(config)
+        final_model.load_state_dict(best_model)
+        final_model.to(device)
+        export_to_onnx(final_model, config, 'best')
+    else:
+        logger.error("No best model found to export.")
+    
 
 if __name__ == "__main__":
     main()
