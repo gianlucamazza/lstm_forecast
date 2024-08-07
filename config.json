@@ -4,7 +4,6 @@
         "symbol": "BTCUSD",
         "data_path": "data/BTCUSD_1d.csv",
         "scaled_data_path": "data/BTCUSD_1d_scaled_data.csv",
-        "asset_type": "commodity",
         "data_sampling_interval": "1d",
         "start_date": "2013-01-01",
         "data_resampling_frequency": "D",
@@ -64,7 +63,13 @@
             "Ichimoku_Senkou_Span_B",
             "Volume_SMA",
             "Volume_Change",
-            "Volume_RSI"
+            "Volume_RSI",
+            "Vortex_Positive",
+            "Vortex_Negative",
+            "TRIX",
+            "PSAR",
+            "PSAR_Up",
+            "PSAR_Down"
         ],
         "selected_features": []
     },

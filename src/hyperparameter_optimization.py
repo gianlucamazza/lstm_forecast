@@ -104,17 +104,17 @@ def objective(optuna_trial, config, selected_features):
 
     return avg_val_loss + feature_penalty
 
-def filter_available_features(data, selected_features):
-    available_features = set(data.columns)
+def filter_available_features(config, data, selected_features):
+    available_features = config.data_settings["all_features"]
     filtered_features = [feature for feature in selected_features if feature in available_features]
     missing_features = [feature for feature in selected_features if feature not in available_features]
     if missing_features:
         optuna_logger.warning(f"Missing features: {missing_features}")
     return filtered_features
 
-def feature_selection_objective(optuna_trial, config, data):
+def feature_selection_objective(optuna_trial, config, data: pd.DataFrame, min_features=5):
     all_features = config.data_settings["all_features"]
-    available_features = data.columns.tolist()
+    available_features = data.columns
     selected_features = []
 
     for feature in all_features:
@@ -125,9 +125,9 @@ def feature_selection_objective(optuna_trial, config, data):
 
     num_selected_features = len(selected_features)
     optuna_logger.info(f"Trial {optuna_trial.number}: Selected features: {selected_features} (Total: {num_selected_features})")
-
-    if not selected_features:
-        optuna_logger.warning(f"Trial {optuna_trial.number}: No features selected, returning infinity loss")
+    
+    if num_selected_features < min_features:
+        optuna_logger.warning(f"Trial {optuna_trial.number}: Selected features are less than the minimum required ({min_features}), returning infinity loss")
         return float('inf')
 
     filtered_data = data[selected_features + config.data_settings["targets"]]
@@ -176,7 +176,8 @@ def parse_arguments():
     arg_parser.add_argument("--config", type=str, required=True, help="Path to configuration JSON file")
     arg_parser.add_argument("--n_trials", type=int, default=100, help="Number of trials for hyperparameter tuning")
     arg_parser.add_argument("--n_feature_trials", type=int, default=50, help="Number of trials for feature selection")
-    arg_parser.add_argument("--force", action="store_true", help="Force re-run of Optuna study")
+    arg_parser.add_argument("--min_features", type=int, default=5, help="Minimum number of features to select")
+    arg_parser.add_argument("--force", action="store_true", help="Force re-run of Optuna study, both feature selection and hyperparameter tuning")
     return arg_parser.parse_args()
 
 def main():
@@ -185,7 +186,15 @@ def main():
         config = load_config(args.config)
         optuna_logger.info(f"Loaded configuration from {args.config}")
 
-        data = pd.read_csv(config.data_settings["scaled_data_path"])
+        train_val_loaders, _, _, _, train_data, _ = load_and_preprocess_data(config)
+        data = train_data
+        
+        if args.force:
+            optuna_logger.info("Forcing re-run of Optuna study")
+            if os.path.exists("data/optuna_feature_selection.db"):
+                os.remove("data/optuna_feature_selection.db")
+            if os.path.exists("data/optuna_hyperparameter_tuning.db"):
+                os.remove("data/optuna_hyperparameter_tuning.db")
             
         optuna_logger.info("Starting feature selection")
         feature_study = optuna.create_study(
@@ -194,7 +203,8 @@ def main():
             storage="sqlite:///data/optuna_feature_selection.db",
             load_if_exists=not args.force
         )
-        feature_study.optimize(lambda t: feature_selection_objective(t, config, data), n_trials=args.n_feature_trials)
+
+        feature_study.optimize(lambda t: feature_selection_objective(t, config, data, min_features=args.min_features), n_trials=args.n_feature_trials)
 
         best_feature_trial = feature_study.best_trial
         selected_features = [feature for feature in config.data_settings["all_features"] if best_feature_trial.params.get(f"use_{feature}", False)]
@@ -226,8 +236,6 @@ def main():
 
         config.model_settings.update(best_params)
         update_config(config, "model_settings", config.model_settings)
-
-        train_val_loaders, _, _, _, _, _ = load_and_preprocess_data(config, selected_features)
 
         model = PricePredictor(
             input_size=len(selected_features),
