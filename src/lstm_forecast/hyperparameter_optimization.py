@@ -232,15 +232,20 @@ def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_fe
 
         # Hyperparameter Tuning
         optuna_logger.info("Starting hyperparameter tuning")
+        if force:
+            optuna_logger.info("Forcing re-run of hyperparameter tuning study")
+            if os.path.exists("data/optuna_hyperparameter_tuning.db"):
+                os.remove("data/optuna_hyperparameter_tuning.db")
+
         study = optuna.create_study(
             direction="minimize",
             study_name="hyperparameter_tuning_study",
             storage="sqlite:///data/optuna_hyperparameter_tuning.db",
-            load_if_exists=not force
+            load_if_exists=True
         )
 
-        remaining_trials = max(0, n_trials - len(study.trials))
-        if remaining_trials > 0 or force:
+        remaining_trials = n_trials if force else max(0, n_trials - len(study.trials))
+        if remaining_trials > 0:
             optuna_logger.info(f"Running {remaining_trials} hyperparameter tuning trials")
             study.optimize(lambda t: objective(t, config, selected_features), n_trials=remaining_trials)
         else:
