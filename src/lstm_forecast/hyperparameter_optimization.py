@@ -188,6 +188,13 @@ def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_fe
             storage="sqlite:///data/optuna_feature_selection.db",
             load_if_exists=not force
         )
+        
+        if len(feature_study.trials) < n_feature_trials or force:
+            optuna_logger.info("Starting or continuing feature selection")
+            feature_study.optimize(lambda t: feature_selection_objective(t, config, data, min_features=min_features), n_trials=n_feature_trials)
+        else:
+            optuna_logger.info(f"Feature selection study already has {len(feature_study.trials)} trials. Skipping optimization.")
+
 
         feature_study.optimize(lambda t: feature_selection_objective(t, config, data, min_features=min_features), n_trials=n_feature_trials)
 
@@ -205,7 +212,8 @@ def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_fe
 
         config.selected_features = selected_features
         update_config(config, "selected_features", selected_features)
-        optuna_logger.info(f"Selected features: {selected_features}")
+        optuna_logger.info(f"Selected features saved in config: {config.selected_features}")
+        optuna_logger.info(f"Number of features in config: {len(config.selected_features)}")
 
         optuna_logger.info("Starting hyperparameter tuning")
         study = optuna.create_study(
@@ -214,6 +222,13 @@ def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_fe
             storage="sqlite:///data/optuna_hyperparameter_tuning.db",
             load_if_exists=not force
         )
+        
+        if len(study.trials) < n_trials or force:
+            optuna_logger.info("Starting or continuing hyperparameter tuning")
+            study.optimize(lambda t: objective(t, config, selected_features), n_trials=n_trials)
+        else:
+            optuna_logger.info(f"Hyperparameter tuning study already has {len(study.trials)} trials. Skipping optimization.")
+        
         study.optimize(lambda t: objective(t, config, selected_features), n_trials=n_trials)
 
         best_params = study.best_trial.params
@@ -221,6 +236,9 @@ def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_fe
 
         config.model_settings.update(best_params)
         update_config(config, "model_settings", config.model_settings)
+
+        optuna_logger.info(f"Initializing model with input_size={len(selected_features)}")
+        optuna_logger.info(f"Selected features used for model initialization: {selected_features}")
 
         model = PricePredictor(
             input_size=len(selected_features),
@@ -231,6 +249,8 @@ def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_fe
         ).to(device)
 
         train_loader, val_loader = train_val_loaders[0]
+        X, y = next(iter(train_loader))
+        optuna_logger.info(f"Loaded data shape: X: {X.shape}, y: {y.shape}")
 
         train_model(
             config,
