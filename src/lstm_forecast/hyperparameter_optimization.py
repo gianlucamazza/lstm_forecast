@@ -198,10 +198,14 @@ def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_fe
             storage="sqlite:///data/optuna_feature_selection.db",
             load_if_exists=not force
         )
-        
-        if len(feature_study.trials) < n_feature_trials or force:
-            optuna_logger.info("Starting or continuing feature selection")
-            feature_study.optimize(lambda t: feature_selection_objective(t, config, data, min_features=min_features), n_trials=n_feature_trials)
+
+        remaining_feature_trials = max(0, n_feature_trials - len(feature_study.trials))
+        if remaining_feature_trials > 0 or force:
+            optuna_logger.info(f"Running {remaining_feature_trials} feature selection trials")
+            feature_study.optimize(
+                lambda t: feature_selection_objective(t, config, data, min_features=min_features), 
+                n_trials=remaining_feature_trials
+            )
         else:
             optuna_logger.info(f"Feature selection study already has {len(feature_study.trials)} trials. Skipping optimization.")
 
@@ -234,10 +238,11 @@ def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_fe
             storage="sqlite:///data/optuna_hyperparameter_tuning.db",
             load_if_exists=not force
         )
-        
-        if len(study.trials) < n_trials or force:
-            optuna_logger.info("Starting or continuing hyperparameter tuning")
-            study.optimize(lambda t: objective(t, config, selected_features), n_trials=n_trials)
+
+        remaining_trials = max(0, n_trials - len(study.trials))
+        if remaining_trials > 0 or force:
+            optuna_logger.info(f"Running {remaining_trials} hyperparameter tuning trials")
+            study.optimize(lambda t: objective(t, config, selected_features), n_trials=remaining_trials)
         else:
             optuna_logger.info(f"Hyperparameter tuning study already has {len(study.trials)} trials. Skipping optimization.")
         
