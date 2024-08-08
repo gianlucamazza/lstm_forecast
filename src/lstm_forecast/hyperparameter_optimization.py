@@ -182,7 +182,7 @@ def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_fe
     try:
         optuna_logger.info(f"Loaded configuration from {config}")
 
-        train_val_loaders, _, _, _, train_data, _ = load_and_preprocess_data(config)
+        _, _, _, _, train_data, _ = load_and_preprocess_data(config)
         data = train_data
         
         # Feature Selection
@@ -229,6 +229,8 @@ def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_fe
             optuna_logger.info("Selected features successfully saved to config file")
         else:
             optuna_logger.warning("Selected features may not have been saved correctly")
+
+        train_val_loaders, _, _, _, _, _ = load_and_preprocess_data(config, selected_features)
 
         # Hyperparameter Tuning
         optuna_logger.info("Starting hyperparameter tuning")
