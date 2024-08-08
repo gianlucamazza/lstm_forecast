@@ -40,10 +40,14 @@ The data includes the following columns:
 Ensure you have Python 3.11 installed. Install the necessary packages using:
 
 ```bash
-pip install -r requirements.txt
+pip install .
 ```
 
 ## Usage
+
+```bash
+lstm_forecast -h
+```
 
 ### Configuration
 
