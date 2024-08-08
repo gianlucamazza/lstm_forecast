@@ -1,5 +1,4 @@
 import os
-import traceback
 import optuna
 import numpy as np
 import pandas as pd
@@ -170,9 +169,8 @@ def feature_selection_objective(optuna_trial, config, data: pd.DataFrame, min_fe
     return avg_val_loss + feature_penalty
 
 last_lr = None
-
 def log_lr_change(scheduler):
-    global last_lr
+    last_lr = None
     current_lr = scheduler.optimizer.param_groups[0]['lr']
     if last_lr is None or current_lr != last_lr:
         optuna_logger.info(f"Learning rate changed to: {current_lr}")
@@ -185,28 +183,29 @@ def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_fe
         train_val_loaders, _, _, _, train_data, _ = load_and_preprocess_data(config)
         data = train_data
         
-        # Feature Selection
         if force:
-            optuna_logger.info("Forcing re-run of feature selection study")
+            optuna_logger.info("Forcing re-run of Optuna study")
             if os.path.exists("data/optuna_feature_selection.db"):
                 os.remove("data/optuna_feature_selection.db")
-
+            if os.path.exists("data/optuna_hyperparameter_tuning.db"):
+                os.remove("data/optuna_hyperparameter_tuning.db")
+            
+        optuna_logger.info("Starting feature selection")
         feature_study = optuna.create_study(
             direction="minimize",
             study_name="feature_selection_study",
             storage="sqlite:///data/optuna_feature_selection.db",
-            load_if_exists=True
+            load_if_exists=not force
         )
-
-        remaining_feature_trials = n_feature_trials if force else max(0, n_feature_trials - len(feature_study.trials))
-        if remaining_feature_trials > 0:
-            optuna_logger.info(f"Running {remaining_feature_trials} feature selection trials")
-            feature_study.optimize(
-                lambda t: feature_selection_objective(t, config, data, min_features=min_features), 
-                n_trials=remaining_feature_trials
-            )
+        
+        if len(feature_study.trials) < n_feature_trials or force:
+            optuna_logger.info("Starting or continuing feature selection")
+            feature_study.optimize(lambda t: feature_selection_objective(t, config, data, min_features=min_features), n_trials=n_feature_trials)
         else:
             optuna_logger.info(f"Feature selection study already has {len(feature_study.trials)} trials. Skipping optimization.")
+
+
+        feature_study.optimize(lambda t: feature_selection_objective(t, config, data, min_features=min_features), n_trials=n_feature_trials)
 
         best_feature_trial = feature_study.best_trial
         selected_features = [feature for feature in config.data_settings["all_features"] if best_feature_trial.params.get(f"use_{feature}", False)]
@@ -230,7 +229,6 @@ def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_fe
         else:
             optuna_logger.warning("Selected features may not have been saved correctly")
 
-        # Hyperparameter Tuning
         optuna_logger.info("Starting hyperparameter tuning")
         study = optuna.create_study(
             direction="minimize",
@@ -238,13 +236,14 @@ def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_fe
             storage="sqlite:///data/optuna_hyperparameter_tuning.db",
             load_if_exists=not force
         )
-
-        remaining_trials = max(0, n_trials - len(study.trials))
-        if remaining_trials > 0 or force:
-            optuna_logger.info(f"Running {remaining_trials} hyperparameter tuning trials")
-            study.optimize(lambda t: objective(t, config, selected_features), n_trials=remaining_trials)
+        
+        if len(study.trials) < n_trials or force:
+            optuna_logger.info("Starting or continuing hyperparameter tuning")
+            study.optimize(lambda t: objective(t, config, selected_features), n_trials=n_trials)
         else:
             optuna_logger.info(f"Hyperparameter tuning study already has {len(study.trials)} trials. Skipping optimization.")
+        
+        study.optimize(lambda t: objective(t, config, selected_features), n_trials=n_trials)
 
         best_params = study.best_trial.params
         optuna_logger.info(f"Best hyperparameters: {best_params}")
@@ -306,9 +305,7 @@ def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_fe
         for key, value in trial.params.items():
             optuna_logger.info(f"    {key}: {value}")
     except Exception as e:
-        optuna_logger.error(f"An error occurred: {str(e)}")
-        optuna_logger.error("Traceback:")
-        optuna_logger.error(traceback.format_exc())
+        optuna_logger.error(f"An error occurred: {e}")
 
 if __name__ == "__main__":
     main()
