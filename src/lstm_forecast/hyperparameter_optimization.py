@@ -205,9 +205,6 @@ def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_fe
         else:
             optuna_logger.info(f"Feature selection study already has {len(feature_study.trials)} trials. Skipping optimization.")
 
-
-        feature_study.optimize(lambda t: feature_selection_objective(t, config, data, min_features=min_features), n_trials=n_feature_trials)
-
         best_feature_trial = feature_study.best_trial
         selected_features = [feature for feature in config.data_settings["all_features"] if best_feature_trial.params.get(f"use_{feature}", False)]
         
