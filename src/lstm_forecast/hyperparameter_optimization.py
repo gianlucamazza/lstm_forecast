@@ -71,7 +71,7 @@ def objective(optuna_trial, config, selected_features):
 
             criterion = nn.MSELoss()
             optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-            scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10, verbose=True)
+            scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10)
             early_stopping = EarlyStopping(
                 patience=10, delta=0.001, verbose=True,
                 path=f"models/optuna/model_{optuna_trial.number}_fold_{fold_idx}.pt"
@@ -82,6 +82,7 @@ def objective(optuna_trial, config, selected_features):
                 train_loss = run_training_epoch(model, train_loader, criterion, optimizer, device, clip_value=clip_value)
                 val_loss = run_validation_epoch(model, val_loader, criterion, device)
                 scheduler.step(val_loss)
+                log_lr_change(scheduler)
                 optuna_logger.info(f"Trial {optuna_trial.number}, Fold {fold_idx}, Epoch {epoch + 1}/{config.epochs}, "
                                    f"Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
 
@@ -166,6 +167,15 @@ def feature_selection_objective(optuna_trial, config, data: pd.DataFrame, min_fe
 
     feature_penalty = 0.01 * num_selected_features
     return avg_val_loss + feature_penalty
+
+last_lr = None
+
+def log_lr_change(scheduler):
+    global last_lr
+    current_lr = scheduler.optimizer.param_groups[0]['lr']
+    if last_lr is None or current_lr != last_lr:
+        optuna_logger.info(f"Learning rate changed to: {current_lr}")
+        last_lr = current_lr
 
 def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_features: int = 5, force: bool = False):
     try:
