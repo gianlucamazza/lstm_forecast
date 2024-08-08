@@ -194,7 +194,7 @@ def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_fe
         best_feature_trial = feature_study.best_trial
         selected_features = [feature for feature in config.data_settings["all_features"] if best_feature_trial.params.get(f"use_{feature}", False)]
         
-        selected_features = filter_available_features(data, selected_features)
+        selected_features = filter_available_features(config, data, selected_features)
         
         if not selected_features:
             optuna_logger.error("No valid features selected. Aborting.")
