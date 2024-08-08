@@ -184,14 +184,7 @@ def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_fe
         train_val_loaders, _, _, _, train_data, _ = load_and_preprocess_data(config)
         data = train_data
         
-        if force:
-            optuna_logger.info("Forcing re-run of Optuna study")
-            if os.path.exists("data/optuna_feature_selection.db"):
-                os.remove("data/optuna_feature_selection.db")
-            if os.path.exists("data/optuna_hyperparameter_tuning.db"):
-                os.remove("data/optuna_hyperparameter_tuning.db")
-            
-        optuna_logger.info("Starting feature selection")
+        # Feature Selection
         feature_study = optuna.create_study(
             direction="minimize",
             study_name="feature_selection_study",
@@ -231,6 +224,7 @@ def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_fe
         else:
             optuna_logger.warning("Selected features may not have been saved correctly")
 
+        # Hyperparameter Tuning
         optuna_logger.info("Starting hyperparameter tuning")
         study = optuna.create_study(
             direction="minimize",
@@ -245,8 +239,6 @@ def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_fe
             study.optimize(lambda t: objective(t, config, selected_features), n_trials=remaining_trials)
         else:
             optuna_logger.info(f"Hyperparameter tuning study already has {len(study.trials)} trials. Skipping optimization.")
-        
-        study.optimize(lambda t: objective(t, config, selected_features), n_trials=n_trials)
 
         best_params = study.best_trial.params
         optuna_logger.info(f"Best hyperparameters: {best_params}")
