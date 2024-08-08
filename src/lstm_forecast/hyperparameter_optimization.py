@@ -1,4 +1,4 @@
-import os
+import traceback
 import optuna
 import numpy as np
 import pandas as pd
@@ -300,7 +300,9 @@ def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_fe
         for key, value in trial.params.items():
             optuna_logger.info(f"    {key}: {value}")
     except Exception as e:
-        optuna_logger.error(f"An error occurred: {e}")
+        optuna_logger.error(f"An error occurred: {str(e)}")
+        optuna_logger.error("Traceback:")
+        optuna_logger.error(traceback.format_exc())
 
 if __name__ == "__main__":
     main()
