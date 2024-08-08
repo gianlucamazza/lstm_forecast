@@ -12,7 +12,7 @@ from lstm_forecast.data_loader import load_and_preprocess_data
 from lstm_forecast.model import PricePredictor
 from lstm_forecast.train import train_model, evaluate_model
 from lstm_forecast.early_stopping import EarlyStopping
-from lstm_forecast.config import update_config, Config
+from lstm_forecast.config import update_config, load_config,Config
 from lstm_forecast.logger import setup_logger
 from lstm_forecast.model_utils import run_training_epoch, run_validation_epoch
 from lstm_forecast.feature_selection import time_series_feature_selection, correlation_analysis
@@ -211,9 +211,14 @@ def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_fe
         selected_features = time_series_feature_selection(data[selected_features], data[config.data_settings["targets"]], num_features=len(selected_features))
 
         config.selected_features = selected_features
-        update_config(config, "selected_features", selected_features)
-        optuna_logger.info(f"Selected features saved in config: {config.selected_features}")
-        optuna_logger.info(f"Number of features in config: {len(config.selected_features)}")
+        update_config(config, "data_settings.selected_features", selected_features)
+        config.save()
+
+        saved_config = load_config(config.config_path)
+        if saved_config.selected_features == selected_features:
+            optuna_logger.info("Selected features successfully saved to config file")
+        else:
+            optuna_logger.warning("Selected features may not have been saved correctly")
 
         optuna_logger.info("Starting hyperparameter tuning")
         study = optuna.create_study(
@@ -236,6 +241,7 @@ def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_fe
 
         config.model_settings.update(best_params)
         update_config(config, "model_settings", config.model_settings)
+        config.save()
 
         optuna_logger.info(f"Initializing model with input_size={len(selected_features)}")
         optuna_logger.info(f"Selected features used for model initialization: {selected_features}")
