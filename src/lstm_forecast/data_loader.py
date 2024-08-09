@@ -24,11 +24,6 @@ def get_data(config) -> Tuple[pd.DataFrame, List[str]]:
         interval=config.data_sampling_interval
     )
 
-    max_window = max([max(v) if isinstance(v, list) else v for v in config.indicator_windows.values()])
-    
-    if len(historical_data) < max_window:
-        raise ValueError(f"Not enough data to calculate indicators. Need at least {max_window} data points.")
-
     historical_data, features = calculate_technical_indicators(
         historical_data,
         windows=config.indicator_windows,
