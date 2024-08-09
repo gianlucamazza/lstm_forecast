@@ -4,6 +4,7 @@ logs/*.log
 png/*.png
 reports/*.csv
 models/*.pth
+models/*.onnx
 models/optuna/*
 models/checkpoints/*
 
