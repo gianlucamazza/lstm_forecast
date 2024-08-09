@@ -215,7 +215,7 @@ def load_model(symbol: str, path: str, model_params: dict, input_size: int) -> n
     model_path = os.path.join(path, f"{symbol}_best_model.pth")
     logger.info(f"Loading model from {model_path}")
     
-    state_dict = torch.load(model_path, map_location=device)
+    state_dict = torch.load(model_path, map_location=device, weights_only=True)
     
     hidden_size = state_dict['lstm.weight_hh_l0'].size(1)
     saved_input_size = state_dict['lstm.weight_ih_l0'].size(1)
