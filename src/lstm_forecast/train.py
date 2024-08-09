@@ -129,41 +129,57 @@ def export_to_onnx(model, config, fold_idx):
 
 def main(config: Config):
     """Main function to run the training and evaluation."""
-    logger.info(f"Loaded configuration from {config}")
-    logger.info(f"Configuration: {config}")
+    try:
+        logger.info(f"Loaded configuration from {config}")
+        logger.info(f"Configuration: {config}")
 
-    train_val_loaders, _, _, _, _, _ = load_and_preprocess_data(config)
+        train_val_loaders, _, _, _, _, _ = load_and_preprocess_data(config, selected_features=config.data_settings.get("selected_features"))
 
-    for fold_idx, (train_loader, val_loader) in enumerate(train_val_loaders, 1):
-        model = initialize_model(config)
-        model.to(device)
-        train_model(
-            config,
-            model,
-            train_loader,
-            val_loader,
-            num_epochs=config.training_settings["epochs"],
-            learning_rate=config.model_settings.get("learning_rate", 0.001),
-            model_dir=config.training_settings["model_dir"],
-            weight_decay=config.model_settings.get("weight_decay", 0.0),
-            _device=device,
-            fold_idx=fold_idx
-        )
+        best_val_loss = float('inf')  # Initialize to infinity so any real val_loss is lower
+        best_model = None  # Initialize as None
 
-        val_loss = evaluate_model(model, val_loader, torch.nn.MSELoss(), device)
-        
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
-            best_model = model.state_dict()
+        for fold_idx, (train_loader, val_loader) in enumerate(train_val_loaders, 1):
+            model = initialize_model(config)
+            model.to(device)
+            train_model(
+                config,
+                model,
+                train_loader,
+                val_loader,
+                num_epochs=config.training_settings["epochs"],
+                learning_rate=config.model_settings.get("learning_rate", 0.001),
+                model_dir=config.training_settings["model_dir"],
+                weight_decay=config.model_settings.get("weight_decay", 0.0),
+                _device=device,
+                fold_idx=fold_idx
+            )
 
-    if best_model is not None:
-        final_model = initialize_model(config)
-        final_model.load_state_dict(best_model)
-        final_model.to(device)
-        export_to_onnx(final_model, config, 'best')
-    else:
-        logger.error("No best model found to export.")
-    
+            val_loss = evaluate_model(model, val_loader, torch.nn.MSELoss(), device)
+            
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
+                best_model = model.state_dict()
+
+        if best_model is not None:
+            final_model = initialize_model(config)
+            final_model.load_state_dict(best_model)
+            final_model.to(device)
+            export_to_onnx(final_model, config, 'best')
+            pth_model_path = f"{config.training_settings['model_dir']}/{config.data_settings['symbol']}_best.pth"
+            torch.save(final_model.state_dict(), pth_model_path)
+            logger.info(f"Best model saved to {pth_model_path}")
+
+        else:
+            logger.error("No best model found to export.")
+
+    except Exception as e:
+        logger.error(f"An error occurred during training: {str(e)}")
+        raise
+
+if __name__ == "__main__":
+    main()
+
+
 
 if __name__ == "__main__":
     main()

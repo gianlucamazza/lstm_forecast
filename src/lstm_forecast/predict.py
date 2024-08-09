@@ -1,6 +1,4 @@
 import argparse
-import os
-import sys
 import time
 from typing import List, Tuple
 
@@ -9,8 +7,6 @@ import pandas as pd
 import torch
 import torch.nn as nn
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from lstm_forecast.model import load_model
 from lstm_forecast.data_loader import preprocess_data, get_data

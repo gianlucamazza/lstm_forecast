@@ -19,3 +19,6 @@ build/
 
 # virtualenv
 venv/
+
+# Python packaging
+.pypirc

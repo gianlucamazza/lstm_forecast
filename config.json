@@ -71,18 +71,22 @@
             "PSAR_Up",
             "PSAR_Down"
         ],
-        "selected_features": []
+        "selected_features": [
+            "MACD",
+            "SMA_200",
+            "EMA"
+        ]
     },
     "model_settings": {
-        "hidden_size": 306,
+        "hidden_size": 391,
         "num_layers": 1,
-        "dropout": 0.43161239031237997,
-        "learning_rate": 0.00018123930183988458,
+        "dropout": 0.012239709228895848,
+        "learning_rate": 0.00020025239898961104,
         "fc_output_size": 5,
-        "weight_decay": 2.7417040630355e-05,
-        "clip_value": 1.0,
-        "batch_size": 235,
-        "sequence_length": 19
+        "weight_decay": 8.99288758616325e-05,
+        "clip_value": 3.974825341474775,
+        "batch_size": 20,
+        "sequence_length": 16
     },
     "training_settings": {
         "look_back": 120,
