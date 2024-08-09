@@ -24,6 +24,11 @@ def get_data(config) -> Tuple[pd.DataFrame, List[str]]:
         interval=config.data_sampling_interval
     )
 
+    max_window = max([max(v) if isinstance(v, list) else v for v in config.indicator_windows.values()])
+    
+    if len(historical_data) < max_window:
+        raise ValueError(f"Not enough data to calculate indicators. Need at least {max_window} data points.")
+
     historical_data, features = calculate_technical_indicators(
         historical_data,
         windows=config.indicator_windows,
@@ -102,24 +107,18 @@ def save_scaled_data(
     scaled_df.to_csv(f"data/{symbol}_{interval}_scaled_data.csv", index=False)
     logger.info(f"Scaled dataset saved to data/{symbol}_{interval}_scaled_data.csv")
 
-def create_dataset(
-    scaled_features: np.ndarray,
-    scaled_targets: np.ndarray,
-    look_back: int,
-    look_forward: int,
-    targets: List[str],
-) -> Tuple[np.ndarray, np.ndarray]:
+def create_dataset(scaled_features, scaled_targets, look_back, look_forward, targets):
     _X, _y = [], []
-    for i in range(look_back, len(scaled_features) - look_forward):
+    for i in range(look_back, len(scaled_features) - look_forward + 1):
         _X.append(scaled_features[i - look_back: i])
         _y.append(scaled_targets[i + look_forward - 1, : len(targets)])
 
     _X = np.array(_X)
     _y = np.array(_y)
-    _y = _y.reshape(-1, len(targets))
     logger.info(f"Shape of _X: {_X.shape}")
     logger.info(f"Shape of _y: {_y.shape}")
     return _X, _y
+
 
 def create_timeseries_window(_x: np.ndarray, _y: np.ndarray, n_splits: int):
     tscv = TimeSeriesSplit(n_splits=n_splits)

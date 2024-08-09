@@ -12,3 +12,4 @@ optuna
 onnxruntime
 onnx
 flask
+pytest
