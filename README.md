@@ -1,7 +1,7 @@
 # [PYTORCH] LSTM Forecast
 
-![Test and Build](https://github.com/username/repository-name/workflows/Test%20and%20Build/badge.svg)
-![Deploy to PyPI](https://github.com/username/repository-name/workflows/Deploy%20to%20PyPI/badge.svg)
+![Test and Build](https://github.com/gianlucamazza/lstm_forecast/workflows/Test%20and%20Build/badge.svg)
+![Deploy to PyPI](https://github.com/gianlucamazza/lstm_forecast/workflows/Deploy%20to%20PyPI/badge.svg)
 
 ## Overview
 
