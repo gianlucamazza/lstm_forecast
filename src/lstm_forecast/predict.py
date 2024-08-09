@@ -1,6 +1,4 @@
 import argparse
-import os
-import sys
 import time
 from typing import List, Tuple
 
@@ -10,13 +8,11 @@ import torch
 import torch.nn as nn
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-from src.model import load_model
-from src.data_loader import preprocess_data, get_data
-from src.predict_utils import inverse_transform_predictions, plot_predictions, save_predictions_report
-from src.logger import setup_logger
-from src.config import load_config
+from lstm_forecast.model import load_model
+from lstm_forecast.data_loader import preprocess_data, get_data
+from lstm_forecast.predict_utils import inverse_transform_predictions, plot_predictions, save_predictions_report
+from lstm_forecast.logger import setup_logger
+from lstm_forecast.config import load_config
 
 # Set up logger
 logger = setup_logger("predict_logger", "logs/predict.log")

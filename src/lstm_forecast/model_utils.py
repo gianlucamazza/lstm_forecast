@@ -1,5 +1,5 @@
 import torch
-from src.logger import setup_logger
+from lstm_forecast.logger import setup_logger
 
 logger = setup_logger("train_logger", "logs/train.log")
 
