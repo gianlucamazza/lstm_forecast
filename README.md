@@ -1,153 +1,198 @@
-# [PYTORCH] LSTM Forecast
-
-![Test and Build](https://github.com/gianlucamazza/lstm_forecast/workflows/Test%20and%20Build/badge.svg)
-![Deploy to PyPI](https://github.com/gianlucamazza/lstm_forecast/workflows/Deploy%20to%20PyPI/badge.svg)
+# LSTM Price Prediction
 
 ## Overview
 
-This project aims to predict stock prices using Long Short-Term Memory (LSTM) networks. The model is trained on historical stock data, which includes various technical indicators. The pipeline includes data preprocessing, feature engineering, model training, and prediction.
+This project implements an LSTM-based model for predicting cryptocurrency prices. It includes features for data loading, preprocessing, model training, hyperparameter optimization, backtesting, and API deployment.
 
-## Pipeline
+## Table of Contents
 
-1. **Data Loading**: Load historical stock data using the `yfinance` library.
-2. **Data Preprocessing**: Preprocess the data by filling missing values and resampling the data.
-3. **Feature Engineering**: Calculate technical indicators and add them to the dataset.
-4. **Feature Selection**: Select the best features using the `feature_engineering.py` script.
-5. **Model Training**: Train the LSTM model using the selected features.
-6. **Model Evaluation**: Evaluate the model using Mean Squared Error (MSE) and Mean Absolute Error (MAE) metrics.
-7. **Prediction**: Generate predictions using the trained model.
-8. **Hyperparameter Optimization**: Optimize the hyperparameters of the LSTM model using the Optuna library.
-9. **Backtesting**: Backtest the model on historical data to evaluate its performance.
-10. **Visualization**: Plot the predictions and evaluation metrics using Plotly.
-11. **Logging**: Log the training and prediction results using the `logging` library.
+- [LSTM Price Prediction](#lstm-price-prediction)
+  - [Overview](#overview)
+  - [Table of Contents](#table-of-contents)
+  - [Project Structure](#project-structure)
+  - [Installation](#installation)
+  - [Usage](#usage)
+    - [Prepare Data](#prepare-data)
+    - [Optimize Hyperparameters and Feature Selection](#optimize-hyperparameters-and-feature-selection)
+    - [Train the Model](#train-the-model)
+    - [Make Predictions](#make-predictions)
+    - [Start the API Server](#start-the-api-server)
+    - [General Usage](#general-usage)
+  - [Configuration](#configuration)
+  - [API](#api)
+  - [Backtesting](#backtesting)
+  - [Testing](#testing)
+  - [License](#license)
 
-## Data
+## Project Structure
 
-The historical stock data is loaded using the `yfinance` library. The data includes the following columns:
-
-- `Date`: The date of the stock price.
-- `Open`: The opening price of the stock.
-- `High`: The highest price of the stock.
-- `Low`: The lowest price of the stock.
-- `Close`: The closing price of the stock.
-- `Adj Close`: The adjusted closing price of the stock.
-- `Volume`: The volume of the stock traded.
-
-## Setup
-
-### Requirements
-
-Ensure you have Python 3.11 installed. Install the necessary packages using:
-
-```bash
-pip install .
 ```
+.
+├── LICENSE
+├── README.md
+├── config.json
+├── data/
+├── docs/
+├── logs/
+├── models/
+│   ├── checkpoints/
+│   └── optuna/
+├── png/
+├── pyproject.toml
+├── reports/
+├── requirements.txt
+├── setup.py
+├── src/
+│   └── lstm_forecast/
+│       ├── __init__.py
+│       ├── api/
+│       ├── backtesting/
+│       ├── cli.py
+│       ├── config.py
+│       ├── data_loader.py
+│       ├── early_stopping.py
+│       ├── feature_engineering.py
+│       ├── feature_selection.py
+│       ├── generate_html.py
+│       ├── hyperparameter_optimization.py
+│       ├── logger.py
+│       ├── model.py
+│       ├── model_utils.py
+│       ├── predict.py
+│       ├── predict_utils.py
+│       └── train.py
+├── static/
+└── tests/
+```
+
+## Installation
+
+1. Clone the repository:
+   ```
+   git clone https://github.com/your-username/lstm-price-prediction.git
+   cd lstm-price-prediction
+   ```
+
+2. Create a virtual environment:
+   ```
+   python -m venv venv
+   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+   ```
+
+3. Install the required packages:
+   ```
+   pip install -r requirements.txt
+   ```
+
+4. Install the project in editable mode:
+   ```
+   pip install -e .
+   ```
 
 ## Usage
 
-```bash
-$ lstm_forecast -h
-usage: lstm_forecast [-h] {optimize,train,predict,server} ...
+The `lstm_forecast` command-line interface provides several subcommands for different functionalities:
 
-positional arguments:
-  {optimize,train,predict,server}
-    optimize            Optimize feature selection and hyperparameters
-    train               Train the model
-    predict             Make predictions
-    server              Start the API server
+### Prepare Data
 
-optional arguments:
-  -h, --help            show this help message and exit
+To prepare the data for training and prediction:
+
+```
+lstm_forecast prepare --config path/to/config.json
 ```
 
-### Configuration
+### Optimize Hyperparameters and Feature Selection
 
-Update the `config.json` file with the desired parameters.
+To run hyperparameter optimization and feature selection:
 
-#### `data_settings`
+```
+lstm_forecast optimize --config path/to/config.json [OPTIONS]
+```
 
-Settings related to data:
+Options:
+- `--n_trials INTEGER`: Number of trials for hyperparameter tuning (default: 100)
+- `--n_feature_trials INTEGER`: Number of trials for feature selection (default: 15)
+- `--min_features INTEGER`: Minimum number of features to select (default: 5)
+- `--force`: Force re-run of Optuna study
 
-- `ticker`: Stock ticker symbol.
-- `symbol`: Stock symbol.
-- `data_path`: Path to the historical data CSV file.
-- `scaled_data_path`: Path to the scaled data CSV file.
-- `asset_type`: Type of asset (e.g., 'commodity').
-- `data_sampling_interval`: Interval for the historical data (e.g., '1d' for daily).
-- `start_date`: Start date for the historical data.
-- `data_resampling_frequency`: Frequency of the data (e.g., 'D' for daily).
-- `technical_indicators`: Dictionary containing the window sizes for the technical indicators:
-  - `SMA_50`: Window size for the 50-day Simple Moving Average.
-  - `SMA_200`: Window size for the 200-day Simple Moving Average.
-  - `EMA`: Window size for the Exponential Moving Average.
-  - `MACD`: List of three values representing the windows for the MACD indicator.
-  - `RSI`: Window size for the Relative Strength Index.
-  - `Bollinger`: Window size for the Bollinger Bands.
-  - `ATR`: Window size for the Average True Range.
-  - `Stochastic`: Window size for the Stochastic Oscillator.
-  - `Aroon`: Window size for the Aroon indicator.
-  - `Williams_R`: Window size for the Williams %R indicator.
-  - `CMF`: Window size for the Chaikin Money Flow indicator.
-  - `CCI`: Window size for the Commodity Channel Index.
-  - `Ichimoku`: Dictionary containing the window sizes for the Ichimoku Cloud:
-    - `window1`: Window size for the Tenkan-sen.
-    - `window2`: Window size for the Kijun-sen.
-    - `window3`: Window size for the Senkou Span B.
-- `targets`: List of target variables for prediction.
-- `disabled_features`: List of features to be disabled.
-- `all_features`: List of all available features.
-- `selected_features`: List of best features selected for training.
+### Train the Model
 
-#### `model_settings`
+To train the model:
 
-Settings related to the model:
+```
+lstm_forecast train --config path/to/config.json
+```
 
-- `hidden_size`: Number of hidden units in the LSTM layer.
-- `num_layers`: Number of LSTM layers.
-- `dropout`: Dropout rate.
-- `learning_rate`: Learning rate for the optimizer.
-- `fc_output_size`: Output size of the fully connected layer.
-- `weight_decay`: Weight decay for the optimizer.
-- `clip_value`: Gradient clipping value.
-- `batch_size`: Batch size for training.
-- `sequence_length`: Sequence length for the LSTM model.
+### Make Predictions
 
-#### `training_settings`
+To make predictions using a trained model:
 
-Settings related to training:
+```
+lstm_forecast predict --config path/to/config.json
+```
 
-- `look_back`: Number of days to look back for the LSTM model.
-- `look_forward`: Number of days to predict.
-- `epochs`: Number of epochs for training.
-- `model_dir`: Directory to store the trained model.
-- `use_time_series_split`: Boolean to use time series split for cross-validation.
-- `time_series_splits`: Number of time series splits for cross-validation.
+### Start the API Server
 
-#### `logging_settings`
+To start the API server:
 
-Settings related to logging:
+```
+lstm_forecast server --config path/to/config.json
+```
 
-- `log_dir`: Directory to store the logs.
+### General Usage
 
-#### `backtesting_params`
+All commands require a configuration file specified with the `--config` option. This JSON file contains all the necessary settings for data processing, model architecture, training, and prediction.
 
-Parameters for backtesting:
+For more information on any command, you can use the `--help` option:
 
-- `initial_cash`: Initial cash for backtesting.
-- `trading_fee`: Trading fee for backtesting.
-- `take_profit`: Take profit ratio.
-- `stop_loss`: Stop loss ratio.
-- `trade_allocation`: Trade allocation percentage.
-- `max_open_trades`: Maximum number of open trades.
+```
+lstm_forecast [COMMAND] --help
+```
 
-### Models
+Replace `[COMMAND]` with any of the available commands (prepare, optimize, train, predict, server) to see specific help for that command.
 
-`models/{symbol}_model.pth` contains the trained model.
+## Configuration
 
-## Contributors
+The `config.json` file contains all the necessary settings for data processing, model architecture, training, and prediction. Modify this file to adjust parameters such as:
 
-- **Gianluca Mazza** - [LinkedIn](https://www.linkedin.com/in/gianlucamazza/)
-- **Matteo Garbelli** - [LinkedIn](https://www.linkedin.com/in/matteo-garbelli-1a0bb3b1/)
+- Data settings (ticker, date range, features)
+- Model settings (hidden size, number of layers, dropout)
+- Training settings (epochs, learning rate, batch size)
+- Backtesting parameters
+
+## API
+
+The project includes a FastAPI-based API for model inference. To start the API server:
+
+```
+uvicorn lstm_forecast.api.app:app --reload
+```
+
+API endpoints:
+- `/predict`: Make predictions using the trained model
+- `/backtest`: Run backtesting on historical data
+
+## Backtesting
+
+The backtesting module allows you to evaluate the model's performance on historical data. It includes:
+
+- Trading engine simulation
+- Performance metrics calculation
+- Visualization of results
+
+To run a backtest:
+
+```
+lstm_forecast backtest --config path/to/config.json --model path/to/model.pth
+```
+
+## Testing
+
+To run the tests:
+
+```
+pytest tests/
+```
 
 ## License
 
