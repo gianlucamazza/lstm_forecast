@@ -6,7 +6,7 @@ from lstm_forecast.hyperparameter_optimization import (
 )
 from lstm_forecast.train import main as train_main
 from lstm_forecast.predict import main as predict_main
-from lstm_forecast.api.app import create_app
+from lstm_forecast.api import create_app
 from lstm_forecast.config import Config
 
 
