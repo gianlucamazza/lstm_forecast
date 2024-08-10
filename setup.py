@@ -73,12 +73,5 @@ setup(
     package_data={
         "": ["*.json", "*.html", "*.png"],
     },
-    extras_require={
-        "dev": [
-            "pytest",
-            "sphinx",
-            "twine",
-        ],
-    },
     keywords="lstm forecasting finance time series deep learning",
 )
