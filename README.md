@@ -1,4 +1,4 @@
-# LSTM Price Prediction
+# LSTM Forecast
 
 ## Overview
 
@@ -6,7 +6,7 @@ This project implements an LSTM-based model for predicting cryptocurrency prices
 
 ## Table of Contents
 
-- [LSTM Price Prediction](#lstm-price-prediction)
+- [LSTM Forecast](#lstm-forecast)
   - [Overview](#overview)
   - [Table of Contents](#table-of-contents)
   - [Project Structure](#project-structure)
