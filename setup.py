@@ -73,5 +73,5 @@ setup(
     package_data={
         "": ["*.json", "*.html", "*.png"],
     },
-    keywords="lstm forecasting finance time series deep learning",
+    keywords="lstm forecasting finance timeseries deeplearning",
 )
