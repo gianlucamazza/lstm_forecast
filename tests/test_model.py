@@ -5,6 +5,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 
 from lstm_forecast.model import PricePredictor, load_model
+from lstm_forecast.config import Config
 
 
 @pytest.fixture(scope="module")
@@ -117,7 +118,7 @@ def temp_model_path(tmp_path_factory, model, model_params):
     model_path.unlink()
 
 
-def test_model_loading(config):
+def test_model_loading(config: Config):
     path, symbol, _ = temp_model_path
     loaded_model = load_model(config=config)
 
@@ -136,4 +137,5 @@ def test_model_loading(config):
 
 
 if __name__ == "__main__":
-    pytest.main()
+    config = Config()
+    pytest.main(config=config)
