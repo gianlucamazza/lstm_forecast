@@ -154,7 +154,7 @@ def test_main(
     print(f"torch.save call count: {mock_torch_save.call_count}")
     print("\ninitialize_model call args:")
     for i, call in enumerate(mock_initialize.call_args_list):
-        print(f"Call {i+1}: {call}")
+        print(f"Call {i + 1}: {call}")
     assert mock_prepare_data.call_count == 1
     assert (
         mock_initialize.call_count == 1
