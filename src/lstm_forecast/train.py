@@ -85,19 +85,15 @@ def save_training_state(model, optimizer, epoch, best_val_loss, config):
 def train_model(
     config,
     model: torch.nn.Module,
+    optimizer: torch.optim.Optimizer,
     train_loader: torch.utils.data.DataLoader,
     val_loader: torch.utils.data.DataLoader,
     num_epochs: int,
-    learning_rate: float,
     model_dir: str,
-    weight_decay: float,
     _device: torch.device,
     fold_idx: int = None,
 ) -> None:
     """Train the model with early stopping."""
-    optimizer = torch.optim.Adam(
-        model.parameters(), lr=learning_rate, weight_decay=weight_decay
-    )
     loss_fn = torch.nn.MSELoss()
 
     early_stopping = EarlyStopping(
@@ -238,44 +234,55 @@ def main(config: Config):
             weight_decay=config.model_settings.get("weight_decay", 0.0),
         )
 
+        global_early_stopping = EarlyStopping(
+            patience=10,
+            verbose=True,
+            path=f"{config.training_settings['model_dir']}/{config.data_settings['symbol']}_best_model.pth",
+        )
+
+        all_train_losses = []
+        all_val_losses = []
+
         for fold_idx, (train_loader, val_loader) in enumerate(
             train_val_loaders, 1
         ):
             logger.info(f"Training fold {fold_idx}")
-            # Use the same model instance for all folds, just move it to the correct device
             model.to(device)
 
-            # Train the model
-            for epoch in range(config.training_settings["epochs"]):
-                train_model(
-                    config,
-                    model,
-                    train_loader,
-                    val_loader,
-                    num_epochs=config.training_settings["epochs"],
-                    learning_rate=config.model_settings.get(
-                        "learning_rate", 0.001
-                    ),
-                    model_dir=config.training_settings["model_dir"],
-                    weight_decay=config.model_settings.get(
-                        "weight_decay", 0.0
-                    ),
-                    _device=device,
-                    fold_idx=fold_idx,
-                )
+            train_losses, val_losses = train_model(
+                config,
+                model,
+                optimizer,
+                train_loader,
+                val_loader,
+                num_epochs=config.training_settings["epochs"],
+                model_dir=config.training_settings["model_dir"],
+                _device=device,
+                fold_idx=fold_idx,
+            )
 
-                # Evaluate the model on the validation set
-                val_loss = evaluate_model(
-                    model, val_loader, torch.nn.MSELoss(), device
-                )
+            all_train_losses.extend(train_losses)
+            all_val_losses.extend(val_losses)
 
-                if val_loss < best_val_loss:
-                    best_val_loss = val_loss
-                    best_model = model.state_dict()
+            # Evaluate the model on the validation set
+            val_loss = evaluate_model(
+                model, val_loader, torch.nn.MSELoss(), device
+            )
 
-                save_training_state(
-                    model, optimizer, epoch, best_val_loss, config
+            global_early_stopping(val_loss, model)
+            if global_early_stopping.early_stop:
+                logger.info(
+                    "Global early stopping triggered. Stopping training."
                 )
+                break
+
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
+                best_model = model.state_dict().copy()
+
+            save_training_state(
+                model, optimizer, fold_idx, best_val_loss, config
+            )
 
         if best_model is not None:
             # Save and export the best model
@@ -290,14 +297,21 @@ def main(config: Config):
 
             # Save the training state including the optimizer state
             save_training_state(
-                final_model, optimizer, epoch, best_val_loss, config
+                final_model, optimizer, fold_idx, best_val_loss, config
             )
         else:
             logger.error("No best model found to export.")
 
+        plot_training_history(all_train_losses, all_val_losses, config)
+
+    except ValueError as ve:
+        logger.error(f"Value error occurred: {str(ve)}")
+    except torch.cuda.CudaError as ce:
+        logger.error(f"CUDA error occurred: {str(ce)}")
     except Exception as e:
-        logger.error(f"An error occurred during training: {str(e)}")
-        raise
+        logger.error(f"An unexpected error occurred: {str(e)}")
+    finally:
+        logger.info("Training process completed.")
 
 
 if __name__ == "__main__":

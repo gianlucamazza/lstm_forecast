@@ -117,11 +117,9 @@ def temp_model_path(tmp_path_factory, model, model_params):
     model_path.unlink()
 
 
-def test_model_loading(temp_model_path, model_params):
+def test_model_loading(config):
     path, symbol, _ = temp_model_path
-    loaded_model = load_model(
-        symbol, path, model_params, model_params["input_size"]
-    )
+    loaded_model = load_model(config=config)
 
     assert isinstance(loaded_model, PricePredictor)
     assert loaded_model.hidden_size == model_params["hidden_size"]
