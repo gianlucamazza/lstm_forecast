@@ -1,5 +1,8 @@
 # LSTM Forecast
 
+![Test and Build](https://github.com/gianlucamazza/lstm_forecast/workflows/Test%20and%20Build/badge.svg)
+ ![Deploy to PyPI](https://github.com/gianlucamazza/lstm_forecast/workflows/Deploy%20to%20PyPI/badge.svg)
+
 ## Overview
 
 This project implements an LSTM-based model for predicting cryptocurrency prices. It includes features for data loading, preprocessing, model training, hyperparameter optimization, backtesting, and API deployment.
@@ -11,6 +14,8 @@ This project implements an LSTM-based model for predicting cryptocurrency prices
   - [Table of Contents](#table-of-contents)
   - [Project Structure](#project-structure)
   - [Installation](#installation)
+    - [Install with pip](#install-with-pip)
+    - [Install from sources](#install-from-sources)
   - [Usage](#usage)
     - [Prepare Data](#prepare-data)
     - [Optimize Hyperparameters and Feature Selection](#optimize-hyperparameters-and-feature-selection)
@@ -67,10 +72,22 @@ This project implements an LSTM-based model for predicting cryptocurrency prices
 
 ## Installation
 
+### Install with pip
+
+If you want to use the latest stable version, you can install the package directly from PyPI:
+
+```
+pip install lstm-forecast
+```
+
+### Install from sources
+
+If you want to use the latest development version or contribute to the project, you can install from the source:
+
 1. Clone the repository:
    ```
-   git clone https://github.com/your-username/lstm-price-prediction.git
-   cd lstm-price-prediction
+   git clone https://github.com/gianlucamazza/lstm_forecast.git
+   cd lstm_forecast
    ```
 
 2. Create a virtual environment:
@@ -88,6 +105,8 @@ This project implements an LSTM-based model for predicting cryptocurrency prices
    ```
    pip install -e .
    ```
+
+This way, you'll have the latest version of the code and be able to make changes if needed.
 
 ## Usage
 
