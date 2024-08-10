@@ -1,7 +1,10 @@
 from setuptools import setup, find_packages
+import re
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
+    
+long_description = re.sub(r'!\[.*?\]\(.*?\)\n', '', long_description)
 
 setup(
     name='lstm_forecast',
