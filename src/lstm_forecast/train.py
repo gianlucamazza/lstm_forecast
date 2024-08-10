@@ -136,8 +136,13 @@ def main(config: Config):
         best_val_loss = float('inf')
         best_model = None
 
+        # Initialize the model only once, outside the loop
+        model = initialize_model(config, num_features)
+        logger.info("Model initialized")
+
         for fold_idx, (train_loader, val_loader) in enumerate(train_val_loaders, 1):
-            model = initialize_model(config, num_features)
+            logger.info(f"Training fold {fold_idx}")
+            # Use the same model instance for all folds, just move it to the correct device
             model.to(device)
             train_model(
                 config,
@@ -159,7 +164,7 @@ def main(config: Config):
                 best_model = model.state_dict()
 
         if best_model is not None:
-            final_model = initialize_model(config, num_features)
+            final_model = model
             final_model.load_state_dict(best_model)
             final_model.to(device)
             export_to_onnx(final_model, config, 'best')
