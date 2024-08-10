@@ -1,6 +1,7 @@
 import json
 import time
 
+
 class Config:
     def __init__(self, config_path):
         self.config_path = config_path
@@ -22,15 +23,27 @@ class Config:
         self.symbol = self.data_settings.get("symbol")
         self.asset_type = self.data_settings.get("asset_type")
         self.data_path = self.data_settings.get("data_path")
-        self.data_sampling_interval = self.data_settings.get("data_sampling_interval")
+        self.data_sampling_interval = self.data_settings.get(
+            "data_sampling_interval"
+        )
         self.start_date = self.data_settings.get("start_date")
-        self.end_date = self.data_settings.get("end_date", time.strftime("%Y-%m-%d"))
-        self.indicator_windows = self.data_settings.get("technical_indicators", {})
-        self.data_resampling_frequency = self.data_settings.get("data_resampling_frequency")
+        self.end_date = self.data_settings.get(
+            "end_date", time.strftime("%Y-%m-%d")
+        )
+        self.indicator_windows = self.data_settings.get(
+            "technical_indicators", {}
+        )
+        self.data_resampling_frequency = self.data_settings.get(
+            "data_resampling_frequency"
+        )
         self.targets = self.data_settings.get("targets", [])
-        self.disabled_features = self.data_settings.get("disabled_features", [])
+        self.disabled_features = self.data_settings.get(
+            "disabled_features", []
+        )
         self.all_features = self.data_settings.get("all_features", [])
-        self.selected_features = self.data_settings.get("selected_features", [])
+        self.selected_features = self.data_settings.get(
+            "selected_features", []
+        )
         self.log_dir = self.logging_settings.get("log_dir")
 
         self.look_back = self.training_settings.get("look_back")
@@ -46,7 +59,7 @@ class Config:
             json.dump(self.config, f, indent=4)
 
     def update(self, key, value):
-        keys = key.split('.')
+        keys = key.split(".")
         d = self.config
         for k in keys[:-1]:
             d = d.setdefault(k, {})
@@ -54,7 +67,7 @@ class Config:
         self._parse_config()  # Update attributes to reflect the change
 
     def get(self, key, default=None):
-        keys = key.split('.')
+        keys = key.split(".")
         d = self.config
         for k in keys:
             if isinstance(d, dict):
@@ -72,5 +85,7 @@ def update_config(config, key, value):
     if isinstance(config, Config):
         config.update(key, value)
     else:
-        raise TypeError("The provided config is not an instance of the Config class")
+        raise TypeError(
+            "The provided config is not an instance of the Config class"
+        )
     return config

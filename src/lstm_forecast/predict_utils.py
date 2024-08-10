@@ -6,28 +6,31 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 
 def inverse_transform_predictions(
-    predictions: np.ndarray, 
-    scaler_prices: StandardScaler, 
-    scaler_volume: MinMaxScaler, 
-    features: List[str], 
-    num_targets: int
+    predictions: np.ndarray,
+    scaler_prices: StandardScaler,
+    scaler_volume: MinMaxScaler,
+    features: List[str],
+    num_targets: int,
 ) -> np.ndarray:
-    predictions_reshaped = np.zeros((predictions.shape[0], len(features) + num_targets))
+    predictions_reshaped = np.zeros(
+        (predictions.shape[0], len(features) + num_targets)
+    )
     predictions_reshaped[:, :num_targets] = predictions
 
-    predictions_reshaped[:, :num_targets - 1] = scaler_prices.inverse_transform(
-        predictions[:, :num_targets - 1]
+    predictions_reshaped[:, : num_targets - 1] = (
+        scaler_prices.inverse_transform(predictions[:, : num_targets - 1])
     )
-    predictions_reshaped[:, num_targets - 1:num_targets] = (
-        scaler_volume.inverse_transform(predictions[:, num_targets - 1:num_targets])
+    predictions_reshaped[:, num_targets - 1 : num_targets] = (
+        scaler_volume.inverse_transform(
+            predictions[:, num_targets - 1 : num_targets]
+        )
     )
 
     return predictions_reshaped[:, :num_targets]
 
+
 def create_candles(
-    predictions: np.ndarray, 
-    freq: str, 
-    start_date: pd.Timestamp
+    predictions: np.ndarray, freq: str, start_date: pd.Timestamp
 ) -> pd.DataFrame:
     columns = ["Open", "High", "Low", "Close"]
     if predictions.shape[1] == 5:
@@ -35,6 +38,7 @@ def create_candles(
     df = pd.DataFrame(predictions, columns=columns)
     df.index = pd.date_range(start=start_date, periods=len(df), freq=freq)
     return df
+
 
 def plot_predictions(
     symbol: str,
@@ -44,7 +48,7 @@ def plot_predictions(
     future_predictions: np.ndarray,
     freq: str,
     interval: str,
-    logger
+    logger,
 ) -> None:
     logger.info("Plotting predictions")
 
@@ -72,6 +76,7 @@ def plot_predictions(
     fig.write_html(filename)
     logger.info(f"Predictions plot saved to {filename}")
 
+
 def add_candlestick_trace(
     fig: go.Figure,
     candles: pd.DataFrame,
@@ -92,6 +97,7 @@ def add_candlestick_trace(
         )
     )
 
+
 def update_layout(fig: go.Figure, symbol: str, interval: str) -> None:
     fig.update_layout(
         title=f"{symbol} - Predictions",
@@ -99,8 +105,11 @@ def update_layout(fig: go.Figure, symbol: str, interval: str) -> None:
         yaxis_title="Price",
         xaxis_rangeslider_visible=False,
         template="plotly_white",
-        xaxis=dict(tickformat="%Y-%m-%d %H:%M" if "h" in interval else "%Y-%m-%d"),
+        xaxis=dict(
+            tickformat="%Y-%m-%d %H:%M" if "h" in interval else "%Y-%m-%d"
+        ),
     )
+
 
 def save_predictions_report(
     predictions: np.ndarray,
@@ -111,8 +120,12 @@ def save_predictions_report(
 ) -> None:
     if predictions.shape[1] < len(targets):
         padding_width = len(targets) - predictions.shape[1]
-        predictions = np.pad(predictions, ((0, 0), (0, padding_width)), "constant")
+        predictions = np.pad(
+            predictions, ((0, 0), (0, padding_width)), "constant"
+        )
 
     report = pd.DataFrame(data=predictions, columns=targets)
-    report.index = pd.date_range(start=start_date, periods=len(predictions), freq=freq)
+    report.index = pd.date_range(
+        start=start_date, periods=len(predictions), freq=freq
+    )
     report.to_csv(f"reports/{symbol}_predictions.csv", index=False)

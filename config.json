@@ -11,11 +11,7 @@
             "SMA_50": 50,
             "SMA_200": 200,
             "EMA": 20,
-            "MACD": [
-                12,
-                26,
-                9
-            ],
+            "MACD": [12, 26, 9],
             "RSI": 14,
             "Bollinger": 20,
             "ATR": 14,
@@ -30,16 +26,8 @@
                 "window3": 52
             }
         },
-        "targets": [
-            "Open",
-            "High",
-            "Low",
-            "Close",
-            "Volume"
-        ],
-        "disabled_features": [
-            "Adj Close"
-        ],
+        "targets": ["Open", "High", "Low", "Close", "Volume"],
+        "disabled_features": ["Adj Close"],
         "all_features": [
             "SMA_50",
             "SMA_200",
@@ -71,11 +59,7 @@
             "PSAR_Up",
             "PSAR_Down"
         ],
-        "selected_features": [
-            "MACD",
-            "SMA_200",
-            "EMA"
-        ]
+        "selected_features": ["MACD", "SMA_200", "EMA"]
     },
     "model_settings": {
         "hidden_size": 391,
@@ -83,7 +67,7 @@
         "dropout": 0.012239709228895848,
         "learning_rate": 0.00020025239898961104,
         "fc_output_size": 5,
-        "weight_decay": 8.99288758616325e-05,
+        "weight_decay": 8.99288758616325e-5,
         "clip_value": 3.974825341474775,
         "batch_size": 20,
         "sequence_length": 16
@@ -93,6 +77,7 @@
         "look_forward": 30,
         "epochs": 150,
         "model_dir": "models",
+        "plot_dir": "plots",
         "use_time_series_split": true,
         "time_series_splits": 5,
         "max_lag": 5

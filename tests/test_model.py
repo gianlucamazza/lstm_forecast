@@ -6,9 +6,11 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from lstm_forecast.model import PricePredictor, load_model
 
+
 @pytest.fixture(scope="module")
 def device():
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 @pytest.fixture(scope="module")
 def model_params():
@@ -17,12 +19,14 @@ def model_params():
         "hidden_size": 50,
         "num_layers": 2,
         "dropout": 0.5,
-        "fc_output_size": 1
+        "fc_output_size": 1,
     }
+
 
 @pytest.fixture(scope="module")
 def model(model_params, device):
     return PricePredictor(**model_params).to(device)
+
 
 @pytest.fixture(scope="module")
 def data_loader(model_params, device):
@@ -33,6 +37,7 @@ def data_loader(model_params, device):
     dataset = TensorDataset(x, y)
     return DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
+
 def test_price_predictor_initialization(model, model_params):
     assert isinstance(model, PricePredictor)
     assert model.hidden_size == model_params["hidden_size"]
@@ -42,17 +47,21 @@ def test_price_predictor_initialization(model, model_params):
     assert isinstance(model.fc, nn.Linear)
     assert model.fc.out_features == model_params["fc_output_size"]
 
+
 def test_forward_pass(model, data_loader, model_params):
     x, _ = next(iter(data_loader))
     output = model(x)
     assert output.shape == (x.shape[0], model_params["fc_output_size"])
     assert not torch.isnan(output).any(), "Output contains NaN values"
 
+
 def test_training_epoch(model, data_loader):
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
-    initial_state = {name: param.clone() for name, param in model.named_parameters()}
+    initial_state = {
+        name: param.clone() for name, param in model.named_parameters()
+    }
 
     print("\nInitial model parameters:")
     for name, param in model.named_parameters():
@@ -80,11 +89,14 @@ def test_training_epoch(model, data_loader):
 
     assert any_change, "Model weights did not update significantly"
     assert losses[-1] < losses[0], "Final loss is not lower than initial loss"
-    
+
     # Check if average loss of last half of epochs is lower than first half
     mid_point = num_epochs // 2
-    assert sum(losses[mid_point:]) / len(losses[mid_point:]) < sum(losses[:mid_point]) / len(losses[:mid_point]), \
-        "Average loss of latter epochs is not lower than earlier epochs"
+    assert sum(losses[mid_point:]) / len(losses[mid_point:]) < sum(
+        losses[:mid_point]
+    ) / len(
+        losses[:mid_point]
+    ), "Average loss of latter epochs is not lower than earlier epochs"
 
     print("\nTraining successful: weights updated and loss decreased overall.")
 
@@ -95,6 +107,7 @@ def test_validation_epoch(model, data_loader):
     assert isinstance(loss, float)
     assert loss > 0
 
+
 @pytest.fixture(scope="module")
 def temp_model_path(tmp_path_factory, model, model_params):
     temp_dir = tmp_path_factory.mktemp("models")
@@ -103,18 +116,26 @@ def temp_model_path(tmp_path_factory, model, model_params):
     yield str(temp_dir), "TEST_SYMBOL", model_params
     model_path.unlink()
 
+
 def test_model_loading(temp_model_path, model_params):
     path, symbol, _ = temp_model_path
-    loaded_model = load_model(symbol, path, model_params, model_params["input_size"])
+    loaded_model = load_model(
+        symbol, path, model_params, model_params["input_size"]
+    )
 
     assert isinstance(loaded_model, PricePredictor)
     assert loaded_model.hidden_size == model_params["hidden_size"]
     assert loaded_model.num_layers == model_params["num_layers"]
-    
+
     # Compare state dictionaries
-    original_state_dict = torch.load(os.path.join(path, f"{symbol}_best_model.pth"), weights_only=True)
+    original_state_dict = torch.load(
+        os.path.join(path, f"{symbol}_best_model.pth"), weights_only=True
+    )
     for key in original_state_dict:
-        assert torch.equal(loaded_model.state_dict()[key], original_state_dict[key])
+        assert torch.equal(
+            loaded_model.state_dict()[key], original_state_dict[key]
+        )
+
 
 if __name__ == "__main__":
     pytest.main()

@@ -20,6 +20,9 @@ src/__pycache__/
 src/*.egg-info/
 build/
 
+# Distribution / packaging
+node_modules/
+
 # virtualenv
 venv/
 
