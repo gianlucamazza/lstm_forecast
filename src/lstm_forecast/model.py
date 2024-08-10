@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from lstm_forecast.logger import setup_logger
+from sklearn.preprocessing import StandardScaler
 
 logger = setup_logger("model_logger", "logs/model.log")
 device: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -173,7 +174,7 @@ def load_model(symbol: str, path: str, model_params: dict, input_size: int) -> n
 def predict(
     model: nn.Module,
     x_data: np.ndarray,
-    scaler: 'StandardScaler',
+    scaler: StandardScaler,
     future_days: int,
     features: List[str],
 ) -> Tuple[np.ndarray, np.ndarray]:

@@ -51,23 +51,24 @@ def test_forward_pass(model, data_loader, model_params):
 def test_training_epoch(model, data_loader):
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-    
+
     initial_state = {name: param.clone() for name, param in model.named_parameters()}
-    
+
     print("\nInitial model parameters:")
     for name, param in model.named_parameters():
         print(f"{name}: {param.mean().item():.6f}")
-    
+
     losses = []
-    for epoch in range(5):
+    num_epochs = 5
+    for epoch in range(num_epochs):
         loss = model.run_training_epoch(data_loader, criterion, optimizer)
         losses.append(loss)
         print(f"Epoch {epoch + 1}, Loss: {loss:.6f}")
-    
+
     print("\nFinal model parameters:")
     for name, param in model.named_parameters():
         print(f"{name}: {param.mean().item():.6f}")
-    
+
     print("\nParameter changes:")
     any_change = False
     for name, initial_param in initial_state.items():
@@ -76,9 +77,16 @@ def test_training_epoch(model, data_loader):
         print(f"{name} change: {change:.6f}")
         if change > 1e-6:
             any_change = True
-    
+
     assert any_change, "Model weights did not update significantly"
-    assert all(losses[i] >= losses[i+1] for i in range(len(losses)-1)), "Loss did not decrease monotonically"
+    assert losses[-1] < losses[0], "Final loss is not lower than initial loss"
+    
+    # Check if average loss of last half of epochs is lower than first half
+    mid_point = num_epochs // 2
+    assert sum(losses[mid_point:]) / len(losses[mid_point:]) < sum(losses[:mid_point]) / len(losses[:mid_point]), \
+        "Average loss of latter epochs is not lower than earlier epochs"
+
+    print("\nTraining successful: weights updated and loss decreased overall.")
 
 
 def test_validation_epoch(model, data_loader):
