@@ -9,7 +9,7 @@ import torch.optim as optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from optuna.trial import TrialState
 
-from lstm_forecast.data_loader import load_and_preprocess_data
+from lstm_forecast.data_loader import main as prepare_data
 from lstm_forecast.model import PricePredictor
 from lstm_forecast.train import train_model, evaluate_model
 from lstm_forecast.early_stopping import EarlyStopping
@@ -52,7 +52,7 @@ def objective(optuna_trial, config, selected_features):
 
     try:
         # Load and preprocess data
-        train_val_loaders, _, _, _, _, _ = load_and_preprocess_data(config, selected_features)
+        train_val_loaders, _, _, _, _, _ = prepare_data(config)
 
         if not train_val_loaders:
             optuna_logger.warning(f"No data loaded for trial {optuna_trial.number}")
@@ -128,8 +128,8 @@ def feature_selection_objective(optuna_trial, config, data: pd.DataFrame, min_fe
         optuna_logger.warning(f"Trial {optuna_trial.number}: Selected features are less than the minimum required ({min_features}), returning infinity loss")
         return float('inf')
 
-    filtered_data = data[selected_features + config.data_settings["targets"]]
-    train_val_loaders, _, _, _, _, _ = load_and_preprocess_data(config, filtered_data)
+    # filtered_data = data[selected_features + config.data_settings["targets"]]
+    train_val_loaders, _, _, _, _, _ = prepare_data(config, selected_features)
     optuna_logger.info(f"Trial {optuna_trial.number}: Data loaded and preprocessed")
 
     fold_val_losses = []
@@ -182,7 +182,7 @@ def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_fe
     try:
         optuna_logger.info(f"Loaded configuration from {config}")
 
-        _, _, _, _, train_data, _ = load_and_preprocess_data(config)
+        _, _, _, _, train_data, _ = prepare_data(config)
         data = train_data
         
         # Feature Selection
@@ -230,7 +230,7 @@ def main(config: Config, n_trials: int = 100, n_feature_trials: int = 50, min_fe
         else:
             optuna_logger.warning("Selected features may not have been saved correctly")
 
-        train_val_loaders, _, _, _, _, _ = load_and_preprocess_data(config, selected_features)
+        train_val_loaders, _, _, _, _, _ = prepare_data(config, selected_features)
 
         # Hyperparameter Tuning
         optuna_logger.info("Starting hyperparameter tuning")
