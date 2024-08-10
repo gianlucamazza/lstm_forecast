@@ -7,7 +7,9 @@ class EarlyStopping:
     Early stops the training if validation loss doesn't improve after a given patience.
     """
 
-    def __init__(self, patience=10, delta=0.001, verbose=False, path="checkpoint.pt"):
+    def __init__(
+        self, patience=10, delta=0.001, verbose=False, path="checkpoint.pt"
+    ):
         """
         Args:
             patience (int): How long to wait after last time validation loss improved.
@@ -44,7 +46,9 @@ class EarlyStopping:
         else:
             self.counter += 1
             if self.verbose:
-                self.logger.info(f"No improvement in validation loss. Counter: {self.counter}/{self.patience}")
+                self.logger.info(
+                    f"No improvement in validation loss. Counter: {self.counter}/{self.patience}"
+                )
             if self.counter >= self.patience:
                 self.early_stop = True
                 if self.verbose:
