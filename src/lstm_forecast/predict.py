@@ -12,7 +12,7 @@ from lstm_forecast.model import load_model
 from lstm_forecast.data_loader import preprocess_data, get_data
 from lstm_forecast.predict_utils import inverse_transform_predictions, plot_predictions, save_predictions_report
 from lstm_forecast.logger import setup_logger
-from lstm_forecast.config import load_config
+from lstm_forecast.config import Config
 
 # Set up logger
 logger = setup_logger("predict_logger", "logs/predict.log")
@@ -20,7 +20,6 @@ logger = setup_logger("predict_logger", "logs/predict.log")
 # Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 logger.info(f"Device: {device}")
-
 
 def predict(
     _model: nn.Module,
@@ -102,45 +101,36 @@ def predict(
     logger.info("Prediction completed.")
     return predictions, future_predictions
 
-
-
 def get_historical_data(config) -> Tuple[pd.DataFrame, List[str]]:
     logger.info(f"Getting data for {config.symbol} from {config.start_date}")
-    return get_data(
-        config.ticker,
-        config.symbol,
-        asset_type=config.asset_type,
-        start=config.start_date,
-        end=time.strftime("%Y-%m-%d"),
-        windows=config.indicator_windows,
-        data_sampling_interval=config.data_sampling_interval,
-        data_resampling_frequency=config.data_resampling_frequency,
-    )
+    return get_data(config)
 
-
-def main(config_path: str) -> None:
-    config = load_config(config_path)
-    logger.info(f"Loaded configuration from {config_path}")
+def main(config: Config):
     logger.info(f"Starting prediction for {config.data_settings['ticker']}")
 
     selected_features = config.data_settings["selected_features"]
 
     historical_data, features = get_historical_data(config)
-    x, _, _, scaler_prices, scaler_volume, _ = (
-        preprocess_data(
-            symbol=config.data_settings["symbol"],
-            data_sampling_interval=config.data_settings["data_sampling_interval"],
-            historical_data=historical_data,
-            targets=config.data_settings["targets"],
-            look_back=config.training_settings["look_back"],
-            look_forward=config.training_settings["look_forward"],
-            features=features,
-            selected_features=selected_features,
-        )
+    
+    x, y, scaler_prices, scaler_volume, _ = preprocess_data(
+        symbol=config.data_settings["symbol"],
+        data_sampling_interval=config.data_settings["data_sampling_interval"],
+        historical_data=historical_data,
+        targets=config.data_settings["targets"],
+        look_back=config.training_settings["look_back"],
+        look_forward=config.training_settings["look_forward"],
+        features=features,
+        disabled_features=config.data_settings.get("disabled_features", []),
     )
 
     logger.info(f"Loaded historical data for {config.data_settings['symbol']}")
     logger.info(f"Selected features: {selected_features}")
+
+    # Filter x to only include selected features
+    feature_indices = [features.index(feature) for feature in selected_features]
+    x_selected = x[:, :, feature_indices]
+
+    logger.info(f"Shape of x after selecting features: {x_selected.shape}")
 
     model = load_model(
         config.data_settings["symbol"],
@@ -153,7 +143,7 @@ def main(config_path: str) -> None:
 
     predictions, future_predictions = predict(
         _model=model,
-        _x=x,
+        _x=x_selected,
         scaler_prices=scaler_prices,
         scaler_volume=scaler_volume,
         future_days=config.training_settings["look_forward"],
@@ -180,8 +170,6 @@ def main(config_path: str) -> None:
         config.symbol,
     )
     logger.info(f"Prediction for {config.symbol} completed")
-
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

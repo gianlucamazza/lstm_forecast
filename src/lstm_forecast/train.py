@@ -3,10 +3,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch, onnx
 
+from lstm_forecast.data_loader import main as prepare_data
 from lstm_forecast.model import PricePredictor, init_weights
 from lstm_forecast.early_stopping import EarlyStopping
 from lstm_forecast.logger import setup_logger
-from lstm_forecast.data_loader import load_and_preprocess_data
 from lstm_forecast.config import Config
 from lstm_forecast.model_utils import run_training_epoch, run_validation_epoch
 
@@ -14,14 +14,12 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 logger = setup_logger("train_logger", "logs/train.log")
 
 
-def initialize_model(config) -> PricePredictor:
-    """Initialize the model with the given configuration."""
-    input_size = len(config.data_settings["selected_features"])
-
+def initialize_model(config: Config, num_features: int) -> PricePredictor:
+    """Initialize the model with the given configuration and number of features."""
     dropout = config.model_settings["dropout"] if config.model_settings["num_layers"] > 1 else 0
 
     model = PricePredictor(
-        input_size=input_size,
+        input_size=num_features,
         hidden_size=config.model_settings["hidden_size"],
         num_layers=config.model_settings["num_layers"],
         dropout=dropout,
@@ -133,13 +131,18 @@ def main(config: Config):
         logger.info(f"Loaded configuration from {config}")
         logger.info(f"Configuration: {config}")
 
-        train_val_loaders, _, _, _, _, _ = load_and_preprocess_data(config, selected_features=config.data_settings.get("selected_features"))
+        train_val_loaders, _, _, _, _, _, num_features = prepare_data(config)
 
-        best_val_loss = float('inf')  # Initialize to infinity so any real val_loss is lower
-        best_model = None  # Initialize as None
+        best_val_loss = float('inf')
+        best_model = None
+
+        # Initialize the model only once, outside the loop
+        model = initialize_model(config, num_features)
+        logger.info("Model initialized")
 
         for fold_idx, (train_loader, val_loader) in enumerate(train_val_loaders, 1):
-            model = initialize_model(config)
+            logger.info(f"Training fold {fold_idx}")
+            # Use the same model instance for all folds, just move it to the correct device
             model.to(device)
             train_model(
                 config,
@@ -161,25 +164,19 @@ def main(config: Config):
                 best_model = model.state_dict()
 
         if best_model is not None:
-            final_model = initialize_model(config)
+            final_model = model
             final_model.load_state_dict(best_model)
             final_model.to(device)
             export_to_onnx(final_model, config, 'best')
             pth_model_path = f"{config.training_settings['model_dir']}/{config.data_settings['symbol']}_best.pth"
             torch.save(final_model.state_dict(), pth_model_path)
             logger.info(f"Best model saved to {pth_model_path}")
-
         else:
             logger.error("No best model found to export.")
 
     except Exception as e:
         logger.error(f"An error occurred during training: {str(e)}")
         raise
-
-if __name__ == "__main__":
-    main()
-
-
 
 if __name__ == "__main__":
     main()

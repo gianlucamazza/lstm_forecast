@@ -3,14 +3,13 @@ import os
 import numpy as np
 import torch
 import torch.nn as nn
-from sklearn.preprocessing import StandardScaler
 from lstm_forecast.logger import setup_logger
+from sklearn.preprocessing import StandardScaler
 
 logger = setup_logger("model_logger", "logs/model.log")
 device: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
-def init_weights(m):
+def init_weights(m: nn.Module) -> None:
     if isinstance(m, nn.Linear):
         torch.nn.init.xavier_uniform_(m.weight)
         m.bias.data.fill_(0.01)
@@ -20,7 +19,6 @@ def init_weights(m):
                 nn.init.orthogonal_(param.data)
             elif 'bias' in name:
                 param.data.fill_(0)
-
 
 class PricePredictor(nn.Module):
     """
@@ -136,81 +134,6 @@ class PricePredictor(nn.Module):
                 total_loss += criterion(val_outputs, y_val_batch).item()
         return total_loss / len(data_loader)
 
-    def __init__(
-        self,
-        input_size: int,
-        hidden_size: int,
-        num_layers: int,
-        dropout: float,
-        fc_output_size: int,
-    ) -> None:
-        super(PricePredictor, self).__init__()
-        logger.info(
-            f"Initializing PricePredictor with input size: {input_size}, hidden size: {hidden_size}, "
-            f"num layers: {num_layers}, dropout: {dropout}"
-        )
-        self.hidden_size = hidden_size
-        self.num_layers = num_layers
-        self.lstm = nn.LSTM(
-            input_size=input_size,
-            hidden_size=hidden_size,
-            num_layers=num_layers,
-            batch_first=True,
-            dropout=dropout if num_layers > 1 else 0,
-        )
-        self.dropout = nn.Dropout(dropout)
-        self.fc = nn.Linear(hidden_size, fc_output_size)
-
-        # Apply weight initialization
-        self.apply(init_weights)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # Add batch dimension if input is unbatched
-        if x.dim() == 2:
-            x = x.unsqueeze(0)
-
-        batch_size, seq_len, _ = x.size()
-        h_0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).to(x.device)
-        c_0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).to(x.device)
-
-        out, _ = self.lstm(x, (h_0, c_0))
-        out = self.dropout(out[:, -1, :])
-        out = self.fc(out)
-
-        # Remove batch dimension if input was unbatched
-        if batch_size == 1:
-            out = out.squeeze(0)
-
-        logger.debug("Forward pass completed.")
-        return out
-
-    def run_training_epoch(self, data_loader, criterion, optimizer):
-        """Run a single training epoch using the given data loader."""
-        self.train()
-        total_loss = 0.0
-        for x_batch, y_batch in data_loader:
-            x_batch, y_batch = x_batch.to(device), y_batch.to(device)
-            optimizer.zero_grad()
-            outputs = self(x_batch)
-            loss = criterion(outputs, y_batch)
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
-            optimizer.step()
-            total_loss += loss.item()
-        return total_loss / len(data_loader)
-
-    def run_validation_epoch(self, data_loader, criterion):
-        """Run a single validation epoch using the given data loader."""
-        self.eval()
-        total_loss = 0.0
-        with torch.no_grad():
-            for X_val_batch, y_val_batch in data_loader:
-                X_val_batch, y_val_batch = X_val_batch.to(device), y_val_batch.to(device)
-                val_outputs = self(X_val_batch)
-                total_loss += criterion(val_outputs, y_val_batch).item()
-        return total_loss / len(data_loader)
-
-
 def load_model(symbol: str, path: str, model_params: dict, input_size: int) -> nn.Module:
     model_path = os.path.join(path, f"{symbol}_best_model.pth")
     logger.info(f"Loading model from {model_path}")
@@ -248,20 +171,29 @@ def load_model(symbol: str, path: str, model_params: dict, input_size: int) -> n
     
     return model
 
-
 def predict(
     model: nn.Module,
     x_data: np.ndarray,
     scaler: StandardScaler,
     future_days: int,
-    features: List,
+    features: List[str],
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Make predictions using the trained model.
+
+    Args:
+        model (nn.Module): The trained model.
+        x_data (np.ndarray): Input data.
+        scaler (StandardScaler): The scaler used for data normalization.
+        future_days (int): Number of days to predict into the future.
+        features (List[str]): List of feature names.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: Predictions for the input data and future predictions.
     """
     model.eval()
     with torch.no_grad():
-        x_tensor = torch.tensor(x_data, dtype=torch.float32).to(model.device)
+        x_tensor = torch.tensor(x_data, dtype=torch.float32).to(device)
         predictions = model(x_tensor).cpu().numpy()
 
         predictions_reshaped = np.zeros((x_data.shape[0], len(features) + 1))
@@ -275,7 +207,7 @@ def predict(
 
         future_predictions = []
         for _ in range(future_days):
-            x_tensor = torch.tensor(x_data[-1:], dtype=torch.float32).to(model.device)
+            x_tensor = torch.tensor(x_data[-1:], dtype=torch.float32).to(device)
             future_pred = model(x_tensor).cpu().numpy()[0][0]
             future_predictions.append(future_pred)
 

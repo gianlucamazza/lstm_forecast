@@ -1,10 +1,15 @@
 # src/lstm_forecast/cli.py
 import argparse
+from lstm_forecast.data_loader import main as prepare_data
 from lstm_forecast.hyperparameter_optimization import main as hyperparameter_optimization
 from lstm_forecast.train import main as train_main
 from lstm_forecast.predict import main as predict_main
 from lstm_forecast.api.app import create_app
 from lstm_forecast.config import Config
+
+def prepare(args):
+    config = Config(args.config)
+    prepare_data(config)
 
 def optimize(args):
     config = Config(args.config)
@@ -30,6 +35,10 @@ def main():
     # parent parser
     parent_parser = argparse.ArgumentParser(add_help=False)
     parent_parser.add_argument('--config', type=str, required=True, help='Path to configuration JSON file')
+    
+    # prepare command
+    parser_prepare = subparsers.add_parser('prepare', parents=[parent_parser], help='Prepare data')
+    parser_prepare.set_defaults(func=prepare)
 
     # optimize command
     parser_optimize = subparsers.add_parser('optimize', parents=[parent_parser], help='Optimize feature selection and hyperparameters')

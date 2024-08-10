@@ -4,8 +4,11 @@ logs/*.log
 png/*.png
 reports/*.csv
 models/*.pth
+models/*.onnx
 models/optuna/*
 models/checkpoints/*
+test_models/*
+test_models/*/*
 
 # IDEs
 .idea/
