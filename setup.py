@@ -45,7 +45,7 @@ setup(
         "numpy>=1.26.4",
         "yfinance>=0.2.41",
         "matplotlib>=3.9.1",
-        "torch>=2.5.0",
+        "torch>=2.4.0",
         "plotly>=5.3.1",
         "scikit-learn>=1.5.1",
         "xgboost>=2.1.0",
