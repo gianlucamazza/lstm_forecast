@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name='lstm_forecast',
-    version='0.1.0',
+    version='0.1.1',
     author='Gianluca Mazza',
     author_email='gmazza1989@proton.me',
     description='A package for LSTM-based financial time series forecasting',
