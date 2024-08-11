@@ -33,8 +33,18 @@ optuna_logger = setup_logger("optuna_logger", "logs/optuna.log")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def objective(optuna_trial, config, selected_features):
-    # Suggest hyperparameters
+def objective(optuna_trial, config, selected_features) -> float:
+    """
+    Objective function for Optuna hyperparameter optimization.
+
+    Args:
+        optuna_trial (optuna.Trial): The Optuna trial object.
+        config (Config): The configuration object.
+        selected_features (List[str]): The selected features for training.
+
+    Returns:
+        float: The loss value for the trial.
+    """
     hidden_size = optuna_trial.suggest_int("hidden_size", 32, 512)
     num_layers = optuna_trial.suggest_int("num_layers", 1, 5)
     dropout = optuna_trial.suggest_float("dropout", 0.0, 0.5)
@@ -145,6 +155,16 @@ def objective(optuna_trial, config, selected_features):
 
 
 def filter_available_features(config, selected_features):
+    """
+    Filter selected features based on availability in the dataset.
+
+    Args:
+        config (Config): The configuration object.
+        selected_features (List[str]): The selected features.
+
+    Returns:
+        List[str]: The filtered list of selected features.
+    """
     available_features = config.data_settings["all_features"]
     filtered_features = [
         feature
@@ -163,7 +183,19 @@ def filter_available_features(config, selected_features):
 
 def feature_selection_objective(
     optuna_trial, config, data: pd.DataFrame, min_features=5
-):
+) -> float:
+    """
+    Objective function for Optuna feature selection.
+
+    Args:
+        optuna_trial (optuna.Trial): The Optuna trial object.
+        config (Config): The configuration object.
+        data (pd.DataFrame): The input data.
+        min_features (int): The minimum number of features required.
+
+    Returns:
+        float: The loss value for the trial.
+    """
     all_features = config.data_settings["all_features"]
     available_features = data.columns
     selected_features = []

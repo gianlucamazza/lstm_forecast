@@ -16,6 +16,15 @@ device: torch.device = torch.device(
 
 
 def init_weights(m: nn.Module) -> None:
+    """
+    Initialize the weights of the model.
+
+    Args:
+        m (nn.Module): The model to initialize.
+
+    Returns:
+        None
+    """
     if isinstance(m, nn.Linear):
         torch.nn.init.xavier_uniform_(m.weight)
         m.bias.data.fill_(0.01)
@@ -97,8 +106,7 @@ class PricePredictor(nn.Module):
         out = self.fc(out)
 
         # Remove batch dimension if input was unbatched
-        if batch_size == 1:
-            out = out.squeeze(0)
+        out = out.squeeze(0) if x.size(0) == 1 else out
 
         logger.debug("Forward pass completed.")
         return out
@@ -159,6 +167,15 @@ class PricePredictor(nn.Module):
 
 
 def load_model(config: Config) -> Tuple[nn.Module, List[str]]:
+    """
+    Load the trained model from the specified path.
+
+    Args:
+        config (Config): The configuration object.
+
+        Returns:
+        Tuple[nn.Module, List[str]]: The loaded model and the selected features.
+    """
     # Get model path and features path from config
     model_path = os.path.join(
         config.training_settings["model_dir"],

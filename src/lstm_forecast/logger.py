@@ -5,8 +5,20 @@ LOG_DIR = "logs"
 LOG_FILE = "logs/lstm_forecast.log"
 
 
-def setup_logger(name, log_file=LOG_FILE, level=logging.INFO):
-    """Function to setup a logger with the given name and log file."""
+def setup_logger(
+    name, log_file=LOG_FILE, level=logging.INFO
+) -> logging.Logger:
+    """
+    Set up a logger with the given name and log file.
+
+    Args:
+        name (str): The name of the logger.
+        log_file (str, optional): The path to the log file. Defaults to LOG_FILE.
+        level (int, optional): The logging level. Defaults to logging.INFO.
+
+    Returns:
+        logging.Logger: The configured logger.
+    """
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
@@ -22,8 +34,6 @@ def setup_logger(name, log_file=LOG_FILE, level=logging.INFO):
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(formatter)
         logger_module.addHandler(console_handler)
-
-    return logger_module
 
     return logger_module
 

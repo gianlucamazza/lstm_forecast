@@ -14,7 +14,15 @@ logger = setup_logger("data_loader_logger", "logs/data_loader.log")
 
 
 def get_data(config: Config) -> Tuple[pd.DataFrame, List[str]]:
-    """Download historical stock data and calculate technical indicators."""
+    """
+    Download historical data for the given symbol and preprocess it.
+
+    Args:
+        config (Config): Configuration object containing necessary settings.
+
+    Returns:
+        Tuple[pd.DataFrame, List[str]]: A tuple containing the historical data and the list of features.
+    """
     logger.info(
         f"Downloading data for {config.ticker} from {config.start_date} to {config.end_date}"
     )
@@ -52,6 +60,22 @@ def preprocess_data(
 ) -> Tuple[
     np.ndarray, np.ndarray, StandardScaler, StandardScaler, MinMaxScaler
 ]:
+    """
+    Preprocess the historical data for the model.
+
+    Args:
+        symbol (str): The symbol of the asset.
+        data_sampling_interval (str): The data sampling interval.
+        historical_data (pd.DataFrame): The historical data.
+        targets (List[str]): The target features.
+        look_back (int): The number of time steps to look back.
+        look_forward (int): The number of time steps to look forward.
+        features (List[str]): The list of features.
+        disabled_features (List[str]): The list of disabled features.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray, StandardScaler, StandardScaler, MinMaxScaler]: A tuple containing the preprocessed data.
+    """
     logger.info("Starting preprocessing of data")
     logger.info(f"Targets: {targets}")
     logger.info(f"Look back: {look_back}, Look forward: {look_forward}")
@@ -112,6 +136,19 @@ def create_dataset(
     look_forward: int,
     targets: List[str],
 ) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Create the input and target datasets for the model.
+
+    Args:
+        scaled_features (np.ndarray): The scaled feature data.
+        scaled_targets (np.ndarray): The scaled target data.
+        look_back (int): The number of time steps to look back.
+        look_forward (int): The number of time steps to look forward.
+        targets (List[str]): The target features.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: A tuple containing the input and target datasets.
+    """
     X, y = [], []
     for i in range(look_back, len(scaled_features) - look_forward + 1):
         X.append(scaled_features[i - look_back : i])
@@ -129,6 +166,17 @@ def create_dataloader(
     batch_size: int,
     name: str = "DataLoader",
 ) -> torch.utils.data.DataLoader:
+    """
+    Create a DataLoader from the input data.
+
+    Args:
+        data (Tuple[torch.Tensor, torch.Tensor]): The input data.
+        batch_size (int): The batch size.
+        name (str): The name of the DataLoader.
+
+    Returns:
+        torch.utils.data.DataLoader: The DataLoader object.
+    """
     dataset = torch.utils.data.TensorDataset(*data)
     logger.info(f"Creating {name} with batch size: {batch_size}")
     return torch.utils.data.DataLoader(
@@ -146,6 +194,16 @@ def load_and_preprocess_data(
     pd.DataFrame,
     StandardScaler,
 ]:
+    """
+    Load and preprocess the data for the model.
+
+    Args:
+        config (Config): The configuration object.
+        selected_features (List[str]): The list of selected features.
+
+    Returns:
+        Tuple[List[Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]], List[str], StandardScaler, MinMaxScaler, pd.DataFrame, StandardScaler, int]: A tuple containing the processed data.
+    """
     historical_data, all_features = get_data(config)
 
     if selected_features is None:
