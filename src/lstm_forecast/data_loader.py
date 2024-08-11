@@ -125,10 +125,12 @@ def create_dataset(
 
 
 def create_dataloader(
-    data: Tuple[torch.Tensor, torch.Tensor], batch_size: int
+    data: Tuple[torch.Tensor, torch.Tensor],
+    batch_size: int,
+    name: str = "DataLoader",
 ) -> torch.utils.data.DataLoader:
     dataset = torch.utils.data.TensorDataset(*data)
-    logger.info(f"Creating DataLoader with batch size: {batch_size}")
+    logger.info(f"Creating {name} with batch size: {batch_size}")
     return torch.utils.data.DataLoader(
         dataset, batch_size=batch_size, shuffle=False
     )
@@ -181,10 +183,12 @@ def load_and_preprocess_data(
     train_loader = create_dataloader(
         (torch.tensor(X_train).float(), torch.tensor(y_train).float()),
         batch_size=batch_size,
+        name="train_loader",
     )
     val_loader = create_dataloader(
         (torch.tensor(X_val).float(), torch.tensor(y_val).float()),
         batch_size=batch_size,
+        name="val_loader",
     )
 
     num_features = X.shape[2]
