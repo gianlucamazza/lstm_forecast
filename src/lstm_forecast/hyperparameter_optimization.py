@@ -11,7 +11,11 @@ from optuna.trial import TrialState
 
 from lstm_forecast.data_loader import main as prepare_data
 from lstm_forecast.model import PricePredictor
-from lstm_forecast.train import train_model, evaluate_model
+from lstm_forecast.train import (
+    train_model,
+    evaluate_model,
+    plot_training_history,
+)
 from lstm_forecast.early_stopping import EarlyStopping
 from lstm_forecast.config import update_config, load_config, Config
 from lstm_forecast.logger import setup_logger
@@ -402,7 +406,7 @@ def main(
         X, y = next(iter(train_loader))
         optuna_logger.info(f"Loaded data shape: X: {X.shape}, y: {y.shape}")
 
-        train_model(
+        train_losses, val_losses = train_model(
             config,
             model,
             train_loader,
@@ -413,6 +417,11 @@ def main(
             weight_decay=config.model_settings.get("weight_decay", 0.0),
             _device=device,
         )
+
+        optuna_logger.info(f"Final Training Loss: {train_losses[-1]:.4f}")
+        optuna_logger.info(f"Final Validation Loss: {val_losses[-1]:.4f}")
+
+        plot_training_history(train_losses, val_losses, config)
 
         evaluate_model(
             model,
