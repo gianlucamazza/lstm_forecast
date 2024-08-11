@@ -146,6 +146,13 @@ def test_create_dataloader(mock_config):
     assert isinstance(dataloader, torch.utils.data.DataLoader)
     assert dataloader.batch_size == batch_size
 
+    dataloader_with_name = create_dataloader(
+        (X, y), batch_size, name="test_loader"
+    )
+
+    assert isinstance(dataloader_with_name, torch.utils.data.DataLoader)
+    assert dataloader_with_name.batch_size == batch_size
+
 
 @patch("lstm_forecast.data_loader.get_data")
 @patch("lstm_forecast.data_loader.preprocess_data")

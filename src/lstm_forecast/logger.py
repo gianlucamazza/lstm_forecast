@@ -1,12 +1,22 @@
 import os
+import sys
 import logging
 
 LOG_DIR = "logs"
-LOG_FILE = "logs/lstm_forecast.log"
+LOG_FILE = os.path.join(LOG_DIR, "lstm_forecast.log")
 
 
-def setup_logger(name, log_file=LOG_FILE, level=logging.INFO):
-    """Function to setup a logger with the given name and log file."""
+def setup_logger(
+    name, log_file=LOG_FILE, level=logging.INFO
+) -> logging.Logger:
+    if (
+        "sphinx" in sys.modules
+    ):  # Disabilita la creazione dei logger durante la costruzione della documentazione
+        return logging.getLogger(name)
+
+    if not os.path.exists(LOG_DIR):
+        os.makedirs(LOG_DIR)
+
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
@@ -24,22 +34,3 @@ def setup_logger(name, log_file=LOG_FILE, level=logging.INFO):
         logger_module.addHandler(console_handler)
 
     return logger_module
-
-    return logger_module
-
-
-model_logger = setup_logger("model_logger", os.path.join(LOG_DIR, "model.log"))
-train_logger = setup_logger("train_logger", os.path.join(LOG_DIR, "train.log"))
-optuna_logger = setup_logger(
-    "optuna_logger", os.path.join(LOG_DIR, "optuna.log")
-)
-early_stopping_logger = setup_logger(
-    "early_stopping_logger", os.path.join(LOG_DIR, "early_stopping.log")
-)
-feature_engineering_logger = setup_logger(
-    "feature_engineering_logger",
-    os.path.join(LOG_DIR, "feature_engineering.log"),
-)
-predict_logger = setup_logger(
-    "predict_logger", os.path.join(LOG_DIR, "predict.log")
-)

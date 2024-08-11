@@ -1,3 +1,4 @@
+from typing import List, Tuple
 import os
 import matplotlib.pyplot as plt
 import numpy as np
@@ -92,7 +93,7 @@ def train_model(
     model_dir: str,
     _device: torch.device,
     fold_idx: int = None,
-) -> None:
+) -> Tuple[List[float], List[float]]:
     """Train the model with early stopping."""
     loss_fn = torch.nn.MSELoss()
 
@@ -136,6 +137,8 @@ def train_model(
         )
 
     plot_training_history(train_losses, val_losses, config)
+
+    return train_losses, val_losses
 
 
 def plot_evaluation(

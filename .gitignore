@@ -3,6 +3,7 @@ data/*.db
 logs/*.log
 png/*.png
 reports/*.csv
+plots/*.png
 models/*.pth
 models/*.onnx
 models/optuna/*

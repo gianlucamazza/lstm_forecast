@@ -10,7 +10,7 @@ from lstm_forecast.logger import setup_logger
 logger = setup_logger("feature_selection_logger", "logs/feature_selection.log")
 
 
-def rolling_feature_selection(X, y, window_size, num_features, lag=10):
+def rolling_feature_selection(X, y, window_size, num_features, lag=10) -> list:
     """
     Perform rolling window feature selection.
 
@@ -45,7 +45,7 @@ def rolling_feature_selection(X, y, window_size, num_features, lag=10):
     return feature_counts.index.tolist()[:num_features]
 
 
-def granger_causality_test(X, y, max_lag=5, threshold=0.05):
+def granger_causality_test(X, y, max_lag=5, threshold=0.05) -> list:
     """
     Perform Granger Causality test for feature selection.
 
@@ -81,7 +81,7 @@ def granger_causality_test(X, y, max_lag=5, threshold=0.05):
     return causal_features
 
 
-def var_causality_test(X, y, max_lag=5, threshold=0.05):
+def var_causality_test(X, y, max_lag=5, threshold=0.05) -> list:
     """
     Perform VAR (Vector Autoregression) Causality test for feature selection.
 
@@ -113,7 +113,7 @@ def var_causality_test(X, y, max_lag=5, threshold=0.05):
     return causal_features
 
 
-def correlation_analysis(df, threshold=0.9):
+def correlation_analysis(df, threshold=0.9) -> list:
     """
     Perform correlation analysis to remove highly correlated features.
 
@@ -141,7 +141,7 @@ def correlation_analysis(df, threshold=0.9):
 
 def time_series_feature_selection(
     X, y, num_features, window_size=252, max_lag=5
-):
+) -> list:
     """
     Perform feature selection for time series data.
 
