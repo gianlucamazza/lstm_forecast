@@ -1,5 +1,5 @@
 import onnxruntime as ort
-from api.config import Config
+from lstm_forecast.config import Config
 
 
 def load_model():

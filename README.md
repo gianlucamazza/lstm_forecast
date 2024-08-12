@@ -159,7 +159,7 @@ lstm_forecast predict --config path/to/config.json
 To start the API server:
 
 ```
-lstm_forecast server --config path/to/config.json
+uvicorn lstm_forecast.api.app:app --reload
 ```
 
 ### General Usage

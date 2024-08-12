@@ -1,5 +1,5 @@
-.. LSTM Forecast documentation master file, created by
-   sphinx-quickstart on Mon Aug 09 2021.
+# docs/source/index.rst
+.. LSTM Forecast documentation
 
 Welcome to LSTM Forecast's documentation!
 ==========================================

@@ -1,6 +1,6 @@
 import numpy as np
 from typing import Dict, Any, List
-from config import Config
+from lstm_forecast.config import Config
 from lstm_forecast.feature_engineering import calculate_technical_indicators
 import pandas as pd
 
