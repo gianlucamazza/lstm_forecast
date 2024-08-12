@@ -1,4 +1,5 @@
-from api import create_app
+# src/lstm_forecast/api/app.py
+from lstm_forecast.api import create_app
 
 app = create_app()
 

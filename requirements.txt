@@ -12,6 +12,7 @@ optuna
 onnxruntime
 onnx
 flask
+uvicorn
 pytest
 black
 flake8
