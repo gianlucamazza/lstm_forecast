@@ -1,15 +1,87 @@
-LSTM Forecast Modules
-======================
+Modules
+=======
 
-This section contains the documentation for the various modules included in the LSTM Forecast library. Each module is listed below with its corresponding documentation.
+.. automodule:: lstm_forecast.api.app
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Modules:
+.. automodule:: lstm_forecast.api.models
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
-   lstm_forecast.api                # API module handling the web interface
-   lstm_forecast.backtesting        # Backtesting tools and utilities
-   lstm_forecast.feature_engineering # Tools for feature engineering
-   lstm_forecast.model              # Model definitions and training logic
-   lstm_forecast.predict            # Prediction utilities and interfaces
-   lstm_forecast.train              # Training pipelines and configurations
+.. automodule:: lstm_forecast.api.routes
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: lstm_forecast.api.utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: lstm_forecast.cli
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: lstm_forecast.config
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: lstm_forecast.data_loader
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: lstm_forecast.early_stopping
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: lstm_forecast.feature_engineering
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: lstm_forecast.feature_selection
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: lstm_forecast.hyperparameter_optimization
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: lstm_forecast.logger
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: lstm_forecast.model
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: lstm_forecast.model_utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: lstm_forecast.predict
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: lstm_forecast.predict_utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: lstm_forecast.train
+    :members:
+    :undoc-members:
+    :show-inheritance:
