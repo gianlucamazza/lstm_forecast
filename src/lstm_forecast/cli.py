@@ -1,4 +1,6 @@
 # src/lstm_forecast/cli.py
+import os
+import re
 import argparse
 from lstm_forecast.data_loader import main as prepare_data
 from lstm_forecast.hyperparameter_optimization import (
@@ -8,6 +10,18 @@ from lstm_forecast.train import main as train_main
 from lstm_forecast.predict import main as predict_main
 from lstm_forecast.api import create_app
 from lstm_forecast.config import Config
+
+
+def get_version():
+    here = os.path.abspath(os.path.dirname(__file__))
+    with open(os.path.join(here, "../../setup.py"), "r") as setup_file:
+        for line in setup_file:
+            if line.startswith("version"):
+                # Extract the version number using regex
+                version_match = re.search(r"version=['\"]([^'\"]*)['\"]", line)
+                if version_match:
+                    return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
 
 
 def prepare(args):
@@ -44,6 +58,14 @@ def server(args):
 
 def main():
     parser = argparse.ArgumentParser(prog="lstm_forecast")
+
+    # Add version argument
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {get_version()}",
+    )
+
     subparsers = parser.add_subparsers(dest="command")
 
     # parent parser

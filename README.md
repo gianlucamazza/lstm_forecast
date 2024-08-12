@@ -5,12 +5,26 @@
 
 ## Overview
 
-LSTM-based model for predicting cryptocurrency prices. It includes features for data loading, preprocessing, model training, hyperparameter optimization, backtesting, and API deployment.
+**LSTM Forecast** is an advanced tool designed for predicting cryptocurrency prices using Long Short-Term Memory (LSTM) networks. This project combines cutting-edge deep learning techniques with comprehensive financial analysis, making it a robust solution for traders and data scientists alike.
+
+With a focus on modularity and flexibility, LSTM Forecast provides a full suite of features including data loading, preprocessing, model training, hyperparameter optimization, backtesting, and API deployment. These tools enable users to build, evaluate, and deploy predictive models tailored to their specific needs, whether for academic research, financial analysis, or active trading.
+
+## Key Features
+
+-   **Data Loading and Preprocessing**: Easily load and preprocess time series data from various sources, with built-in support for technical indicators.
+-   **Model Training**: Train LSTM models with customizable architectures and hyperparameters to fit your specific use case.
+-   **Hyperparameter Optimization**: Leverage advanced techniques like Optuna for automated hyperparameter tuning and feature selection.
+-   **Backtesting**: Evaluate model performance using historical data with a fully integrated backtesting engine.
+-   **API Deployment**: Deploy your trained models as RESTful APIs using FastAPI, enabling real-time predictions and integrations.
+-   **Command-Line Interface**: A powerful CLI that simplifies all aspects of model training, evaluation, and deployment.
+
+LSTM Forecast is designed to be both user-friendly and powerful, providing everything you need to create and deploy sophisticated forecasting models for cryptocurrencies and financial assets.
 
 ## Table of Contents
 
 -   [LSTM Forecast](#lstm-forecast)
     -   [Overview](#overview)
+    -   [Key Features](#key-features)
     -   [Table of Contents](#table-of-contents)
     -   [Project Structure](#project-structure)
     -   [Installation](#installation)
@@ -27,6 +41,7 @@ LSTM-based model for predicting cryptocurrency prices. It includes features for 
     -   [API](#api)
     -   [Backtesting](#backtesting)
     -   [Testing](#testing)
+    -   [Documentation](#documentation)
     -   [License](#license)
 
 ## Project Structure
@@ -217,6 +232,12 @@ To run the tests:
 ```
 pytest tests/
 ```
+
+## Documentation
+
+Comprehensive technical documentation is available at the following link:
+
+[View LSTM Forecast Documentation](https://gianlucamazza.github.io/lstm_forecast/)
 
 ## License
 
