@@ -13,6 +13,17 @@ LSTM Forecast's documentation
    usage
    modules
 
+API Reference
+=============
+
+.. toctree::
+   :maxdepth: 2
+
+   api
+   core
+   utils
+   backtesting
+
 Indices and tables
 ==================
 
