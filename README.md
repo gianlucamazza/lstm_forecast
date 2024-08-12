@@ -1,33 +1,33 @@
 # LSTM Forecast
 
 ![Test and Build](https://github.com/gianlucamazza/lstm_forecast/workflows/Test%20and%20Build/badge.svg)
- ![Deploy to PyPI](https://github.com/gianlucamazza/lstm_forecast/workflows/Deploy%20to%20PyPI/badge.svg)
+![Deploy to PyPI](https://github.com/gianlucamazza/lstm_forecast/workflows/Deploy%20to%20PyPI/badge.svg)
 
 ## Overview
 
-This project implements an LSTM-based model for predicting cryptocurrency prices. It includes features for data loading, preprocessing, model training, hyperparameter optimization, backtesting, and API deployment.
+LSTM-based model for predicting cryptocurrency prices. It includes features for data loading, preprocessing, model training, hyperparameter optimization, backtesting, and API deployment.
 
 ## Table of Contents
 
-- [LSTM Forecast](#lstm-forecast)
-  - [Overview](#overview)
-  - [Table of Contents](#table-of-contents)
-  - [Project Structure](#project-structure)
-  - [Installation](#installation)
-    - [Install with pip](#install-with-pip)
-    - [Install from sources](#install-from-sources)
-  - [Usage](#usage)
-    - [Prepare Data](#prepare-data)
-    - [Optimize Hyperparameters and Feature Selection](#optimize-hyperparameters-and-feature-selection)
-    - [Train the Model](#train-the-model)
-    - [Make Predictions](#make-predictions)
-    - [Start the API Server](#start-the-api-server)
-    - [General Usage](#general-usage)
-  - [Configuration](#configuration)
-  - [API](#api)
-  - [Backtesting](#backtesting)
-  - [Testing](#testing)
-  - [License](#license)
+-   [LSTM Forecast](#lstm-forecast)
+    -   [Overview](#overview)
+    -   [Table of Contents](#table-of-contents)
+    -   [Project Structure](#project-structure)
+    -   [Installation](#installation)
+        -   [Install with pip](#install-with-pip)
+        -   [Install from sources](#install-from-sources)
+    -   [Usage](#usage)
+        -   [Prepare Data](#prepare-data)
+        -   [Optimize Hyperparameters and Feature Selection](#optimize-hyperparameters-and-feature-selection)
+        -   [Train the Model](#train-the-model)
+        -   [Make Predictions](#make-predictions)
+        -   [Start the API Server](#start-the-api-server)
+        -   [General Usage](#general-usage)
+    -   [Configuration](#configuration)
+    -   [API](#api)
+    -   [Backtesting](#backtesting)
+    -   [Testing](#testing)
+    -   [License](#license)
 
 ## Project Structure
 
@@ -85,26 +85,29 @@ pip install lstm-forecast
 If you want to use the latest development version or contribute to the project, you can install from the source:
 
 1. Clone the repository:
-   ```
-   git clone https://github.com/gianlucamazza/lstm_forecast.git
-   cd lstm_forecast
-   ```
+
+    ```
+    git clone https://github.com/gianlucamazza/lstm_forecast.git
+    cd lstm_forecast
+    ```
 
 2. Create a virtual environment:
-   ```
-   python -m venv venv
-   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-   ```
+
+    ```
+    python -m venv venv
+    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+    ```
 
 3. Install the required packages:
-   ```
-   pip install -r requirements.txt
-   ```
+
+    ```
+    pip install -r requirements.txt
+    ```
 
 4. Install the project in editable mode:
-   ```
-   pip install -e .
-   ```
+    ```
+    pip install -e .
+    ```
 
 This way, you'll have the latest version of the code and be able to make changes if needed.
 
@@ -129,10 +132,11 @@ lstm_forecast optimize --config path/to/config.json [OPTIONS]
 ```
 
 Options:
-- `--n_trials INTEGER`: Number of trials for hyperparameter tuning (default: 100)
-- `--n_feature_trials INTEGER`: Number of trials for feature selection (default: 15)
-- `--min_features INTEGER`: Minimum number of features to select (default: 5)
-- `--force`: Force re-run of Optuna study
+
+-   `--n_trials INTEGER`: Number of trials for hyperparameter tuning (default: 100)
+-   `--n_feature_trials INTEGER`: Number of trials for feature selection (default: 15)
+-   `--min_features INTEGER`: Minimum number of features to select (default: 5)
+-   `--force`: Force re-run of Optuna study
 
 ### Train the Model
 
@@ -174,10 +178,10 @@ Replace `[COMMAND]` with any of the available commands (prepare, optimize, train
 
 The `config.json` file contains all the necessary settings for data processing, model architecture, training, and prediction. Modify this file to adjust parameters such as:
 
-- Data settings (ticker, date range, features)
-- Model settings (hidden size, number of layers, dropout)
-- Training settings (epochs, learning rate, batch size)
-- Backtesting parameters
+-   Data settings (ticker, date range, features)
+-   Model settings (hidden size, number of layers, dropout)
+-   Training settings (epochs, learning rate, batch size)
+-   Backtesting parameters
 
 ## API
 
@@ -188,16 +192,17 @@ uvicorn lstm_forecast.api.app:app --reload
 ```
 
 API endpoints:
-- `/predict`: Make predictions using the trained model
-- `/backtest`: Run backtesting on historical data
+
+-   `/predict`: Make predictions using the trained model
+-   `/backtest`: Run backtesting on historical data
 
 ## Backtesting
 
 The backtesting module allows you to evaluate the model's performance on historical data. It includes:
 
-- Trading engine simulation
-- Performance metrics calculation
-- Visualization of results
+-   Trading engine simulation
+-   Performance metrics calculation
+-   Visualization of results
 
 To run a backtest:
 
