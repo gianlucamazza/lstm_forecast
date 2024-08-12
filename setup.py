@@ -8,7 +8,7 @@ long_description = re.sub(r"!\[.*?\]\(.*?\)\n", "", long_description)
 
 setup(
     name="lstm_forecast",
-    version="0.1.4",
+    version="0.1.5",
     author="Gianluca Mazza",
     author_email="gmazza1989@proton.me",
     description="A package for LSTM-based financial time series forecasting",
@@ -17,7 +17,7 @@ setup(
     url="https://github.com/gianlucamazza/lstm_forecast",
     project_urls={
         "Bug Tracker": "https://github.com/gianlucamazza/lstm_forecast/issues",
-        "Documentation": "https://github.com/gianlucamazza/lstm_forecast#readme",
+        "Documentation": "https://gianlucamazza.github.io/lstm_forecast/",
         "Source Code": "https://github.com/gianlucamazza/lstm_forecast",
     },
     license="MIT",
