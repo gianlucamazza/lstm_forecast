@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Configuration &mdash; LSTM Forecast 0.1.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=360bc84d"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Usage" href="usage.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            LSTM Forecast
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Modules</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">LSTM Forecast</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Configuration</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/configuration.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="configuration">
+<h1>Configuration<a class="headerlink" href="#configuration" title="Link to this heading"></a></h1>
+<p>configuration example (config.json):</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;data_settings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;ticker&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;BTC-USD&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;symbol&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;BTCUSD&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;data_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;data/BTCUSD_1d.csv&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;scaled_data_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;data/BTCUSD_1d_scaled_data.csv&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;data_sampling_interval&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1d&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;start_date&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2013-01-01&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;data_resampling_frequency&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;D&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;technical_indicators&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nt">&quot;SMA_50&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">50</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;SMA_200&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">200</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;EMA&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;MACD&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">12</span><span class="p">,</span><span class="w"> </span><span class="mi">26</span><span class="p">,</span><span class="w"> </span><span class="mi">9</span><span class="p">],</span>
+<span class="w">            </span><span class="nt">&quot;RSI&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">14</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;Bollinger&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;ATR&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">14</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;Stochastic&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">14</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;Aroon&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">25</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;Williams_R&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">14</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;CMF&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;CCI&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;Ichimoku&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nt">&quot;window1&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">9</span><span class="p">,</span>
+<span class="w">                </span><span class="nt">&quot;window2&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">26</span><span class="p">,</span>
+<span class="w">                </span><span class="nt">&quot;window3&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">52</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="nt">&quot;targets&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;Open&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;High&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Low&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Close&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Volume&quot;</span><span class="p">],</span>
+<span class="w">        </span><span class="nt">&quot;disabled_features&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;Adj Close&quot;</span><span class="p">],</span>
+<span class="w">        </span><span class="nt">&quot;all_features&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">            </span><span class="s2">&quot;SMA_50&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;SMA_200&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;EMA&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;MACD&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;MACD_Signal&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;RSI&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;Bollinger_High&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;Bollinger_Low&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;ADX&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;OBV&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;VWAP&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;Stochastic&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;Aroon_Up&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;Aroon_Down&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;CCI&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;CMF&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;Ichimoku_Tenkan&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;Ichimoku_Kijun&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;Ichimoku_Senkou_Span_A&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;Ichimoku_Senkou_Span_B&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;Volume_SMA&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;Volume_Change&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;Volume_RSI&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;Vortex_Positive&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;Vortex_Negative&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;TRIX&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;PSAR&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;PSAR_Up&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;PSAR_Down&quot;</span>
+<span class="w">        </span><span class="p">],</span>
+<span class="w">        </span><span class="nt">&quot;selected_features&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;MACD&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;SMA_200&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;EMA&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;model_settings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;hidden_size&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">391</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;num_layers&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;dropout&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.012239709228895848</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;learning_rate&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.00020025239898961104</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;fc_output_size&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;weight_decay&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">8.99288758616325e-5</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;clip_value&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">3.974825341474775</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;batch_size&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;sequence_length&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">16</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;training_settings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;look_back&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">120</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;look_forward&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">30</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;epochs&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">150</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;model_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;models&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;plot_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;plots&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;use_time_series_split&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;time_series_splits&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;max_lag&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;logging_settings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;log_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;logs&quot;</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;backtesting_params&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;initial_cash&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">100000</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;trading_fee&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.001</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;take_profit&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">1.5</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;stop_loss&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">1.2</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;trade_allocation&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.1</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;max_open_trades&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Explanation of the configuration file:</p>
+<ul class="simple">
+<li><p><strong>data_settings</strong>: Contains the settings for the data loader, including the path to the data file, the technical indicators to use, the target variables, and the selected features.</p></li>
+<li><p><strong>model_settings</strong>: Contains the hyperparameters for the LSTM model, including the hidden size, number of layers, dropout rate, learning rate, etc.</p></li>
+<li><p><strong>training_settings</strong>: Contains the settings for training the model, including the look-back and look-forward periods, number of epochs, model directory, etc.</p></li>
+<li><p><strong>logging_settings</strong>: Contains the settings for logging, including the log directory.</p></li>
+</ul>
+<p>The configuration file is in JSON format and can be easily modified to suit your needs. You can create multiple configuration files for different datasets or experiments.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="usage.html" class="btn btn-neutral float-right" title="Usage" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Gianluca Mazza.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

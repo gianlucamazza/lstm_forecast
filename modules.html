@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modules &mdash; LSTM Forecast 0.1.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=360bc84d"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Usage" href="usage.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            LSTM Forecast
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Modules</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#api">API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#core">Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-lstm_forecast.utils.early_stopping">Utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#lstm_forecast.utils.early_stopping.EarlyStopping"><code class="docutils literal notranslate"><span class="pre">EarlyStopping</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#lstm_forecast.utils.early_stopping.EarlyStopping.patience"><code class="docutils literal notranslate"><span class="pre">EarlyStopping.patience</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lstm_forecast.utils.early_stopping.EarlyStopping.delta"><code class="docutils literal notranslate"><span class="pre">EarlyStopping.delta</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lstm_forecast.utils.early_stopping.EarlyStopping.verbose"><code class="docutils literal notranslate"><span class="pre">EarlyStopping.verbose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lstm_forecast.utils.early_stopping.EarlyStopping.path"><code class="docutils literal notranslate"><span class="pre">EarlyStopping.path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lstm_forecast.utils.early_stopping.EarlyStopping.counter"><code class="docutils literal notranslate"><span class="pre">EarlyStopping.counter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lstm_forecast.utils.early_stopping.EarlyStopping.best_loss"><code class="docutils literal notranslate"><span class="pre">EarlyStopping.best_loss</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lstm_forecast.utils.early_stopping.EarlyStopping.early_stop"><code class="docutils literal notranslate"><span class="pre">EarlyStopping.early_stop</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lstm_forecast.utils.early_stopping.EarlyStopping.best_model_state"><code class="docutils literal notranslate"><span class="pre">EarlyStopping.best_model_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lstm_forecast.utils.early_stopping.EarlyStopping.logger"><code class="docutils literal notranslate"><span class="pre">EarlyStopping.logger</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lstm_forecast.utils.early_stopping.EarlyStopping.reset"><code class="docutils literal notranslate"><span class="pre">EarlyStopping.reset()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#lstm_forecast.utils.logger.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lstm_forecast.utils.predict_utils.inverse_transform_predictions"><code class="docutils literal notranslate"><span class="pre">inverse_transform_predictions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lstm_forecast.utils.predict_utils.create_candles"><code class="docutils literal notranslate"><span class="pre">create_candles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lstm_forecast.utils.predict_utils.plot_predictions"><code class="docutils literal notranslate"><span class="pre">plot_predictions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lstm_forecast.utils.predict_utils.add_candlestick_trace"><code class="docutils literal notranslate"><span class="pre">add_candlestick_trace()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lstm_forecast.utils.predict_utils.update_layout"><code class="docutils literal notranslate"><span class="pre">update_layout()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lstm_forecast.utils.predict_utils.save_predictions_report"><code class="docutils literal notranslate"><span class="pre">save_predictions_report()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-lstm_forecast.backtesting.metrics">Backtesting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#lstm_forecast.backtesting.metrics.calculate_sortino_ratio"><code class="docutils literal notranslate"><span class="pre">calculate_sortino_ratio()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lstm_forecast.backtesting.metrics.calculate_sharpe_ratio"><code class="docutils literal notranslate"><span class="pre">calculate_sharpe_ratio()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lstm_forecast.backtesting.plot.plot_predictions_with_orders"><code class="docutils literal notranslate"><span class="pre">plot_predictions_with_orders()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-lstm_forecast.config">Other</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#lstm_forecast.config.Config"><code class="docutils literal notranslate"><span class="pre">Config</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#lstm_forecast.config.Config.load_config"><code class="docutils literal notranslate"><span class="pre">Config.load_config()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lstm_forecast.config.Config.save"><code class="docutils literal notranslate"><span class="pre">Config.save()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lstm_forecast.config.Config.update"><code class="docutils literal notranslate"><span class="pre">Config.update()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lstm_forecast.config.Config.get"><code class="docutils literal notranslate"><span class="pre">Config.get()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#lstm_forecast.config.load_config"><code class="docutils literal notranslate"><span class="pre">load_config()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lstm_forecast.config.update_config"><code class="docutils literal notranslate"><span class="pre">update_config()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">LSTM Forecast</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Modules</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/modules.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="modules">
+<h1>Modules<a class="headerlink" href="#modules" title="Link to this heading"></a></h1>
+<section id="api">
+<h2>API<a class="headerlink" href="#api" title="Link to this heading"></a></h2>
+</section>
+<section id="core">
+<h2>Core<a class="headerlink" href="#core" title="Link to this heading"></a></h2>
+</section>
+<section id="module-lstm_forecast.utils.early_stopping">
+<span id="utils"></span><h2>Utils<a class="headerlink" href="#module-lstm_forecast.utils.early_stopping" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="lstm_forecast.utils.early_stopping.EarlyStopping">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lstm_forecast.utils.early_stopping.</span></span><span class="sig-name descname"><span class="pre">EarlyStopping</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">patience</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'checkpoint.pt'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lstm_forecast/utils/early_stopping.html#EarlyStopping"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lstm_forecast.utils.early_stopping.EarlyStopping" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Monitors the validation loss during training and triggers early stopping if the validation loss
+does not improve after a specified number of epochs (patience). Also saves the best model state.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lstm_forecast.utils.early_stopping.EarlyStopping.patience">
+<span class="sig-name descname"><span class="pre">patience</span></span><a class="headerlink" href="#lstm_forecast.utils.early_stopping.EarlyStopping.patience" title="Link to this definition"></a></dt>
+<dd><p>Number of epochs to wait for an improvement in validation loss before stopping.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lstm_forecast.utils.early_stopping.EarlyStopping.delta">
+<span class="sig-name descname"><span class="pre">delta</span></span><a class="headerlink" href="#lstm_forecast.utils.early_stopping.EarlyStopping.delta" title="Link to this definition"></a></dt>
+<dd><p>Minimum change in the monitored validation loss to qualify as an improvement.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lstm_forecast.utils.early_stopping.EarlyStopping.verbose">
+<span class="sig-name descname"><span class="pre">verbose</span></span><a class="headerlink" href="#lstm_forecast.utils.early_stopping.EarlyStopping.verbose" title="Link to this definition"></a></dt>
+<dd><p>If True, logs information about validation loss improvements and early stopping.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lstm_forecast.utils.early_stopping.EarlyStopping.path">
+<span class="sig-name descname"><span class="pre">path</span></span><a class="headerlink" href="#lstm_forecast.utils.early_stopping.EarlyStopping.path" title="Link to this definition"></a></dt>
+<dd><p>File path to save the model checkpoint with the best validation loss.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lstm_forecast.utils.early_stopping.EarlyStopping.counter">
+<span class="sig-name descname"><span class="pre">counter</span></span><a class="headerlink" href="#lstm_forecast.utils.early_stopping.EarlyStopping.counter" title="Link to this definition"></a></dt>
+<dd><p>Counts the number of consecutive epochs without improvement in validation loss.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lstm_forecast.utils.early_stopping.EarlyStopping.best_loss">
+<span class="sig-name descname"><span class="pre">best_loss</span></span><a class="headerlink" href="#lstm_forecast.utils.early_stopping.EarlyStopping.best_loss" title="Link to this definition"></a></dt>
+<dd><p>Best validation loss observed during training.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lstm_forecast.utils.early_stopping.EarlyStopping.early_stop">
+<span class="sig-name descname"><span class="pre">early_stop</span></span><a class="headerlink" href="#lstm_forecast.utils.early_stopping.EarlyStopping.early_stop" title="Link to this definition"></a></dt>
+<dd><p>Flag to indicate whether early stopping has been triggered.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lstm_forecast.utils.early_stopping.EarlyStopping.best_model_state">
+<span class="sig-name descname"><span class="pre">best_model_state</span></span><a class="headerlink" href="#lstm_forecast.utils.early_stopping.EarlyStopping.best_model_state" title="Link to this definition"></a></dt>
+<dd><p>State dictionary of the model corresponding to the best validation loss.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lstm_forecast.utils.early_stopping.EarlyStopping.logger">
+<span class="sig-name descname"><span class="pre">logger</span></span><a class="headerlink" href="#lstm_forecast.utils.early_stopping.EarlyStopping.logger" title="Link to this definition"></a></dt>
+<dd><p>Logger instance for logging messages related to early stopping.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>logging.Logger</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lstm_forecast.utils.early_stopping.EarlyStopping.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lstm_forecast/utils/early_stopping.html#EarlyStopping.reset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lstm_forecast.utils.early_stopping.EarlyStopping.reset" title="Link to this definition"></a></dt>
+<dd><p>Resets the early stopping attributes to their initial states. This is useful if
+you want to reuse the EarlyStopping instance for another training session.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>None</strong></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function" id="module-lstm_forecast.utils.logger">
+<dt class="sig sig-object py" id="lstm_forecast.utils.logger.setup_logger">
+<span class="sig-prename descclassname"><span class="pre">lstm_forecast.utils.logger.</span></span><span class="sig-name descname"><span class="pre">setup_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'logs/lstm_forecast.log'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lstm_forecast/utils/logger.html#setup_logger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lstm_forecast.utils.logger.setup_logger" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Logger</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function" id="module-lstm_forecast.utils.predict_utils">
+<dt class="sig sig-object py" id="lstm_forecast.utils.predict_utils.inverse_transform_predictions">
+<span class="sig-prename descclassname"><span class="pre">lstm_forecast.utils.predict_utils.</span></span><span class="sig-name descname"><span class="pre">inverse_transform_predictions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scaler_prices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scaler_volume</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_targets</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lstm_forecast/utils/predict_utils.html#inverse_transform_predictions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lstm_forecast.utils.predict_utils.inverse_transform_predictions" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>predictions</strong> (<em>ndarray</em>)</p></li>
+<li><p><strong>scaler_prices</strong> (<em>StandardScaler</em>)</p></li>
+<li><p><strong>scaler_volume</strong> (<em>MinMaxScaler</em>)</p></li>
+<li><p><strong>features</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>num_targets</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lstm_forecast.utils.predict_utils.create_candles">
+<span class="sig-prename descclassname"><span class="pre">lstm_forecast.utils.predict_utils.</span></span><span class="sig-name descname"><span class="pre">create_candles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lstm_forecast/utils/predict_utils.html#create_candles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lstm_forecast.utils.predict_utils.create_candles" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>predictions</strong> (<em>ndarray</em>)</p></li>
+<li><p><strong>freq</strong> (<em>str</em>)</p></li>
+<li><p><strong>start_date</strong> (<em>Timestamp</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lstm_forecast.utils.predict_utils.plot_predictions">
+<span class="sig-prename descclassname"><span class="pre">lstm_forecast.utils.predict_utils.</span></span><span class="sig-name descname"><span class="pre">plot_predictions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">symbol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">candles</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">future_predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lstm_forecast/utils/predict_utils.html#plot_predictions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lstm_forecast.utils.predict_utils.plot_predictions" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>symbol</strong> (<em>str</em>)</p></li>
+<li><p><strong>filename</strong> (<em>str</em>)</p></li>
+<li><p><strong>candles</strong> (<em>DataFrame</em>)</p></li>
+<li><p><strong>predictions</strong> (<em>ndarray</em>)</p></li>
+<li><p><strong>future_predictions</strong> (<em>ndarray</em>)</p></li>
+<li><p><strong>freq</strong> (<em>str</em>)</p></li>
+<li><p><strong>interval</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lstm_forecast.utils.predict_utils.add_candlestick_trace">
+<span class="sig-prename descclassname"><span class="pre">lstm_forecast.utils.predict_utils.</span></span><span class="sig-name descname"><span class="pre">add_candlestick_trace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">candles</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">increasing_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'green'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decreasing_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'red'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lstm_forecast/utils/predict_utils.html#add_candlestick_trace"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lstm_forecast.utils.predict_utils.add_candlestick_trace" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>fig</strong> (<em>Figure</em>)</p></li>
+<li><p><strong>candles</strong> (<em>DataFrame</em>)</p></li>
+<li><p><strong>name</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lstm_forecast.utils.predict_utils.update_layout">
+<span class="sig-prename descclassname"><span class="pre">lstm_forecast.utils.predict_utils.</span></span><span class="sig-name descname"><span class="pre">update_layout</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symbol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lstm_forecast/utils/predict_utils.html#update_layout"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lstm_forecast.utils.predict_utils.update_layout" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>fig</strong> (<em>Figure</em>)</p></li>
+<li><p><strong>symbol</strong> (<em>str</em>)</p></li>
+<li><p><strong>interval</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lstm_forecast.utils.predict_utils.save_predictions_report">
+<span class="sig-prename descclassname"><span class="pre">lstm_forecast.utils.predict_utils.</span></span><span class="sig-name descname"><span class="pre">save_predictions_report</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symbol</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lstm_forecast/utils/predict_utils.html#save_predictions_report"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lstm_forecast.utils.predict_utils.save_predictions_report" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>predictions</strong> (<em>ndarray</em>)</p></li>
+<li><p><strong>targets</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>start_date</strong> (<em>Timestamp</em>)</p></li>
+<li><p><strong>freq</strong> (<em>str</em>)</p></li>
+<li><p><strong>symbol</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-lstm_forecast.backtesting.metrics">
+<span id="backtesting"></span><h2>Backtesting<a class="headerlink" href="#module-lstm_forecast.backtesting.metrics" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="lstm_forecast.backtesting.metrics.calculate_sortino_ratio">
+<span class="sig-prename descclassname"><span class="pre">lstm_forecast.backtesting.metrics.</span></span><span class="sig-name descname"><span class="pre">calculate_sortino_ratio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">historical_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lstm_forecast/backtesting/metrics.html#calculate_sortino_ratio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lstm_forecast.backtesting.metrics.calculate_sortino_ratio" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>historical_data</strong> (<em>DataFrame</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lstm_forecast.backtesting.metrics.calculate_sharpe_ratio">
+<span class="sig-prename descclassname"><span class="pre">lstm_forecast.backtesting.metrics.</span></span><span class="sig-name descname"><span class="pre">calculate_sharpe_ratio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">historical_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lstm_forecast/backtesting/metrics.html#calculate_sharpe_ratio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lstm_forecast.backtesting.metrics.calculate_sharpe_ratio" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>historical_data</strong> (<em>DataFrame</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function" id="module-lstm_forecast.backtesting.plot">
+<dt class="sig sig-object py" id="lstm_forecast.backtesting.plot.plot_predictions_with_orders">
+<span class="sig-prename descclassname"><span class="pre">lstm_forecast.backtesting.plot.</span></span><span class="sig-name descname"><span class="pre">plot_predictions_with_orders</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">symbol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">historical_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">future_predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transactions</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lstm_forecast/backtesting/plot.html#plot_predictions_with_orders"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lstm_forecast.backtesting.plot.plot_predictions_with_orders" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>symbol</strong> (<em>str</em>)</p></li>
+<li><p><strong>filename</strong> (<em>str</em>)</p></li>
+<li><p><strong>historical_data</strong> (<em>ndarray</em>)</p></li>
+<li><p><strong>predictions</strong> (<em>ndarray</em>)</p></li>
+<li><p><strong>future_predictions</strong> (<em>ndarray</em>)</p></li>
+<li><p><strong>data</strong> (<em>DataFrame</em>)</p></li>
+<li><p><strong>freq</strong> (<em>str</em>)</p></li>
+<li><p><strong>transactions</strong> (<em>DataFrame</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-lstm_forecast.config">
+<span id="other"></span><h2>Other<a class="headerlink" href="#module-lstm_forecast.config" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="lstm_forecast.config.Config">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lstm_forecast.config.</span></span><span class="sig-name descname"><span class="pre">Config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lstm_forecast/config.html#Config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lstm_forecast.config.Config" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="lstm_forecast.config.Config.load_config">
+<span class="sig-name descname"><span class="pre">load_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lstm_forecast/config.html#Config.load_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lstm_forecast.config.Config.load_config" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lstm_forecast.config.Config.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lstm_forecast/config.html#Config.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lstm_forecast.config.Config.save" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lstm_forecast.config.Config.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lstm_forecast/config.html#Config.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lstm_forecast.config.Config.update" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lstm_forecast.config.Config.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lstm_forecast/config.html#Config.get"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lstm_forecast.config.Config.get" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lstm_forecast.config.load_config">
+<span class="sig-prename descclassname"><span class="pre">lstm_forecast.config.</span></span><span class="sig-name descname"><span class="pre">load_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lstm_forecast/config.html#load_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lstm_forecast.config.load_config" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lstm_forecast.config.update_config">
+<span class="sig-prename descclassname"><span class="pre">lstm_forecast.config.</span></span><span class="sig-name descname"><span class="pre">update_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lstm_forecast/config.html#update_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lstm_forecast.config.update_config" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="usage.html" class="btn btn-neutral float-left" title="Usage" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Gianluca Mazza.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
