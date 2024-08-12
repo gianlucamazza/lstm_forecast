@@ -35,5 +35,4 @@ jobs:
               with:
                   github_token: ${{ secrets.CI_LSTM_FORECAST }}
                   publish_dir: ./docs/build/html
-                  publish_branch: gh-pages
-                  force_orphan: true
+                  publish_branch: main
