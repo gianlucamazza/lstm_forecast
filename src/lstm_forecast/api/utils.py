@@ -5,45 +5,30 @@ from lstm_forecast.feature_engineering import calculate_technical_indicators
 import pandas as pd
 
 
-def preprocess_data(data: Dict[str, Any]) -> np.ndarray:
+def preprocess_data(data: Dict[str, Any], config: Config) -> np.ndarray:
     """
-    Preprocess the input data for the model.
+    Preprocess the data for the model.
 
     Args:
-    data (Dict[str, Any]): A dictionary containing the input data.
-        Expected to have 'ohlcv' key with OHLCV data.
+    data (Dict[str, Any]): Data to be preprocessed.
+    config (Config): Configuration object containing necessary settings.
 
     Returns:
-    np.ndarray: Preprocessed data ready for model input.
+    np.ndarray: Preprocessed data.
     """
-    config = Config()
+    df = pd.DataFrame(data)
+    df = calculate_technical_indicators(df)
+    df = df.dropna()
 
-    df = pd.DataFrame(
-        data["ohlcv"], columns=["Open", "High", "Low", "Close", "Volume"]
-    )
+    features = config.get_features()
+    target = config.get_target()
 
-    df, features = calculate_technical_indicators(
-        df,
-        windows=config.indicator_windows,
-        asset_type=config.asset_type,
-        frequency=config.data_resampling_frequency,
-    )
+    df = df[features + [target]]
 
-    selected_features = config.data_settings["selected_features"]
-    feature_data = df[selected_features]
+    scaler = config.get_feature_scaler()
+    normalized_data = scaler.transform(df)
 
-    scaler = config.get_scaler()
-    normalized_data = scaler.transform(feature_data)
-
-    sequence_length = config.model_settings.get("sequence_length", 120)
-    if len(normalized_data) < sequence_length:
-        raise ValueError(f"Insufficient data. Need {sequence_length}+ points.")
-
-    model_input = np.array(
-        [normalized_data[-sequence_length:]], dtype=np.float32
-    )
-
-    return model_input
+    return normalized_data
 
 
 def postprocess_prediction(
