@@ -1,7 +1,7 @@
 .. LSTM Forecast documentation.
 
-Welcome to LSTM Forecast's documentation!
-=========================================
+LSTM Forecast's documentation
+=============================
 
 .. toctree::
    :maxdepth: 2
