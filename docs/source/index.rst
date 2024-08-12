@@ -9,6 +9,7 @@ Welcome to LSTM Forecast's documentation!
 
    introduction
    installation
+   configuration
    usage
    modules
 
