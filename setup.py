@@ -8,7 +8,7 @@ long_description = re.sub(r"!\[.*?\]\(.*?\)\n", "", long_description)
 
 setup(
     name="lstm_forecast",
-    version="0.1.3",
+    version="0.1.4",
     author="Gianluca Mazza",
     author_email="gmazza1989@proton.me",
     description="A package for LSTM-based financial time series forecasting",
