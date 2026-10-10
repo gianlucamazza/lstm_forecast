@@ -10,7 +10,7 @@ setup(
     name="lstm_forecast",
     version="0.1.5",
     author="Gianluca Mazza",
-    author_email="gmazza1989@proton.me",
+    author_email="info@gianlucamazza.it",
     description="A package for LSTM-based financial time series forecasting",
     long_description=long_description,
     long_description_content_type="text/markdown",
